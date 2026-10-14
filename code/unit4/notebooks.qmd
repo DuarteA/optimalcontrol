@@ -1,0 +1,65 @@
+---
+title: "Unit 4 -- Jupyter notebooks"
+subtitle: "4SC000 Optimal Control and Reinforcement Learning"
+format:
+  html:
+    toc: false
+---
+
+<!--
+Landing page for the Unit 4 notebooks, linked from the header of
+notes/unit4-notes.qmd -- same pattern as code/unit1..3/notebooks.qmd.
+Each entry is a one-paragraph description plus a direct download link to
+the .ipynb sitting next to this file. The notebooks are NOT rendered by
+Quarto (see the render/resources lists in _quarto.yml); they are copied
+into _output verbatim, so these relative links resolve in the rendered
+site. Ordered roughly by increasing complexity. All three are Bayes'
+filter examples, which is the whole content of this unit.
+-->
+
+The notebooks below accompany Unit 4. They are ordinary Jupyter
+notebooks and need only `numpy` (plus `matplotlib` for the plots); open
+them in JupyterLab, VS Code, or any notebook environment.
+
+## Angle estimation with the Bayes' filter
+
+The cleanest illustration of the filter itself. The angle of a spinning
+wheel is to be estimated from a camera that reads the hue of coloured
+markings on the wheel, but sees only a limited arc of it and, because
+brightness varies, sometimes reports the wrong hue -- though usually one
+close to the truth. The angle is quantized into $N$ values, so the belief
+is just a vector of $N$ probabilities, and the prediction and correction
+steps of the Bayes' filter can be watched updating it directly. This is
+the discrete counterpart of the Kalman filter example that opens Unit 6,
+and of the Viterbi notebook in Unit 1, which asks for the most likely
+*sequence* of angles rather than the belief at each step.
+
+[Download `A_4_angleestimationbayes.ipynb`](A_4_angleestimationbayes.ipynb){download="A_4_angleestimationbayes.ipynb"}
+
+## Position estimation in a grid world
+
+An agent moves through the 77-cell grid world of Unit 3, plus 40 obstacle
+cells in which it is invisible, taking a step to an adjacent cell or
+staying put with equal probability among the moves the walls permit. When
+the agent is visible its position is measured; when it is not, no
+measurement arrives at all. The belief over its position must therefore
+be propagated through stretches of pure prediction and sharpened again
+when the agent reappears -- a good demonstration that a missing
+measurement is itself informative, since it rules out every visible cell.
+
+[Download `A_4_K_gridworldBayes.ipynb`](A_4_K_gridworldBayes.ipynb){download="A_4_K_gridworldBayes.ipynb"}
+
+## Remote temperature sensing: when should a sensor transmit?
+
+A battery-powered sensor measures a temperature evolving as
+$T_{k+1}=T_k+U_k+w_k$ and transmits to a remote station over a wireless
+link, where transmissions are the dominant drain on the battery. The
+question is how to keep the remote estimate accurate while transmitting
+as little as possible, and the notebook compares two answers: transmit
+periodically, or transmit only when the measurement has drifted past a
+threshold. The threshold rule is the more interesting one, because
+*silence* then carries information -- the station learns that the
+temperature is still within the band -- which is exactly the kind of
+reasoning the Bayes' filter formalizes.
+
+[Download `A_4_K_RemoteTempSensingBayes.ipynb`](A_4_K_RemoteTempSensingBayes.ipynb){download="A_4_K_RemoteTempSensingBayes.ipynb"}

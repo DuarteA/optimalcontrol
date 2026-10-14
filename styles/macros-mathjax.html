@@ -1,0 +1,25 @@
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      argmin: ["\\operatorname*{argmin}_{#1}", 1],
+      argmax: ["\\operatorname*{argmax}_{#1}", 1],
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>

@@ -1,0 +1,31 @@
+# Rendered site. It is published to the `gh-pages` branch by
+# `quarto publish gh-pages`, so it must NOT also be committed on the
+# source branch -- otherwise every render produces a ~250 MB diff here.
+_output/
+
+# Quarto's build cache / freeze directory.
+.quarto/
+
+# Leftover pdf from an earlier root-level index.qmd. index.qmd is html-only
+# now (see its header comment), so nothing regenerates this.
+index.pdf
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# LaTeX intermediates, in case a pdf render is interrupted
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/

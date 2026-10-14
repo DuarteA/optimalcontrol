@@ -1,0 +1,105 @@
+---
+title: "Unit 6 -- Jupyter notebooks"
+subtitle: "4SC000 Optimal Control and Reinforcement Learning"
+format:
+  html:
+    toc: false
+---
+
+<!--
+Landing page for the Unit 6 notebooks, linked from the header of
+notes/unit6-notes.qmd -- same pattern as code/unit1..5/notebooks.qmd.
+Each entry is a one-paragraph description plus a direct download link to
+the .ipynb sitting next to this file. The notebooks are NOT rendered by
+Quarto (see the render/resources lists in _quarto.yml); they are copied
+into _output verbatim, so these relative links resolve in the rendered
+site. Ordered to follow the unit: stochastic LQ first, then the Kalman
+filter, then LQG, then the two applications.
+
+The instructor asked for these by their JupyterNotebooks/ names (B_2_*);
+in course-quarto they carry the A_6_ prefix used for every other unit.
+A_6_K_quadraticgame.ipynb is listed last: it is filed as B_1_K_game.ipynb
+in the source folder, but that prefix is a leftover from an earlier
+lecture numbering and the content belongs to this unit -- confirmed by
+the instructor on 2026-10-01.
+-->
+
+The notebooks below accompany Unit 6. They are ordinary Jupyter
+notebooks and need only `numpy` (plus `matplotlib` for the plots, and
+`control`/`slycot` for some of the continuous-time models); open them in
+JupyterLab, VS Code, or any notebook environment. A dependency-free
+Python implementation of the filter itself is in
+[`kalman_filter.py`](kalman_filter.py) -- see [`README.md`](README.md).
+
+## Linear quadratic control with stochastic disturbances
+
+The first half of the unit, made concrete: the finite-horizon LQ
+controller applied to a plant driven by random disturbances. Two things
+are worth watching. The controller copes with the disturbances without
+any modification -- this is certainty equivalence, the optimal gains
+being the deterministic ones -- and the expected cost predicted by the
+theory, $x_0^\intercal P_0x_0+\sum_k\text{trace}(P_{k+1}W)$, matches the
+average cost over Monte Carlo runs. That second check is the one to run
+yourself: it turns an identity on the page into a number.
+
+[Download `A_6_LQCstochastic.ipynb`](A_6_LQCstochastic.ipynb){download="A_6_LQCstochastic.ipynb"}
+
+## The Kalman filter
+
+The filter itself, iterated on a worked example for long enough that the
+gains converge to their stationary values, and then checked against the
+library routine. Running it is the quickest way to see the point made in
+the notes: the covariances $\Phi_{k|k-1}$, $\Phi_{k|k}$ and the gain
+$L_k$ do not depend on the measurements at all, so they can be computed
+offline before any data arrives.
+
+[Download `A_6_Kalman.ipynb`](A_6_Kalman.ipynb){download="A_6_Kalman.ipynb"}
+
+## LQG control of an inverted pendulum
+
+The separation principle at work on the inverted pendulum of Unit 5,
+which here must be controlled from a single noisy measurement rather than
+the full state. The average-cost infinite-horizon LQG controller is
+assembled from the two dual Riccati equations -- the LQR gain and the
+stationary Kalman gain, designed independently -- and the comparison
+against Unit 5's full-state response shows exactly what partial
+information costs.
+
+[Download `A_6_lqg.ipynb`](A_6_lqg.ipynb){download="A_6_lqg.ipynb"}
+
+## Sensor fusion: lidar and accelerometer on a mass-spring-damper
+
+An object on a spring carries two sensors: a lidar measuring distance to
+a wall, and an accelerometer. Neither alone gives a good position
+estimate -- the lidar is noisy, the accelerometer drifts when integrated
+twice -- but the Kalman filter merges them into one estimate that is
+better than either, and an LQG controller is then built on top. This is
+sensor fusion in its most recognizable form, and the clearest argument
+for why the filter is worth the algebra.
+
+[Download `A_6_K_SensorFusionAndLQG.ipynb`](A_6_K_SensorFusionAndLQG.ipynb){download="A_6_K_SensorFusionAndLQG.ipynb"}
+
+## IMU pose estimation: Kalman versus complementary filter
+
+An inertial measurement unit combines gyroscopes, accelerometers and
+magnetometers: the gyroscope measures angular velocity, while the
+accelerometer and magnetometer together yield the attitude angles. With
+the kinematics linearized the three angles decouple, so each is a small
+estimation problem. The notebook compares the Kalman filter against the
+*complementary* filter, the fixed-gain scheme widely used on embedded
+hardware, which is the practical question an engineer actually faces: is
+the extra machinery worth it here?
+
+[Download `A_6_K_KalmanIMU.ipynb`](A_6_K_KalmanIMU.ipynb){download="A_6_K_KalmanIMU.ipynb"}
+
+## A min-max game against a worst-case disturbance
+
+The same linear plant and quadratic cost as the rest of the unit, but
+with the disturbance $\omega_k$ no longer a sequence of independent
+Gaussian variables: here it is chosen *adversarially*, to make the cost
+as large as the controller tries to make it small. The problem becomes a
+min-max game rather than a minimization, and the question is what
+survives of the Riccati machinery when the uncertainty stops being random
+and starts pushing back.
+
+[Download `A_6_K_quadraticgame.ipynb`](A_6_K_quadraticgame.ipynb){download="A_6_K_quadraticgame.ipynb"}

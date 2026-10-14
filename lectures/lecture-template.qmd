@@ -1,0 +1,89 @@
+---
+format: revealjs
+---
+
+<!--
+This is a TEMPLATE showing the slide conventions/mechanics. I can't open
+.key files, so real content still needs Keynote exported to PDF first.
+
+Mechanics demonstrated below: the standard title slide, a section slide,
+bullets, math, a live code plot, an image placeholder, and a summary slide.
+Each level-2 heading (##) starts a new slide; level-1 (#) starts a section
+divider slide.
+-->
+
+## Unit N {.center}
+
+<!--
+STANDARD TITLE SLIDE, finalized 2026-08-07 on Lecture 1 -- reuse this exact
+block (just change "Unit N" and the subtitle) for every future lecture.
+No YAML title/subtitle/author in the frontmatter above -- Quarto
+auto-generates its own title slide whenever `title:` is set, which would
+duplicate this hand-built one.
+-->
+
+### Topic Title Goes Here
+
+![](figures/shared/tue-logo.png){width="20%" fig-align="center"}
+
+::: {.title-slide-meta}
+4SC000, Q2 2026-2027
+
+Duarte Antunes
+:::
+
+## Outline
+
+- Motivation and problem setting
+- Key definition / result
+- Worked example
+- Connection to the problem set
+
+# Section heading
+
+A level-1 heading (`#`) renders as a full "section divider" slide in reveal.js
+-- useful for the same kind of part-break you already use in PS1-3.
+
+## A slide with math
+
+The dynamic programming recursion for the finite-horizon cost-to-go:
+
+$$
+\costtogo_k(\state) = \min_{\action \in U(\state)} \; g_k(\state,\action) + \costtogo_{k+1}\big(f_k(\state,\action)\big)
+$$
+
+using the macros already defined in `styles/macros.tex` (`\costtogo`, `\state`,
+`\action`) so notation stays consistent across all 14 lectures.
+
+## A slide with a live code plot
+
+Code blocks execute when the deck is rendered, so a figure like this is
+generated fresh every time rather than being a static export pasted in from
+MATLAB/Keynote:
+
+```{python}
+#| echo: false
+import numpy as np
+import matplotlib.pyplot as plt
+
+x = np.linspace(0, 10, 200)
+plt.figure(figsize=(6, 3.2))
+plt.plot(x, np.sin(x), label="example signal")
+plt.xlabel("t"); plt.ylabel("x(t)"); plt.legend()
+plt.tight_layout()
+plt.show()
+```
+
+## Image placeholder
+
+For a figure you already have (e.g. a diagram exported from Keynote or a plot
+from `Code/`), reference it like any Markdown image:
+
+```markdown
+![Caption text](../figures/lectureN-fig1.png)
+```
+
+## Summary
+
+- Recap of the 2-3 key takeaways
+- Pointer to the matching problem-set exercise (see `exercises/`)

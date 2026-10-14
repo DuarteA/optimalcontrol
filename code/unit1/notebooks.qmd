@@ -1,0 +1,57 @@
+---
+title: "Unit 1 -- Jupyter notebooks"
+subtitle: "4SC000 Optimal Control and Reinforcement Learning"
+format:
+  html:
+    toc: false
+---
+
+<!--
+Landing page for the Unit 1 notebooks, linked from the header of
+notes/unit1-notes.qmd. Each entry is a one-paragraph description plus a
+direct download link to the .ipynb sitting next to this file; Quarto
+copies those notebooks into _output/code/unit1/ when the project is
+rendered, so the relative links resolve in the rendered site. The
+download="..." attribute makes the browser save the file rather than
+render it.
+-->
+
+The three notebooks below accompany Unit 1. They are ordinary Jupyter
+notebooks and need only `numpy` (plus `matplotlib` for the plots); open
+them in JupyterLab, VS Code, or any notebook environment.
+
+## The dynamic programming algorithm
+
+A general implementation of the dynamic programming algorithm for
+deterministic finite-horizon problems with finite state and input spaces
+-- exactly the setting of the transition diagrams in the notes. The
+problem is supplied as the transition map and the arc costs, and the
+routine returns the costs-to-go $J_k$ together with *all* minimizing
+decisions at each state, so the non-uniqueness discussed in the notes is
+visible directly in the output. The other two notebooks build on this
+routine.
+
+[Download `A_1_dp.ipynb`](A_1_dp.ipynb){download="A_1_dp.ipynb"}
+
+## Inventory control
+
+The inventory control example worked through in the notes: a shop decides
+how many items of a product to order at each stage, with the stock
+evolving as $x_{k+1}=\max\{x_k+u_k-d_k,0\}$ under a known demand, over a
+finite horizon. The notebook sets the problem up in the form expected by
+the dynamic programming routine above and recovers the costs-to-go and
+the optimal ordering policy.
+
+[Download `A_1_inventorycontrol.ipynb`](A_1_inventorycontrol.ipynb){download="A_1_inventorycontrol.ipynb"}
+
+## Angle estimation with the Viterbi algorithm
+
+An application of dynamic programming to *estimation* rather than
+control: recovering the angle of a spinning wheel from noisy hue
+measurements produced by a camera. The angle is quantized into $N$
+values, so the problem is that of finding the most likely state sequence
+of a hidden Markov chain given the measurements -- which, after taking
+logarithms, is again a shortest-path problem solved by the dynamic
+programming algorithm. This is the Viterbi algorithm.
+
+[Download `A_1_A_Viterbi.ipynb`](A_1_A_Viterbi.ipynb){download="A_1_A_Viterbi.ipynb"}

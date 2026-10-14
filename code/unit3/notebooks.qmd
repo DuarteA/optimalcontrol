@@ -1,0 +1,83 @@
+---
+title: "Unit 3 -- Jupyter notebooks"
+subtitle: "4SC000 Optimal Control and Reinforcement Learning"
+format:
+  html:
+    toc: false
+---
+
+<!--
+Landing page for the Unit 3 notebooks, linked from the header of
+notes/unit3-notes.qmd -- same pattern as code/unit1/notebooks.qmd and
+code/unit2/notebooks.qmd. Each entry is a one-paragraph description plus
+a direct download link to the .ipynb sitting next to this file. The
+notebooks are NOT rendered by Quarto (see the render/resources lists in
+_quarto.yml); they are copied into _output verbatim, so these relative
+links resolve in the rendered site. Ordered roughly by increasing
+complexity.
+-->
+
+The notebooks below accompany Unit 3. They are ordinary Jupyter
+notebooks and need only `numpy` (plus `matplotlib` for the plots); open
+them in JupyterLab, VS Code, or any notebook environment.
+
+## Shortest paths in graphs
+
+The starting point for the unit: a weighted graph is described by its
+weighted adjacency matrix $W$, with $W_{ij}$ the cost of moving from node
+$i$ to node $j$ and $\infty$ meaning no edge (the matrix is symmetric for
+an undirected graph, and need not be for a directed one). The notebook
+solves the same six-node example three different ways, so the algorithms
+of the notes can be compared side by side on a problem small enough to
+check by hand.
+
+[Download `A_3_shortestpathgraphs.ipynb`](A_3_shortestpathgraphs.ipynb){download="A_3_shortestpathgraphs.ipynb"}
+
+## Robot path planning on a grid
+
+The deterministic robot-planning example: an environment divided into
+cells, where moving to a horizontally or vertically adjacent cell costs
+$1$ and a diagonal move costs $\sqrt2$, obstacle cells are at infinite
+distance, and so is a diagonal move that would squeeze between two cells
+adjacent to the same obstacle. The dynamic programming algorithm computes
+the optimal policy, and the shortest path from A to B is then read off by
+following the arrows. The obstacle matrix `M` is easy to edit, so it is
+worth re-running on an environment of your own.
+
+[Download `A_3_RobotPlanningDeterministic.ipynb`](A_3_RobotPlanningDeterministic.ipynb){download="A_3_RobotPlanningDeterministic.ipynb"}
+
+## Shortest-path policy in Pac-Man's grid world
+
+Pac-Man as a pursuit-evasion game on a grid of 77 cells, where a ghost
+chases Pac-Man and both may move to an adjacent cell or stay put. Here
+Pac-Man is *stationary*, so the ghost's task is simply to take the first
+step of a shortest path from its own cell to Pac-Man's -- shortest in
+both time and cells travelled -- with ties broken by the smallest cell
+label. A direct application of the shortest-path machinery to a state
+space that is a real map rather than an abstract graph.
+
+[Download `A_3_A_Shortest_path_policy_pacman.ipynb`](A_3_A_Shortest_path_policy_pacman.ipynb){download="A_3_A_Shortest_path_policy_pacman.ipynb"}
+
+## Intersection policy in Pac-Man's grid world
+
+The same grid world, but now Pac-Man *moves*, along a path that is
+periodic and known in advance. Chasing the cell Pac-Man currently
+occupies is no longer right: the ghost should head for a cell where the
+two will meet, so as to intersect Pac-Man in the fewest iterations. The
+comparison with the previous notebook is the point -- the same map and
+the same algorithms, but a target that has to be predicted rather than
+merely located.
+
+[Download `A_3_A_Intersection_policy_pacman.ipynb`](A_3_A_Intersection_policy_pacman.ipynb){download="A_3_A_Intersection_policy_pacman.ipynb"}
+
+## The 8-puzzle on a torus
+
+The classic sliding-tile puzzle, solved with both Dijkstra's algorithm
+and A\*. The variant used here removes the boundary, so the frame wraps
+around and there are always exactly four possible moves rather than the
+two or three available at an edge or corner in the usual game. It is the
+best illustration in the unit of a state space that is enormous yet
+perfectly well defined -- every reachable tile arrangement is a node --
+and therefore of why a good heuristic matters.
+
+[Download `A_3_K_Puzzle8.ipynb`](A_3_K_Puzzle8.ipynb){download="A_3_K_Puzzle8.ipynb"}

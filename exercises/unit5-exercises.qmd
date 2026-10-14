@@ -1,0 +1,198 @@
+---
+title: "Unit 5 Exercises"
+subtitle: "4SC000 Optimal Control and Reinforcement Learning"
+format:
+  html:
+    toc: true
+  pdf: default
+---
+
+<!--
+Source: Solved Exercises/2/PS2.tex (problems) and
+Solved Exercises/2/SolutionsPS2.tex (solutions), section 1 "Linear
+quadratic control" -- originally Problems 1.1-1.7 (an 8th problem, on
+stochastic/average-cost LQ control with disturbances, is moved to the
+Unit 6 exercises instead, since its content -- E[...], w_k -- matches
+Lecture 6's opening section rather than anything in Lecture 5; see the
+header note there). Renumbered 5.1-5.7 in Core/Additional order: Core =
+5.1 (scalar system, finite and infinite horizon, by-hand Riccati
+recursion -- originally 1.1), 5.2 (3-state numeric example, finite- and
+infinite-horizon gains via the Riccati iteration -- originally 1.5,
+directly mirrors the double-integrator worked example in the lecture).
+Additional = 5.3 (DC motor: state-space derivation, discretization, LQR
+design -- originally 1.2), 5.4 (Lyapunov equation and its connection to
+the Riccati equation -- originally 1.3), 5.5 (deadbeat control /
+controllability -- originally 1.4), 5.6 (examples where the algebraic
+Riccati equation has no positive-definite solution -- originally 1.6),
+5.7 (R need not be positive definite -- originally 1.7).
+
+Two problem sections in PS2.tex ("Discretization" and "Static
+optimization formulation of optimal control problems") are not included
+here: both are useful prerequisite/refresher material (discretizing a
+continuous-time model; unconstrained quadratic minimization and Lagrange
+multipliers, which underlie the Riccati derivation), but neither maps
+cleanly onto Lecture 5's own content the way Problems 1.1-1.7 do, so
+rather than force a mapping I've left them out -- flag if you'd like a
+"methods refresher" exercise set built from them separately.
+-->
+
+A runnable Python companion to these exercises -- Riccati recursion (both
+finite- and infinite-horizon) plus the double-integrator and DC-motor
+examples -- is available in `code/unit5/` (see its `README.md`).
+
+## Core exercises
+
+**Problem 5.1** Consider a first order discrete-time linear system
+
+$$x_{k+1} = \alpha x_k+u_k, \ \ k\in \mathbb{N}_0,$$
+
+and the cost
+
+$$\sum_{k=0}^q x_k^2+\gamma u_k^2.$$
+
+(a) Considering $\alpha=1$, $\gamma=1$ and $q=2$, determine the policy for $u_0$, $u_1$, and $u_2$ that minimizes the cost.
+(b) Considering $\alpha=1$, $\gamma=1$ and $q=\infty$, determine the policy for $\{u_k, k\in\mathbb{N}_0\}$ that minimizes the cost.
+(c) Suppose now that $|\alpha|<1$ and $q=\infty$. Provide and interpret the policy that minimizes the cost when $\gamma\to\infty$.
+
+::: {.callout-note collapse="true" title="Solution"}
+
+**(a)** For $\alpha=1$, $\gamma=1$, $q=2$, we have $x_{k+1}=x_k+u_k$ and $\sum_{k=0}^2 \underbrace{x_k^2+u_k^2}_{g(x_k,u_k)} + \underbrace{0}_{J_3(x_3)}$, a standard stage decision problem. Applying DP:
+
+**Step 1.** $J_2(x_2) = \min_{u_2} x_2^2+u_2^2 = x_2^2$, where $u_2=\mu(x_2)=0\ \forall x_2$.
+
+**Step 2.** $J_1(x_1) = \min_{u_1} x_1^2+u_1^2+(x_1+u_1)^2 = \min_{u_1} 2x_1^2+2u_1^2+2x_1u_1$. Differentiating and equating to zero: $4u_1+2x_1=0$, so $u_1=-\frac{1}{2}x_1$ and $J_1(x_1)=\frac{3}{2}x_1^2$.
+
+**Step 3.** $J_0(x_0) = \min_{u_0} x_0^2+u_0^2+\frac{3}{2}(x_0+u_0)^2 = \min_{u_0} \frac{5}{2}x_0^2+\frac{5}{2}u_0^2+3x_0u_0$. Differentiating and equating to zero: $5u_0+3x_0=0$, so $u_0=-\frac{3}{5}x_0$ and $J_0(x_0)=1.6x_0^2$.
+
+Alternatively, iterate the (scalar) Riccati equation $p_k=p_{k+1}+1-\frac{p_{k+1}^2}{1+p_{k+1}}$ for $k\in\{2,1,0\}$, $p_3=0$, with gains $K_k=-\frac{p_{k+1}}{1+p_{k+1}}$ (costs-to-go $x_k^2p_k$). This gives $p_2=1$, $K_2=0$; $p_1=\frac{3}{2}$, $K_1=-\frac{1}{2}$; $p_0=1.6$, $K_0=-\frac{3}{5}$ -- matching the by-hand recursion.
+
+**(b)** Since the model is controllable and the cost matrix is positive definite, the backward iteration converges to a limit $p$ satisfying the algebraic Riccati equation $p=p+1-\frac{p^2}{1+p}$, i.e. $p^2-p-1=0$, with roots $p=\frac{1\pm\sqrt5}{2}$. Taking the positive-definite root, $p=\frac{1+\sqrt5}{2}=1.618$, so the optimal cost is $x_0^2p$ and the optimal policy is $u_k=Kx_k$, $k\in\mathbb{N}_0$, where $K=-\frac{p}{1+p}=-\frac{1+\sqrt5}{3+\sqrt5}=-0.618$.
+
+**(c)** $P(\gamma)$ satisfies $p=\alpha^2p+1-p^2\alpha^2/(\gamma+p)$ and converges to $\frac{1}{1-\alpha^2}$ as $\gamma\to\infty$. Thus $K(\gamma)=-\frac{\alpha^2P(\gamma)^2}{\gamma+P(\gamma)}$ converges to zero, so the optimal policy is $u_k=0$ for every $k$. Interpretation: if control is expensive and the system is already stable ($\alpha<1$), it is optimal to just let it run open loop. The resulting cost is obtained from iterating $x_{k+1}=\alpha x_k$: $\sum_{k=0}^\infty x_k^2 = \sum_{k=0}^\infty (\alpha^2)^kx_0^2 = \frac{1}{1-\alpha^2}x_0^2$.
+
+:::
+
+**Problem 5.2** Consider the standard linear quadratic problem
+
+$$\min \sum_{k=0}^{h-1} x_k^\intercal Qx_k+u_k^\intercal Ru_k+2x_k^\intercal Su_k+g_h(x_h) \qquad x_{k+1}=Ax_k+Bu_k$$
+
+for
+
+$$Q=\begin{bmatrix}5&0&0\\0&1&0\\0&0&3\end{bmatrix} \quad S=\begin{bmatrix}0.1&0\\0&0\\0&0\end{bmatrix} \quad R=\begin{bmatrix}1&0\\0&2\end{bmatrix} \quad A=\begin{bmatrix}0&1&0\\-3&4&1\\0&0&3\end{bmatrix} \quad B=\begin{bmatrix}0&0\\1&0\\0&2\end{bmatrix}$$
+
+and $g_h(x_h)=x_h^\intercal Q_hx_h$, $Q_h=\begin{bmatrix}1&0&0\\0&2&0\\0&0&0\end{bmatrix}$.
+
+(i) Provide the gains $K_k$ of the optimal policy $u_k=K_kx_k$, $k\in\{0,1,2,3,4\}$, when $h=5$, by iterating the Riccati equations.
+(ii) Using the same recursion, obtain the optimal policy $u_k=Kx_k$ when $g_h(x_h)=0$ and $h=\infty$.
+(iii) Confirm the results of (ii) using the algebraic Riccati equation directly (e.g. via `dlqr.m` in Matlab, or `scipy.linalg.solve_discrete_are` in Python).
+
+::: {.callout-note collapse="true" title="Solution"}
+
+**(i)** Iterating the Riccati/gain equations backward from $P_5=Q_5=Q_h$ gives
+
+$$K_0=\begin{bmatrix}2.8560&-3.3810&-0.9790\\0.0263&0.0605&-1.4179\end{bmatrix} \qquad K_1=\begin{bmatrix}2.8494&-3.3649&-0.9777\\0.0271&0.0589&-1.4180\end{bmatrix} \qquad K_2=\begin{bmatrix}2.8191&-3.2769&-0.9749\\0.0344&0.0450&-1.4161\end{bmatrix}$$
+
+$$K_3=\begin{bmatrix}2.7408&-3.0849&-0.9967\\0.0829&-0.0448&-1.3211\end{bmatrix} \qquad K_4=\begin{bmatrix}1.9667&-2.6667&-0.6667\\0&0&0\end{bmatrix}$$
+
+The optimal policy is $u_k=K_kx_k$, $k\in\{0,1,2,3,4\}$.
+
+**(ii)** Iterating with a large horizon (e.g. $h=20$) the gains converge, $\bar K=K_0=\begin{bmatrix}2.8570&-3.3830&-0.9792\\0.0262&0.0607&-1.4179\end{bmatrix}$. The optimal policy is $u_k=\bar Kx_k$.
+
+**(iii)** Solving the algebraic Riccati equation directly reproduces the same gains as in (ii).
+
+:::
+
+## Additional exercises
+
+**Problem 5.3** A schematic model of a DC motor is depicted below. The torque generated by the motor is assumed proportional to the armature current, $T=K_ti$, and the back emf $e$ is assumed proportional to the angular velocity of the shaft, $e=K_e\dot\theta$. Newton's law and Kirchhoff's voltage law give
+
+$$J\ddot\theta+b\dot\theta = K_ti \qquad L\frac{di}{dt}+Ri = V-K_e\dot\theta$$
+
+Assuming the inductance is very small, $L\approx 0$, this reduces to $J\ddot\theta+\big(b+\frac{K_tK_e}{R}\big)\dot\theta = \frac{K_t}{R}V$. Parameters: $J=0.01$, $b=0.1$, $K_e=0.01$, $K_t=0.01$, $R=1$, $L=0$.
+
+(i) Find a state-space representation for $x(t) := [\theta(t)\ \ \dot\theta(t)]^\intercal$.
+(ii) Discretize this model for $\tau=0.1$, giving $x_{k+1}=A_dx_k+B_du_k$ with $x_k:=x(\tau k)$.
+(iii) Suppose we want to regulate the state to zero while minimizing $J=\sum_{k=0}^\infty x_k^\intercal Qx_k+u_k^\intercal Ru_k$, $Q=\begin{bmatrix}2&0\\0&5\end{bmatrix}$, $R=0.1$.
+&nbsp;&nbsp;&nbsp;(a) Compute the LQR gain $K^*$ ($u_k=K^*x_k$) and the cost matrix $P^*$ ($x_0^\intercal P^*x_0$).
+&nbsp;&nbsp;&nbsp;(b) Compute the control that regulates the state to zero in the minimum number of steps (deadbeat, cf. Problem 5.5), as a function of $x_0$; show the resulting cost is $x_0^\intercal P_fx_0$ for some $P_f$.
+&nbsp;&nbsp;&nbsp;(c) Compare the costs obtained in (a) and (b).
+
+::: {.callout-note collapse="true" title="Solution"}
+
+**(i)** $\dot x = \begin{bmatrix}0&1\\0&-\alpha\end{bmatrix}x+\begin{bmatrix}0\\\beta\end{bmatrix}V$, where $\alpha=\frac{b+K_tK_e/R}{J}=10.01$ and $\beta=\frac{K_t}{RJ}=1$.
+
+**(ii)** With $A=\begin{bmatrix}0&1\\0&-\alpha\end{bmatrix}$, $B=\begin{bmatrix}0\\\beta\end{bmatrix}$: $A_d=e^{A\tau}=\begin{bmatrix}1.0000&0.0632\\0&0.3675\end{bmatrix}$, $B_d=\int_0^\tau e^{As}ds\,B = \begin{bmatrix}0.0037\\0.0632\end{bmatrix}$.
+
+**(iii)(a)** $K = -\begin{bmatrix}3.9698&1.3993\end{bmatrix}$, $P=\begin{bmatrix}57.4811&4.6278\\4.6278&6.0073\end{bmatrix}$.
+
+**(iii)(b)** From the controllability-matrix formula of Problem 5.5, $\begin{bmatrix}K_0\\K_1\end{bmatrix}=\begin{bmatrix}A_dB_d & B_d\end{bmatrix}^{-1}(-A_d^2)$, which leads to $x_1=(A_d+B_dK_0)x_0$ and $x_2=0$. The cost is $x_0^\intercal Qx_0+x_0^\intercal K_0^\intercal RK_0x_0+x_0^\intercal(A_d+B_dK_0)^\intercal Q(A_d+B_dK_0)x_0+x_0^\intercal K_1^\intercal RK_1x_0 = x_0^\intercal P_fx_0$, where $P_f=Q+K_0^\intercal RK_0+(A_d+B_dK_0)^\intercal Q(A_d+B_dK_0)+K_1^\intercal RK_1$. Numerically, $K_0=\begin{bmatrix}-158.2638&-12.4309\end{bmatrix}$, $K_1=\begin{bmatrix}58.1638&2.4309\end{bmatrix}$, $P_f=\begin{bmatrix}3345.4&231.78\\231.78&21.92\end{bmatrix}$.
+
+**(iii)(c)** $x_0^\intercal P^*x_0 \leq x_0^\intercal P_fx_0$ for every $x_0$, since $P_f-P^*$ is positive definite -- driving the state to zero as fast as possible (deadbeat) is never cheaper than the LQR-optimal trade-off.
+
+:::
+
+**Problem 5.4** In this problem we wish to prove that the cost $\sum_{k=0}^\infty x_k^\intercal Qx_k$, $Q=Q^\intercal$, for an asymptotically stable discrete-time system $x_{k+1}=Ax_k$, is given by $x_0^\intercal Px_0$, where $P$ solves the Lyapunov equation $A^\intercal PA-P=-Q$.
+
+(a) Prove that $\sum_{k=0}^T a^k=\frac{1-a^{T+1}}{1-a}$ for $a\in(-1,1)$, by multiplying the left-hand side by $\frac{1-a}{1-a}$.
+(b) Use (a) to prove the desired result for $A\in\mathbb{R}$, $|A|<1$.
+(c) Generalize (a)-(b) to $A\in\mathbb{R}^{n\times n}$ with eigenvalues inside the unit circle.
+(d) Confirm that if $A$ and $Q$ are replaced by $(A+BK)$ and $Q+K^\intercal RK$, for $K=-(B^\intercal PB+R)^{-1}B^\intercal PA$, the Lyapunov equation coincides with the Riccati equation $P=A^\intercal PA+Q-A^\intercal PB(B^\intercal PB+R)^{-1}B^\intercal PA$. Explain why.
+
+::: {.callout-note collapse="true" title="Solution"}
+
+**(a)** $\sum_{k=0}^T a^k = \frac{1-a}{1-a}\sum_{k=0}^T a^k = \frac{1}{1-a}\sum_{k=0}^T(a^k-a^{k+1}) = \frac{1}{1-a}(1-a^{T+1})$ (telescoping sum).
+
+**(b)** $J=\sum_{k=0}^T x_k^\intercal Qx_k = x_0^\intercal\big[\sum_{k=0}^T (A^k)^\intercal QA^k\big]x_0$. For scalar $A$, this is $x_0^2Q\sum_{k=0}^T(A^2)^k$. As $T\to\infty$, using (a) with $a=A^2$, $\sum_{k=0}^\infty(A^2)^k=\frac{1}{1-A^2}$, so $J=x_0^2Q\frac{1}{1-A^2}$. The Lyapunov equation $A^\intercal PA-P=-Q$ gives $Q=P(1-A^2)$, hence $J=x_0^2P$.
+
+**(c)** $J=x_0^\intercal\big[\sum_{k=0}^T(A^k)^\intercal QA^k\big]x_0$; substituting $Q=P-A^\intercal PA$ (from the Lyapunov equation) telescopes the sum so that only the $k=0$ and $k=T+1$ terms survive: $J=x_0^\intercal\big[P-(A^{T+1})^\intercal PA^{T+1}\big]x_0$, and the last term vanishes as $T\to\infty$ since $A$ is asymptotically stable.
+
+**(d)** Direct substitution. If we apply the LQR policy $u_k=Kx_k$ to $\min\sum_{k=0}^\infty x_k^\intercal Qx_k+u_k^\intercal Ru_k$ for $x_{k+1}=Ax_k+Bu_k$, we get the cost $\sum_{k=0}^\infty x_k^\intercal\underbrace{(Q+K^\intercal RK)}_{\bar Q}x_k$ for the closed loop $x_{k+1}=\underbrace{(A+BK)}_{\bar A}x_k$ -- i.e. the Riccati equation is exactly the Lyapunov equation for the closed-loop cost, confirming (via (a)-(c)) that $x_0^\intercal Px_0$ is indeed the LQR optimal cost.
+
+:::
+
+**Problem 5.5** Consider the discrete-time linear time-invariant system $x_{k+1}=Ax_k+Bu_k$, $x_k\in\mathbb{R}^n$, $u_k\in\mathbb{R}$, $k\in\mathbb{N}_0$, with arbitrary initial condition $x_0$. Suppose we wish to drive the state to a desired final value $\bar x$. Show that the control values
+
+$$\begin{bmatrix}u_0\\u_1\\\vdots\\u_{n-1}\end{bmatrix} = \begin{bmatrix}A^{n-1}B & A^{n-2}B & \cdots & B\end{bmatrix}^{-1}(\bar x-A^nx_0)$$
+
+result in $x_n=\bar x$, provided the matrix on the right-hand side is invertible (in which case the system is said to be controllable).
+
+::: {.callout-note collapse="true" title="Solution"}
+
+From $x_{k+1}=Ax_k+Bu_k$ we conclude that $x_n = A^nx_0+\begin{bmatrix}A^{n-1}B & A^{n-2}B & \cdots & B\end{bmatrix}\begin{bmatrix}u_0\\u_1\\\vdots\\u_{n-1}\end{bmatrix}$. Setting $x_n=\bar x$ and solving for the control vector (assuming invertibility) gives exactly the stated formula.
+
+:::
+
+**Problem 5.6** The goal of this exercise is to provide examples of linear quadratic regulation problems $\sum_{k=0}^\infty x_k^\intercal Qx_k+u_k^\intercal Ru_k$, $x_{k+1}=Ax_k+Bu_k$, for which the optimal control policy cannot be obtained by solving the algebraic Riccati equation $P=A^\intercal PA+Q-(A^\intercal PB)(B^\intercal PB+R)^{-1}(B^\intercal PA)$.
+
+(i) Provide an example of a pair $(A,B)$ for which there does not exist a positive definite solution to the algebraic Riccati equation for any $Q$ and $R$.
+(ii) Provide an example of a pair $(A,Q)$ for which there does not exist a positive definite solution for any $B$ and $R$.
+
+::: {.callout-note collapse="true" title="Solution"}
+
+**(i)** Take $B=0$ and $A$ not Hurwitz (e.g. $A=2$, a scalar). The model reduces to $x_{k+1}=Ax_k$, whose trajectories blow up for any nonzero initial condition ($(A,B)$ is not controllable/stabilizable). The algebraic Riccati equation becomes $P=4P+Q$, whose unique solution $P=-Q/3$ is not positive definite for any positive semi-definite $Q$.
+
+**(ii)** Take $Q=0$, $A=0$: the algebraic Riccati equation becomes $P=0$, whose solution is not positive definite (the pair $(A,N)$ with $Q=NN^\intercal$ fails observability/detectability).
+
+:::
+
+**Problem 5.7** The goal of this exercise is to show that we do not need $R$ to be positive definite to obtain the optimal policy for the standard linear regulator problem with the algebraic Riccati equation. Consider the setting of Problem 5.2 with
+
+$$A=\begin{bmatrix}1/2&1\\1&3\end{bmatrix} \qquad B=\begin{bmatrix}0\\1\end{bmatrix} \qquad R=0 \qquad S=0 \qquad Q=I \qquad Q_h=I$$
+
+(i) Provide the gains $K_k$ of the optimal policy $u_k=K_kx_k$, $k\in\{0,1,2,3,4\}$, when $h=5$, by iterating the Riccati equations.
+(ii) Using the same recursion, obtain the optimal policy $u_k=Kx_k$ for $h=\infty$.
+(iii) Try to solve the algebraic Riccati equation directly with a solver that requires $R>0$ (e.g. `dlqr.m`) and see that it does not work.
+
+::: {.callout-note collapse="true" title="Solution"}
+
+**(i)** Iterating the Riccati recursion with these parameters gives
+
+$$K_0=\begin{bmatrix}-1.1328&-3.2656\end{bmatrix} \quad K_1=\begin{bmatrix}-1.1328&-3.2655\end{bmatrix} \quad K_2=\begin{bmatrix}-1.1324&-3.2647\end{bmatrix} \quad K_3=\begin{bmatrix}-1.1250&-3.2500\end{bmatrix} \quad K_4=\begin{bmatrix}-1&-3\end{bmatrix}$$
+
+The optimal policy is $u_k=K_kx_k$, $k\in\{0,1,2,3,4\}$.
+
+**(ii)** For a large horizon (e.g. $h=20$) the gains converge to $\bar K=K_0=\begin{bmatrix}-1.1328&-3.2656\end{bmatrix}$. The optimal policy is $u_k=\bar Kx_k$.
+
+**(iii)** A solver requiring $R$ positive definite (like `dlqr.m`) fails here, but (ii) shows this is not actually needed for the algebraic Riccati equation itself to admit a solution and define the optimal policy -- the requirement $R>0$ is a sufficient condition used by some solvers/proofs, not a necessary one.
+
+:::

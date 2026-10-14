@@ -1,0 +1,99 @@
+project:
+  type: default
+  # Renders every .qmd under lectures/, exercises/, notes/ and code/ when you
+  # run `quarto render` from this folder. Render one file at a time with
+  # `quarto render lectures/lecture01-....qmd` while iterating on a single one.
+  output-dir: _output
+
+  # Without this explicit list Quarto also treats every .ipynb in code/ as a
+  # source document and renders it to html AND pdf. That is not wanted (the
+  # notebooks are meant to be downloaded and run, not published as pages), and
+  # it breaks the whole build: `code/unit2/A_2_RobotPlanningStochastic.ipynb`
+  # has markdown written as `$ J_{k}(n) = ... $` with a space just inside the
+  # delimiters, which Pandoc does not treat as math, so it reaches LaTeX as
+  # literal `\$J\_\{k\}...` and the pdf pass dies with "Missing $ inserted".
+  # One failed notebook aborts the render of everything else, which is why the
+  # notes/exercises pages were never being regenerated.
+  render:
+    # The site landing page (links to every unit). html only.
+    - "index.qmd"
+    - "lectures/*.qmd"
+    - "exercises/*.qmd"
+    - "notes/*.qmd"
+    - "code/*/*.qmd"
+
+  # The notebooks and scripts are still copied into _output verbatim, so the
+  # download links on code/unitN/notebooks.qmd keep working.
+  resources:
+    - "code/**/*.ipynb"
+    - "code/**/*.py"
+    # Videos embedded via raw <video> HTML in the notes (Unit 1's
+    # movie_writingpolicy.mp4, Unit 4's LEC4sensor1/2.mp4). Listed
+    # explicitly so they are copied into _output regardless of whether
+    # Quarto's resource discovery picks them up from raw HTML blocks.
+    - "lectures/figures/**/*.mp4"
+    # Asks search engines not to index the site while it is a draft being
+    # reviewed. Delete this line (and the file) when the site should be
+    # publicly findable.
+    - "robots.txt"
+    # Tells GitHub Pages not to run the site through Jekyll, which would
+    # otherwise skip any file or directory whose name starts with "_" or ".".
+    - ".nojekyll"
+
+# Shared metadata across every lecture/exercise file (edit once, applies everywhere).
+# Note: lecture revealjs decks build their own title slide by hand (see the
+# top of each lectures/*.qmd) rather than using Quarto's auto-generated one,
+# so this "author" mainly affects exercise PDFs/html title blocks.
+author: "Duarte Antunes"
+institute: "Eindhoven University of Technology (TU/e)"
+
+# Figures are numbered and referenced as "Fig. N" (via @fig-... labels)
+# rather than the Quarto default "Figure N", consistently across html/pdf.
+crossref:
+  fig-title: "Fig."
+  fig-prefix: "Fig."
+
+# Notation used across all lectures and exercises is centralized in two
+# places that must stay in sync (add a macro to BOTH when we introduce one):
+#   - styles/macros.tex          (LaTeX \newcommand, used by the pdf format)
+#   - styles/macros-mathjax.html (MathJax macro config, used by html/revealjs)
+
+format:
+  revealjs:
+    theme: [default, styles/tue.scss]
+    slide-number: true
+    chalkboard: false
+    transition: fade
+    code-line-numbers: true
+    highlight-style: github
+    scrollable: true   # safety net: if a slide's content is still taller than the
+                        # viewport (e.g. a dense figure + several lines of text),
+                        # you can scroll it instead of content silently being cut off
+    auto-stretch: false  # Quarto's default behavior auto-applies the reveal.js
+                          # "r-stretch" class to any image alone on a slide, which
+                          # fills all remaining vertical space and IGNORES any
+                          # width you set -- this is why the TU/e logo stayed huge
+                          # no matter what % we tried. Disabling this globally does
+                          # NOT remove r-stretch from images where we added the
+                          # {.r-stretch} class ourselves on purpose (the lecture
+                          # figures) -- only stops Quarto from adding it uninvited.
+    include-in-header: styles/macros-mathjax.html
+    # Set a footer with course code + week; override per-lecture if needed.
+    footer: "4SC000 -- Optimal Control and Reinforcement Learning"
+  html:
+    theme: [default, styles/tue.scss]
+    toc: true
+    number-sections: true
+    include-in-header: styles/macros-mathjax.html
+  pdf:
+    documentclass: article
+    geometry: margin=1in
+    include-in-header: styles/macros.tex
+    # 'H' (not 't'): many captioned figures in these files sit inside callout
+    # blocks, which Quarto renders as tcolorbox/minipage. A real LaTeX float
+    # ( \begin{figure}[t] ) is illegal there and aborts the pdf pass with
+    # "LaTeX Error: Not in outer par mode". [H] pins the figure in place
+    # instead of floating it, which is legal inside those boxes -- and is
+    # anyway what we want in notes, where a figure should stay next to the
+    # text that discusses it.
+    fig-pos: 'H'

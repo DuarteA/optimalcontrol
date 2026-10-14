@@ -1,0 +1,225 @@
+---
+title: "Unit 6 Exercises"
+subtitle: "4SC000 Optimal Control and Reinforcement Learning"
+format:
+  html:
+    toc: true
+  pdf: default
+---
+
+<!--
+Source: Solved Exercises/2/PS2.tex (problems) and
+Solved Exercises/2/SolutionsPS2.tex (solutions), section 2 "Optimal
+estimation and output feedback" -- originally Problems 2.1-2.6 --
+renumbered 6.1-6.6, plus one problem moved in from section 1 "Linear
+quadratic control" (originally Problem 1.8, an averaged-cost stochastic
+LQ problem with disturbances -- its content matches Lecture 6's opening
+section, "Stochastic dynamic programming and linear quadratic control",
+much more closely than anything in Lecture 5, so it's placed here as 6.7
+rather than in the Unit 5 exercises; see that file's header note too).
+
+Core = 6.1 (repeats Unit 5's Problem 5.1 with disturbances and a noisy
+sensor -- the direct worked introduction to certainty equivalence, the
+Kalman filter, and the separation principle together -- originally 2.1),
+6.2 (stationary Kalman filter in closed form -- originally 2.5).
+Additional = 6.3 (mass-spring-damper Kalman filter -- originally 2.3),
+6.4 (multi-rate LQG design, long -- originally 2.4), 6.5 (estimating an
+unknown constant from noisy measurements -- the simplest possible Kalman
+filter derivation -- originally 2.2), 6.6 (Kalman filter /
+optimal-control duality proof, long -- originally 2.6), 6.7
+(averaged-cost stochastic LQ control -- originally 1.8).
+
+At Duarte's request the stationary-Kalman-filter problem was moved from
+Additional 6.5 into Core as 6.2, and the former Core 6.2 (estimating a
+constant) moved into Additional as 6.5. Numbers follow position, so the
+"originally" tags above are the ones to go by when comparing with PS2.tex.
+
+Notes on missing solutions (all three cases below are exactly as in the
+source -- not an omission on my part):
+- Problem 6.3: SolutionsPS2.tex says "A similar problem is solved in the
+  appendix of Slides II-2 and therefore the solution is omitted." The
+  worked analogue is the mass-spring-damper Kalman filter example in
+  Lecture 6, Appendix C (see lectures/lecture06-kalman-lqg.qmd) -- same
+  setup, same numbers style; presented here as a statement-only problem
+  pointing to that worked example.
+- Problem 6.2: SolutionsPS2.tex says "This exercise was taken from the
+  sample exam 1 of 2015/2016, the solution of this sample exam is
+  already provided" (i.e. provided elsewhere, in the exam archive, not
+  reproduced in this file). Kept as a statement-only problem.
+- Problem 6.7 (originally 1.8): SolutionsPS2.tex says "This exercise was
+  taken from the sample exam 2 of 2015/2016, question 3, and the
+  solution is already provided" -- same situation, statement-only here.
+
+Problems 6.4 and 6.6 have full solutions in the source but they run
+several pages of dense algebra; the write-up below keeps the full
+modeling setup, the key intermediate results, and the final
+answers/formulas, but summarizes rather than reproduces every algebraic
+step verbatim (same approach used for Problem 2.7 in the Unit 2
+exercises) -- the full derivation is in SolutionsPS2.tex if ever needed.
+-->
+
+A runnable Python companion to these exercises -- a general discrete-time
+Kalman filter (prediction + correction), reused from `code/unit4/`, plus
+the mass-spring-damper example of Problem 6.3 -- is available in
+`code/unit6/` (see its `README.md`).
+
+## Core exercises
+
+**Problem 6.1** The goal of this exercise is to repeat Problem 5.1 but considering state disturbances and noisy measurements. To this effect consider a first order discrete-time linear system
+
+$$x_{k+1} = \alpha x_k+u_k+w_k, \ \ k\in \mathbb{N}_0,$$
+
+where $\{w_k\}$ are Gaussian, independent and identically distributed, with variance $\mathbb{E}[w_k^2]=\sigma_w^2$, and consider the cost
+
+$$\mathbb{E}\Big[\sum_{k=0}^q x_k^2+\gamma u_k^2\Big].$$
+
+(a) Considering $\alpha=1$, $\gamma=1$, $q=2$, $\sigma_w=1$, determine the policy for $u_0,u_1,u_2$ that minimizes the cost when:
+&nbsp;&nbsp;&nbsp;(i) the value of $x_k$ is known at every stage $k$.
+&nbsp;&nbsp;&nbsp;(ii) $x_k$ is measured at every stage by a noisy sensor $y_k=x_k+n_k$, where $\{n_k\}$ are Gaussian iid with variance $\mathbb{E}[n_k^2]=\sigma_n^2$, $\sigma_n=\frac{1}{3}$, and $x_0\sim\mathcal{N}(0,10)$.
+(b) Considering $\alpha=1$, $\gamma=1$, and the averaged cost $\lim_{q\to\infty}\frac{1}{q+1}\mathbb{E}\big[\sum_{k=0}^q x_k^2+\gamma u_k^2\big]$, determine the policy for $\{u_k\}$ that minimizes the cost when:
+&nbsp;&nbsp;&nbsp;(i) $x_k$ is known at every stage.
+&nbsp;&nbsp;&nbsp;(ii) $x_k$ is measured as in (a)(ii), with the same distribution for $x_0$.
+
+::: {.callout-note collapse="true" title="Solution"}
+
+**(a)(i)** By certainty equivalence, the policy is the same as in Problem 5.1(a): $u_2=\mu_2(x_2)=0$, $u_1=\mu_1(x_1)=-\frac{1}{2}x_1$, $u_0=\mu_0(x_0)=-\frac{3}{5}x_0$.
+
+**(a)(ii)** Let $I_0=\{y_0\}$, $I_1=\{u_0,y_0,y_1\}$, $I_2=\{u_0,y_0,y_1,u_1,y_2\}$. By the separation principle, the optimal policy replaces the state with its Kalman-filter estimate:
+
+$$u_2=\mu_2(I_2)=0 \qquad u_1=\mu_1(I_1)=-\tfrac{1}{2}\hat x_{1|1} \qquad u_0=\mu_0(I_0)=-\tfrac{3}{5}\hat x_{0|0}$$
+
+Since $u_2=0$, we only need $L_0$ and $L_1$. With $\hat x_{0|-1}=\bar x_0=0$, $\Phi_{0|-1}=10$, $A=B=C=1$, $W=1$, $V=\frac{1}{9}$, iterating $\Phi_{k+1|k}=A\Phi_{k|k}A^\intercal+W$, $\Phi_{k|k}=\Phi_{k|k-1}-\Phi_{k|k-1}C^\intercal(C\Phi_{k|k-1}C^\intercal+V)^{-1}C\Phi_{k|k-1}$, $L_k=\Phi_{k|k-1}C^\intercal(C\Phi_{k|k-1}C^\intercal+V)^{-1}$:
+
+$$\Phi_{0|0}=10-\frac{10^2}{10+\frac19}=\frac{10}{91}, \ \ L_0=\frac{10}{10+\frac19}=\frac{90}{91} \qquad \Phi_{1|0}=\frac{10}{91}+1=\frac{101}{91}, \ \ L_1=\frac{101/91}{101/91+1/9}=0.909$$
+
+so $\hat x_{0|0}=\frac{90}{91}y_0$, $\hat x_{1|0}=\frac{90}{91}y_0+u_0$, $\hat x_{1|1}=\hat x_{1|0}+0.909(y_1-\hat x_{1|0})$.
+
+**(b)(i)** For the average-cost problem the policy coincides with the deterministic infinite-horizon policy from Problem 5.1(b): $u_k=-0.618x_k$.
+
+**(b)(ii)** By the separation principle, $u_k=-0.618\hat x_{k|k}$, where $\hat x_{k|k}$ is now the *stationary* Kalman filter estimate (appropriate for an average-cost criterion, where the initial transient is irrelevant): $\hat x_{k+1|k}=\hat x_{k|k}+u_k$, $\hat x_{k|k}=\hat x_{k|k-1}+L(y_k-\hat x_{k|k-1})$, $L=\frac{\Phi}{\Phi+1/9}$, where $\Phi$ is the positive solution of $\Phi^2=\Phi+\frac19$, i.e. $\Phi=1.1009$ (discarding the negative root $-0.1009$), giving the stationary gain $L=0.9083$.
+
+:::
+
+**Problem 6.2** Consider the system
+
+$$x_{k+1} = \frac56x_k+u_k+w_k$$
+
+with open-loop policy $u_k=1$ for every $k\in\mathbb{N}_0$, and $w_k$ zero-mean iid Gaussian with $\mathbb{E}[w_k^2]=1$. We wish to estimate $x_k$ based on the measurements
+
+$$y_\ell = 2x_\ell+\tfrac12v_\ell, \ \ \ell\in\{0,1,\dots,k\}$$
+
+where $v_\ell$ are zero-mean iid Gaussian with $\mathbb{E}[v_\ell^2]=2$, and $x_0\sim\mathcal{N}(\frac12,1)$.
+
+(i) Show that the Kalman filter estimate $\hat x_{2|2}=\mathbb{E}[x_2|y_0,y_1,y_2,u_0{=}1,u_1{=}1]$ can be written as $\hat x_{2|2}=a_0y_0+a_1y_1+a_2y_2+c$, and give $a_0,a_1,a_2,c$.
+(ii) Show that the stationary estimate $\hat x_{k|k}=\mathbb{E}[x_k|y_0,\dots,y_k,u_0{=}1,\dots,u_{k-1}{=}1]$ can be written as $\hat x_{k|k}=\sum_{\ell=0}^k h_{k-\ell}y_\ell+d_k$, and give an expression for $h_k$ and $d_k$.
+
+::: {.callout-note collapse="true" title="Solution"}
+
+Not reproduced here -- taken from the TU/e 2015/2016 sample exam 1, whose full worked solution is available in the exam archive rather than in SolutionsPS2.tex. The approach follows the standard Kalman filter recursion (prediction with $A=\frac56$, $B=1$, $W=1$; correction with $C=2$, $V=\frac12$) applied twice by hand for (i), then generalized to the stationary (converged) gain for (ii), expressing each $\hat x_{k|k}$ as a linear combination of past outputs -- structurally the same computation as Problem 6.5, with a nontrivial $A$ and $C$.
+
+:::
+
+
+## Additional exercises
+
+**Problem 6.3** Consider a mass-spring-damper system for which the mass displacement $z(t)$ is described by
+
+$$m\ddot z(t) = -c_f\dot z(t)-k_sz(t)+f_d(t), \ \ t\in\mathbb{R}_{\geq 0}$$
+
+where $m=1$, $k_s=5$, $c_f=1$, and $f_d(t)$ models force disturbances.
+
+(a) Find a state-space representation considering $x(t)=[z(t)\ \ \dot z(t)]^\intercal$.
+(b) Find a discrete-time system describing $x(k\tau)$ for $\tau=0.1$, approximating $f_d(t)\approx f_d(k\tau)$ where $f_d(k\tau)$ are zero-mean iid Gaussian with $\mathbb{E}[f_d(k\tau)^2]=0.1$.
+(c) Suppose the output $y(k\tau)=Cx(k\tau)+n_k$ is available, $n_k$ zero-mean iid Gaussian with $\mathbb{E}[n_k^2]=\sigma_n^2$.
+&nbsp;&nbsp;&nbsp;(i) Provide the Kalman filter estimate of $x(k\tau)$ for $k\in\{0,1,2\}$, assuming the initial state covariance is $2I$.
+&nbsp;&nbsp;&nbsp;(ii) Provide the stationary Kalman filter and the asymptotic error covariance matrix.
+
+::: {.callout-note collapse="true" title="Solution"}
+
+A structurally identical problem (same physical setup, mass-spring system with position measurements) is worked out in full in the course slides -- see Lecture 6, Appendix C ("Example: Kalman filter", lectures/lecture06-kalman-lqg.qmd), which discretizes an analogous mass-spring system, sets up $W$ and $V$, and iterates the Kalman filter equations by hand for $k=0,1,2$; follow the same steps here with $m=1$, $k_s=5$, $c_f=1$ in place of the lecture's parameters.
+
+:::
+
+**Problem 6.4** Consider the discrete-time linear system
+
+$$x_{k+1} = Ax_k+Bu_k+\omega_k, \ \ k\in\mathbb{N}_0 \qquad A=\begin{bmatrix}1&\frac15\\0&1\end{bmatrix} \quad B=\begin{bmatrix}0\\1\end{bmatrix} \quad x_0=\begin{bmatrix}1\\1\end{bmatrix}$$
+
+(a) Suppose $\omega_k=0$ for every $k$. Compute the optimal $u_0,u_1,u_2$ minimizing $J=\sum_{k=0}^{h-1}x_k^\intercal Qx_k+u_k^\intercal Ru_k$ for $h=3$, $Q=I$, $R=0.1$.
+(b) Suppose $\omega_k$ are zero-mean iid Gaussian with $\mathbb{E}[\omega_k\omega_k^\intercal]=\frac12I$ and the full state is available. Compute the optimal policy $u_k=\mu_k(x_k)$, $k\in\{0,1,2\}$, minimizing $\mathbb{E}[J]$.
+(c) Suppose $\omega_k$ are as in (b) but only $y_k=Cx_k+n_k$ is available, $C=[1\ \ 0]$, $n_k$ zero-mean iid Gaussian with $\mathbb{E}[n_k^2]=\frac14$.
+&nbsp;&nbsp;&nbsp;(i) Compute the optimal policy $u_k=\mu_k(I_k)$, $k\in\{0,1,2\}$, minimizing $\mathbb{E}[J]$.
+&nbsp;&nbsp;&nbsp;(ii) Compute the optimal policy minimizing the average cost $\lim_{h\to\infty}\frac1h\mathbb{E}[J]$.
+(d) Suppose now the actuators can only be updated at even times $k=2\ell$ (multi-rate control), $u_k=0$ at odd $k$.
+&nbsp;&nbsp;&nbsp;(i) Compute the optimal policy $u_k=\mu_k(I_k)$, $k\in\{0,2\}$, minimizing the cost of (c)(i).
+&nbsp;&nbsp;&nbsp;(ii) Compute the optimal policy for $k=2\ell$ minimizing the average cost of (c)(ii).
+
+::: {.callout-note collapse="true" title="Solution"}
+
+**(a)** This is a standard (deterministic) finite-horizon LQR problem; solving the Riccati recursion with $P_3=0$ gives $P_2=I$, $P_1=\begin{bmatrix}2&0.2\\0.2&1.1309\end{bmatrix}$, $K_2=0$, $K_1=[0\ \ {-\frac1{1.1}}]$, $K_0=[-0.1625\ \ {-0.9513}]$. Propagating $x_0=[1\ \ 1]^\intercal$ through the dynamics with $u_k=K_kx_k$ gives $u_0=-1.1137$, $x_1=[1.2\ \ {-0.1137}]^\intercal$, $u_1=0.1034$, $u_2=0$.
+
+**(b)** By certainty equivalence, the optimal policy is identical to (a): the disturbances change the *cost* but not the optimal gains $K_0,K_1,K_2$ (since $x_0$ is deterministic, $u_0$ is known a priori, but $u_1$ depends on the realization of $w_0$ through $x_1$).
+
+**(c)(i)** By the separation principle, $u_k=K_k\hat x_{k|k}$ with the same gains as (a)-(b), and $\hat x_{k|k}$ the Kalman filter estimate ($\hat x_{0|-1}=\bar x_0=[1\ \ 1]^\intercal$, $\Phi_{0|-1}=0$ since $x_0$ is known exactly, $W=\frac12I$, $V=\frac14$). Iterating gives $\Phi_{0|0}=0$, $L_0=0$ (so $\hat x_{0|0}=x_0$ regardless of $y_0$), $\Phi_{1|0}=\frac12I$, $L_1=\frac23[1\ \ 0]^\intercal$. Since $K_2=0$ and $K_1L_1=0$ (the second component of $K_1$ multiplies a zero entry of $L_1$), it turns out $u_0,u_1,u_2$ all end up *deterministic* -- numerically identical to the noise-free path in (a): $u_0=-1.1137$, $u_1=0.1034$, $u_2=0$. This is a special feature of this particular $A,B,C$, not a general fact about output feedback.
+
+**(c)(ii)** By the separation principle for the average-cost problem, $u_k=K\hat x_{k|k}$ with $K$ the infinite-horizon LQR gain and $\hat x_{k|k}$ from the *stationary* Kalman filter. Solving the two algebraic Riccati equations (control and estimation) numerically gives $P=\begin{bmatrix}6.6069&1.2044\\1.2044&1.3506\end{bmatrix}$, $\Phi=\begin{bmatrix}0.8781&0.7510\\0.7510&3.4230\end{bmatrix}$, $L=\begin{bmatrix}0.7784\\0.6658\end{bmatrix}$, $K=[-0.8303\ \ {-1.0971}]$.
+
+**(d)(i)-(ii)** Grouping two time-steps into one ($\bar x_\ell:=x_{2\ell}$, $\bar u_\ell:=u_{2\ell}$) turns the multi-rate problem into a standard single-rate problem with $\bar A=A^2$, $\bar B=AB$, $\bar Q=Q+A^\intercal QA$, $\bar R=R+B^\intercal QB$, $\bar S=A^\intercal QB$, and lumped disturbance $\bar w_\ell=Aw_{2\ell}+w_{2\ell+1}$ (still Gaussian iid, since sums of Gaussians are Gaussian). For (d)(i) (finite horizon, $h=3$) this gives the single-decision gain $\underline K_0=[-0.0935\ \ {-0.9720}]$ and, since $\hat x_{0|0}=x_0$ exactly, $u_0=-1.0654$ independent of $y_0$. For (d)(ii) (average cost) the same reasoning with the algebraic Riccati/Kalman equations for $(\bar A,\bar B,\bar Q,\bar R,\bar S)$ gives $\bar P=\begin{bmatrix}6.6274&1.2045\\1.2045&1.3536\end{bmatrix}$, the same $\Phi$, $L$ as (c)(ii), and gain $\bar K=[-0.7905\ \ {-1.1269}]$.
+
+:::
+
+**Problem 6.5** Consider the problem of estimating the value of a constant $x_0$ from noisy measurements
+
+$$y_k = x_0+n_k, \ \ k\in\mathbb{N}_0,$$
+
+where $n_k$ are zero-mean iid Gaussian with variance $\mathbb{E}[n_k^2]=\sigma_n^2$. The initial state $x_0$ is also Gaussian with mean $\bar x_0$ and variance $\phi_0=\mathbb{E}[(x_0-\bar x_0)^2]$.
+
+(i) Compute the Kalman filter estimate $\hat x_k$ of $x_0$ (the one minimizing the error variance $\mathbb{E}[(x_k-\hat x_k)^2]$) at times $k\in\{0,1,2\}$, based on $I_0=\{y_0\}$, $I_1=\{y_0,y_1\}$, $I_2=\{y_0,y_1,y_2\}$, and the associated error variances. [Suggestion: note $y_k=x_k+n_k$ for $x_{k+1}=x_k$.]
+(ii) Compute the asymptotic error variance $\lim_{k\to\infty}\mathbb{E}[(x_k-\hat x_k)^2|I_k]$ and explain the value obtained.
+
+::: {.callout-note collapse="true" title="Solution"}
+
+**(i)** Since $x_{k+1}=x_k$, $y_k=x_k+n_k$, the disturbance covariance is $W=0$. The standard Kalman filter equations reduce to $\hat x_{k+1|k}=\hat x_{k|k}$, $\hat x_{k|k}=\hat x_{k|k-1}+L_k(y_k-\hat x_{k|k-1})$, where $L_k=\frac{\phi_{k|k-1}}{\phi_{k|k-1}+\sigma_n^2}$ and $\phi_{k+1|k}=\phi_{k|k}=\frac{\sigma_n^2\phi_{k|k-1}}{\phi_{k|k-1}+\sigma_n^2}$. Writing $\hat x_k:=\hat x_{k|k}$, $\phi_k:=\phi_{k|k-1}$ (note $\phi_k=\phi_{k|k-1}=\phi_{k|k}=\mathbb{E}[(x_k-\hat x_k)^2|I_k]$):
+
+$$\hat x_0 = \bar x_0+\frac{\phi_0}{\phi_0+\sigma_n^2}(y_0-\bar x_0) = \bar x_0\frac{\sigma_n^2}{\phi_0+\sigma_n^2}+y_0\frac{1}{\phi_0+\sigma_n^2}$$
+
+a weighted average of the prior mean and the first measurement (weights set by the ratio of $\phi_0$ to $\sigma_n^2$). Then $\hat x_1=\hat x_0+\frac{\phi_1}{\phi_1+\sigma_n^2}(y_1-\hat x_0)$ and $\hat x_2=\hat x_1+\frac{\phi_2}{\phi_2+\sigma_n^2}(y_2-\hat x_1)$, where $\phi_1=\frac{\sigma_n^2\phi_0}{\phi_0+\sigma_n^2}$, $\phi_2=\frac{\sigma_n^2\phi_1}{\phi_1+\sigma_n^2}$; $\hat x_1$ is a linear combination of $y_0,y_1$ (and $\hat x_2$ of $y_0,y_1,y_2$).
+
+**(ii)** $\lim_{k\to\infty}\mathbb{E}[(x_k-\hat x_k)^2|I_k]=\lim_{k\to\infty}\phi_k$. Since $\phi_k>0$ and $\phi_{k+1}<\phi_k$ for every $k$, the limit is zero: as $k$ grows we accumulate more and more independent measurements of the *same* constant, so our estimate's uncertainty is averaged away to nothing.
+
+:::
+
+**Problem 6.6** Suppose we wish to estimate the state, at a given time $k=h$, of a linear system $x_{k+1}=Ax_k+w_k$, $k\in\{0,\dots,h-1\}$, with $A$ invertible so that $x_k=A^{-1}x_{k+1}-A^{-1}\bar w_{k+1}$, $\bar w_{k+1}:=w_k$. Output measurements $y_k=Cx_k+v_k$ are available for $k\in\{0,\dots,h\}$, and an initial estimate $\bar x_0$ of $x_0$ is available (but not the true $x_0$).
+
+One way to estimate $x_h$ (denoted $\bar x_h$) is to (i) solve the optimal control problem
+
+$$J_h(x_h) = \min_{\bar w_1,\dots,\bar w_h} (x_0-\bar x_0)^\intercal\bar\Theta_0^{-1}(x_0-\bar x_0)+(y_0-Cx_0)^\intercal V^{-1}(y_0-Cx_0) + \sum_{k=1}^h \bar w_k^\intercal W^{-1}\bar w_k+(y_k-Cx_k)^\intercal V^{-1}(y_k-Cx_k)$$
+
+subject to $x_k=A^{-1}x_{k+1}-A^{-1}\bar w_{k+1}$, for given positive definite $W,V,\bar\Theta_0$; then (ii) set $\bar x_h=\text{argmin } J_h(x_h)$. (Interpretation: estimate $x_0,\dots,x_h$ by the values best "explained" by small disturbances, output noise, and deviation from the initial guess, then keep the last estimate.)
+
+Show that $\bar x_h$ coincides with the Kalman filter estimate $\hat x_{h|h}$ obtained from the usual recursion (with $\Theta_{0|-1}=\bar\Theta_0$). [Suggestion: run the DP algorithm *forward* in time (a "cost-to-come" instead of a cost-to-go), and use the matrix inversion lemma $(A+UCV)^{-1}=A^{-1}-A^{-1}U(C^{-1}+VA^{-1}U)^{-1}VA^{-1}$ repeatedly.]
+
+::: {.callout-note collapse="true" title="Solution"}
+
+This is a duality result: the batch/DP estimation problem above is the "dual" of the standard LQR problem, running forward in time instead of backward. The proof shows, by induction on $k$, that if $J_k(x_k)=(x_k-\hat x_{k|k})^\intercal\Theta_{k|k}^{-1}(x_k-\hat x_{k|k})+c_k$ for a constant $c_k$ (true at $k=0$ by construction, using the matrix inversion lemma to show $\Theta_{0|0}^{-1}=\bar\Theta_0^{-1}+C^\intercal V^{-1}C$), then minimizing over $\bar w_{k+1}$ in the recursive definition of $J_{k+1}$ -- itself a small quadratic minimization solved by completing the square -- produces exactly the same form at $k+1$, with $\Theta_{k+1|k+1}$ and $\hat x_{k+1|k+1}$ obeying the *standard* Kalman filter update (prediction $\Theta_{k+1|k}=A\Theta_{k|k}A^\intercal+W$ followed by correction with gain $L_{k+1}=\Theta_{k+1|k}C^\intercal(C\Theta_{k+1|k}C^\intercal+V)^{-1}$). Carrying the induction to $k=h$ gives $J_h(x_h)=(x_h-\hat x_{h|h})^\intercal\Theta_{h|h}^{-1}(x_h-\hat x_{h|h})+c_h$, whose minimizer is trivially $\bar x_h=\text{argmin }J_h(x_h)=\hat x_{h|h}$, as desired. The full algebraic bookkeeping (several applications of the matrix inversion lemma to massage $A^{-\intercal}\Theta_{k|k}^{-1}A^{-1}$ terms into the standard $\Theta_{k+1|k}^{-1}$ form) is in SolutionsPS2.tex if you want to work through every line.
+
+:::
+
+**Problem 6.7** Consider the optimal control problem
+
+$$\min \frac{1}{T+1}\mathbb{E}\Big[\sum_{k=0}^T x_k^\intercal\begin{bmatrix}1&0\\0&3\end{bmatrix}x_k + u_k^\intercal\begin{bmatrix}2&0\\0&2\end{bmatrix}u_k\Big]$$
+
+for
+
+$$x_{k+1} = \begin{bmatrix}\frac32&0\\0&1\end{bmatrix}x_k+\begin{bmatrix}1&0\\0&1\end{bmatrix}u_k+w_k, \ \ k\in\mathbb{N}_{\geq 0}$$
+
+where $x_k,u_k\in\mathbb{R}^2$ and $w_k\in\mathbb{R}^2$ are iid random vectors.
+
+(i) Find an optimal policy for $u_0$ and $u_1$ when $T=2$.
+(ii) Compute the expected optimal cost if $x_0=[1\ \ 2]^\intercal$ and $\mathbb{E}[w_kw_k^\intercal]=3I$ for every $k$.
+(iii) Find the optimal control policy for $u_k$, $k\in\mathbb{N}_{\geq 0}$, when $T\to\infty$.
+
+::: {.callout-note collapse="true" title="Solution"}
+
+Not reproduced here -- taken from the TU/e 2015/2016 sample exam 2, question 3, whose full worked solution is available in the exam archive rather than in SolutionsPS2.tex. This is a direct application of the finite-horizon stochastic LQ result of Lecture 6 (slide "Optimal policy" -- gains $K_k$ from the same Riccati recursion as the deterministic case, with the expected cost picking up the extra $\text{trace}(P_{k+1}\mathbb{E}[w_kw_k^\intercal])$ terms) for (i)-(ii), and of the averaged-cost infinite-horizon extension (Lecture 6, "Discussion" -- cost converging to $\text{trace}(\bar PW)$) for (iii); note $A=\text{diag}(3/2,1)$ is not itself stable, so (iii) is a genuine test of whether $(A,B)$ is controllable enough for the algebraic Riccati equation to still apply.
+
+:::

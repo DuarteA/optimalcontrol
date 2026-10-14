@@ -1,0 +1,89 @@
+---
+title: "Unit 8 -- Jupyter notebooks"
+subtitle: "4SC000 Optimal Control and Reinforcement Learning"
+format:
+  html:
+    toc: false
+---
+
+<!--
+Landing page for the Unit 8 notebooks, linked from the header of
+notes/unit8-notes.qmd -- same pattern as code/unit1..7/notebooks.qmd.
+Each entry is a one-paragraph description plus a direct download link to
+the .ipynb sitting next to this file. The notebooks are NOT rendered by
+Quarto (see the render/resources lists in _quarto.yml); they are copied
+into _output verbatim, so these relative links resolve in the rendered
+site.
+
+The instructor asked for these four by their JupyterNotebooks/ names
+(B_5_A_MPC_quad_tracking, B_5_K_MPCRollout, B_5_LQinputconstraints,
+B_5_SLS); in course-quarto they carry the A_8_ prefix used for every
+other unit. Ordered to follow the unit rather than the request: the
+constrained LQ problem of section 3 first, then its quadcopter
+application, then the switched-system material of section 4 and its
+stochastic variant. That is also roughly increasing difficulty.
+-->
+
+The notebooks below accompany Unit 8. They are ordinary Jupyter notebooks
+and need only `numpy` (plus `matplotlib` for the plots and `scipy` for a
+few of the linear-algebra calls); open them in JupyterLab, VS Code, or any
+notebook environment. Dependency-free Python implementations of the two
+central algorithms -- the MPC quadratic program solved by projected
+gradient descent, and dynamic programming, base-policy evaluation and
+rollout for switched systems -- are in [`mpc.py`](mpc.py) and
+[`rollout.py`](rollout.py); see [`README.md`](README.md).
+
+## Linear quadratic control with input constraints
+
+The worked example behind §3: a double integrator with the hard constraint
+$|u|\leq c$. The notebook sets the problem up as a quadratic program in the
+stacked input $\bar u=[u_0\ \cdots\ u_{h-1}]^\intercal$ by eliminating the
+state exactly as in Unit 7, then solves it subject to the box constraint.
+The thing to try is the comparison that motivates the whole unit: with the
+constraint inactive the solution coincides with the Riccati gain of Unit 5
+to machine precision, and as $c$ is tightened the input saturates and the
+optimal sequence stops being a linear function of the state -- which is why
+a policy can no longer be written down in closed form and has to be
+recomputed online.
+
+[Download `A_8_LQinputconstraints.ipynb`](A_8_LQinputconstraints.ipynb){download="A_8_LQinputconstraints.ipynb"}
+
+## MPC trajectory tracking for a quadcopter
+
+The application of §3.9. The longitudinal channel of a quadcopter,
+$m\ddot p=mg\theta$ and $I_\theta\ddot\theta=\tau$, becomes a fourth-order
+integrator after scaling the pitch angle and the torque, and MPC is used to
+track a prescribed trajectory in $p$. This is the first notebook in the
+course where the horizon is genuinely a design knob you can feel: too short
+and the controller cuts corners because it cannot see the turn coming, too
+long and it spends effort on a future it will never execute, since only the
+first input of each solve is ever applied.
+
+[Download `A_8_A_MPC_quad_tracking.ipynb`](A_8_A_MPC_quad_tracking.ipynb){download="A_8_A_MPC_quad_tracking.ipynb"}
+
+## Control of switched linear systems
+
+The central script for §4, and the one that matches the lecture most
+closely. For $x_{k+1}=A_{\sigma_k}x_k$ with the switching signal
+$\sigma_k\in\{1,\dots,m\}$ as the only decision, exact dynamic programming
+represents the cost-to-go as a finite set of quadratic forms whose number
+can grow like $m^k$ -- so the notebook builds the exact solution for short
+horizons and then the approximate policies (online replanning, MPC,
+rollout) that keep the computation bounded, finishing with the
+resource-aware control application: deciding at each step which of several
+sensors or links to use.
+
+[Download `A_8_SLS.ipynb`](A_8_SLS.ipynb){download="A_8_SLS.ipynb"}
+
+## MPC and rollout for a switched system with disturbances
+
+The stochastic version of the same problem,
+$x_{k+1}=A_{\sigma_k}x_k+w_k$ with zero-mean disturbances of covariance
+$W$, under the average cost $\lim_h \frac1h\mathbb{E}[\sum_\ell
+x_\ell^\intercal Qx_\ell]$. It implements the $H$-step lookahead policy and
+compares it with rollout over a base policy. Run it after the previous one:
+the disturbances mean the exact cost-to-go is no longer a finite set of
+quadratic forms at all, so approximation stops being a matter of
+convenience and becomes the only option.
+
+[Download `A_8_K_MPCRollout.ipynb`](A_8_K_MPCRollout.ipynb){download="A_8_K_MPCRollout.ipynb"}

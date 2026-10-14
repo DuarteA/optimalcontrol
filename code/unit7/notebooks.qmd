@@ -1,0 +1,86 @@
+---
+title: "Unit 7 -- Jupyter notebooks"
+subtitle: "4SC000 Optimal Control and Reinforcement Learning"
+format:
+  html:
+    toc: false
+---
+
+<!--
+Landing page for the Unit 7 notebooks, linked from the header of
+notes/unit7-notes.qmd -- same pattern as code/unit1..6/notebooks.qmd.
+Each entry is a one-paragraph description plus a direct download link to
+the .ipynb sitting next to this file. The notebooks are NOT rendered by
+Quarto (see the render/resources lists in _quarto.yml); they are copied
+into _output verbatim, so these relative links resolve in the rendered
+site.
+
+The instructor asked for these three by their JupyterNotebooks/ names
+(B_3_discexample, B_3_statedisc, B_3_K_Brachistochrone); in course-quarto
+they carry the A_7_ prefix used for every other unit. Ordered to follow
+the unit: the scalar example of section 2.1, then the state/input
+discretization of section 2.5, then the brachistochrone as the optional
+extra. code/unit7/ also holds A_7_gradsearch.ipynb and
+A_7_K_MinEnergy.ipynb, which belong to the static-optimization half
+(filed as B_4_* in the source folder); they are deliberately not listed
+here, since the instructor asked only for the three above -- add them if
+that half should be covered too.
+
+Interactive browser versions of the first two examples are built into the
+notes themselves (collapsible panels at the end of sections 2.1, 2.3 and
+2.4); these notebooks are the full Python originals.
+-->
+
+The notebooks below accompany Unit 7. They are ordinary Jupyter notebooks
+and need only `numpy` (plus `matplotlib` for the plots, and `scipy` for
+the quadrature in the brachistochrone); open them in JupyterLab, VS Code,
+or any notebook environment. Dependency-free Python implementations of the
+two core algorithms -- zero-order-hold discretization with a grid DP
+solver, and the gradient method -- are in
+[`discretization.py`](discretization.py) and
+[`gradient_method.py`](gradient_method.py); see [`README.md`](README.md).
+
+## The scalar discretization example
+
+The example that opens the unit: the two-stage problem
+$\sum_{k=0}^1 x_k^2+u_k^2+g_2(x_2)$ with $x_{k+1}=x_k+u_k$, discretized on
+a grid of spacing $\delta$ and solved by exact backward DP. The flag
+`optterminalcost` switches between the terminal cost $g_2(x_2)=x_2^2$,
+where the answer is known in closed form from Unit 5 and the grid solution
+can be checked against it, and $g_2(x_2)=e^{x_2}$, where it cannot. Running
+both in that order is the point of the script: the first establishes that
+the method works, the second uses it on a problem with no analytical
+solution. For $x_0=1$ the exponential case gives a cost of about $2.64$
+with $u_0=-0.7$, $u_1=-0.45$ -- the triple recomputed by a completely
+different route in the second half of the unit.
+
+[Download `A_7_discexample.ipynb`](A_7_discexample.ipynb){download="A_7_discexample.ipynb"}
+
+## State and input discretization of a double integrator
+
+The same idea in two dimensions: move a double integrator from rest at the
+origin to rest at unit position in one second, with minimum $\int u^2dt$,
+by discretizing time, then the state space, then the input space, and
+running DP on the resulting lattice. The continuous-time answer is known
+from Pontryagin's maximum principle ($z=3t^2-2t^3$, $v=6t-6t^2$,
+$u=6-12t$), so again every approximation can be measured against the truth.
+This is the script behind the lattice pictures of the unit, and the one to
+run if you want to feel the curse of dimensionality: refine the grid and
+watch the table of states times inputs grow.
+
+[Download `A_7_statedisc.ipynb`](A_7_statedisc.ipynb){download="A_7_statedisc.ipynb"}
+
+## The brachistochrone problem
+
+Bernoulli's 1696 problem, included as an optional extra: find the curve
+between two points along which a particle sliding without friction
+descends in the shortest time. The exact answer is a cycloid, obtained
+from the maximum principle; the notebook approximates it by restricting
+attention to continuously differentiable cubic splines through a grid of
+intermediate heights and running DP over that grid, with the travel time
+along each spline segment computed by quadrature. It is a good test of
+whether the discretization recipe has been understood, because almost
+nothing about it is linear or quadratic, and the approximate curve can be
+laid directly on top of the analytical cycloid.
+
+[Download `A_7_K_Brachistochrone.ipynb`](A_7_K_Brachistochrone.ipynb){download="A_7_K_Brachistochrone.ipynb"}

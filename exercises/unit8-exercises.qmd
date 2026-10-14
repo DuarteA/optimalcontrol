@@ -1,0 +1,178 @@
+---
+title: "Unit 8 Exercises"
+subtitle: "4SC000 Optimal Control and Reinforcement Learning"
+format:
+  html:
+    toc: true
+  pdf: default
+---
+
+<!--
+Source: Solved Exercises/2/PS2.tex (problems) and
+Solved Exercises/2/SolutionsPS2.tex (solutions), section 5 "Approximate
+dynamic programming" -- originally Problems 5.1-5.4.
+
+Renumbered 8.1-8.4 in Core/Additional order: Core = 8.1 (a two-mode
+switched linear system: optimal switching policy by exact DP for h=2,
+then a rollout policy with horizon H=1 -- originally 5.1, the direct
+worked example behind the "Switched linear systems"/"Rollout" slides),
+8.2 (a continuous-time switched system, digitized with sampling period
+tau=0.1: a stabilizing CEC-type switching law, an MPC policy with
+horizon H=2, and a rollout policy built on a Lyapunov-based base-policy
+cost -- originally 5.3, ties together CEC, MPC, and rollout for
+switched systems, mirroring the lecture's own progression through those
+three ideas), 8.3 (switching between two fixed state-feedback
+controllers to minimize a quadratic cost, and a proof that the H=1
+rollout policy inherits asymptotic stability from the base policy's
+cost-improvement property -- originally 5.4). Additional = 8.4 (a
+continuous-time heading-control problem discretized and controlled by
+MPC with horizon H=2 -- originally 5.2, a nice extra MPC example but not
+about switched systems, the throughline of the other three problems).
+
+Solutions to 5.1, 5.2, and 5.3 are given in the source and transcribed
+below (with (5.3)(i)(a) reworked from scratch via a Lyapunov-function
+argument, since the sign convention implied by the source's one-line
+answer could not be reconciled with a direct calculation -- see the note
+in 8.2). The source solution to 5.4 is "Solution not provided"; the
+derivation given below for 8.3 is my own, built on the cost-improvement
+property stated in the problem, and is flagged as such rather than
+presented as the original solutions manual.
+
+Numeric matrices below (matrix exponentials, Lyapunov solutions) were
+computed directly rather than copied from the source, which only states
+them symbolically or via a figure that could not be recovered.
+-->
+
+A runnable Python companion to these exercises -- LQR with input
+constraints, MPC for reference tracking, structured (SLS) synthesis, and
+MPC-based rollout -- is available in `code/unit8/` (see its `README.md`).
+
+## Core exercises
+
+**Problem 8.1** Consider the switched linear system $x_{k+1}=A_{\sigma_k}x_k$, $k\in\mathbb{N}_0$, where $\sigma_k\in\{0,1\}$ is the control input, and
+
+$$A_0=\begin{bmatrix}0.8&0.1\\0.2&0.8\end{bmatrix},\qquad A_1=\begin{bmatrix}1&0.1\\0&0.5\end{bmatrix}.$$
+
+Suppose that we wish to minimize $\|x_h\|^2$ for some $h\in\mathbb{N}$.
+
+(i) Provide the optimal policy for $\sigma_0$ and $\sigma_1$ when $h=2$.
+(ii) Consider the base policy $\sigma_k=1$, $\forall k\in\{0,\dots,h-1\}$. Considering this base policy, derive the rollout policy with horizon $H=1$ for $\sigma_0$, $\sigma_1$, $\sigma_2$ when $h=3$.
+
+::: {.callout-note collapse="true" title="Solution"}
+
+**(i)** This is a standard stage decision problem with $g_0=g_1=0$ and terminal cost $g_2(x_2)=x_2^\intercal x_2$. Applying DP backward:
+
+$$J_2(x_2)=x_2^\intercal x_2,\qquad J_1(x_1)=\min_{\sigma_1\in\{0,1\}}x_1^\intercal A_{\sigma_1}^\intercal A_{\sigma_1}x_1 = \min\Big\{x_1^\intercal\begin{bmatrix}0.68&0.24\\0.24&0.65\end{bmatrix}x_1,\ x_1^\intercal\begin{bmatrix}1&0.1\\0.1&0.26\end{bmatrix}x_1\Big\}.$$
+
+The optimal policy at stage $k=1$ is
+
+$$\sigma_1=\begin{cases}0 & \text{if } x_1^\intercal\begin{bmatrix}0.68&0.24\\0.24&0.65\end{bmatrix}x_1 < x_1^\intercal\begin{bmatrix}1&0.1\\0.1&0.26\end{bmatrix}x_1\\1 & \text{otherwise,}\end{cases}$$
+
+equivalently $\sigma_1=0$ if $x_1^\intercal\begin{bmatrix}-0.32&0.14\\0.14&0.39\end{bmatrix}x_1<0$, a conic partition of the state space (the policy is not unique on the boundary). Writing $x_1=(y,z)$, the region where $\sigma_1=0$ is $\{(y,z):-0.32y^2+0.28zy+0.39z^2<0\}$; setting $y=\alpha z$ gives $-0.32\alpha^2+0.28\alpha+0.39=0$, i.e. $\alpha=1.625$ or $\alpha=-0.75$, so the boundary consists of the two lines $y=1.625z$ and $y=-0.75z$.
+
+At stage $k=0$,
+
+$$J_1(x_1)=\min\{\|A_0x_1\|^2,\|A_1x_1\|^2\},\qquad J_0(x_0)=\min_{\sigma_0\in\{0,1\}}\{\|A_0A_{\sigma_0}x_0\|^2,\|A_1A_{\sigma_0}x_0\|^2\}=\min\{x_0^\intercal Z_ix_0\}_{i=1}^4,$$
+
+where $Z_1=(A_0A_0)^\intercal A_0A_0$, $Z_2=(A_0A_1)^\intercal A_0A_1$, $Z_3=(A_1A_0)^\intercal A_1A_0$, $Z_4=(A_1A_1)^\intercal A_1A_1$, and
+
+$$\sigma_0=\begin{cases}0 & \text{if } x_0^\intercal Z_1x_0<x_0^\intercal Z_ix_0 \text{ for } i\in\{2,3,4\}, \text{ or } x_0^\intercal Z_3x_0<x_0^\intercal Z_ix_0\text{ for } i\in\{1,2,4\}\\1 & \text{otherwise.}\end{cases}$$
+
+**(ii)** For the $H=1$ rollout with base policy $\sigma_k=1$ for all $k$, the approximate cost-to-go replaces the exact tail cost by the base policy's cost from $H$ steps ahead: for $h=3$ the tail after one rolled-out decision is $x_3=A_1A_1A_{\sigma_0}x_0$, so at stage $0$ the rollout policy minimizes $\|A_1A_1A_{\sigma_0}x_0\|^2$ over $\sigma_0$:
+
+$$\sigma_0=\begin{cases}0 & \text{if } \|A_1A_1A_0x_0\|^2<\|A_1A_1A_1x_0\|^2\\1 & \text{otherwise.}\end{cases}$$
+
+By the same reasoning, applied one and two steps later,
+
+$$\sigma_1=\begin{cases}0 & \text{if } \|A_1A_0x_1\|^2<\|A_1A_1x_1\|^2\\1 & \text{otherwise,}\end{cases}\qquad \sigma_2=\begin{cases}0 & \text{if } \|A_0x_2\|^2<\|A_1x_2\|^2\\1 & \text{otherwise.}\end{cases}$$
+
+:::
+
+**Problem 8.2** Consider the continuous-time switched linear system $\dot x(t)=B_{\sigma(t)}x(t)$, $x(t)=\begin{bmatrix}y(t)&z(t)\end{bmatrix}^\intercal$, with
+
+$$B_1=\begin{bmatrix}-(1-\beta)&1\\-9&-(1-\beta)\end{bmatrix},\qquad B_2=\begin{bmatrix}-(1-\beta)&9\\-1&-(1-\beta)\end{bmatrix}.$$
+
+The system is controlled digitally with sampling period $\tau=0.1$: $x_{k+1}=A_{\sigma_k}x_k$, $A_1=e^{B_1\tau}$, $A_2=e^{B_2\tau}$.
+
+(i) Suppose $\beta=1$. (a) Provide a policy for $\sigma(t)$ stabilizing the continuous-time system. (b) Provide a policy for $\sigma_k$ stabilizing the discrete-time system.
+(ii) Consider the cost $\sum_{k=0}^\infty x_k^\intercal x_k$. (a) Derive the policy obtained by MPC with horizon $H=2$ (minimizing $x_k^\intercal x_k+x_{k+1}^\intercal x_{k+1}$ at each $k$), and describe the switching regions for $\beta=1$ and $\beta=0.9$. Does this policy stabilize the discrete-time system? (b) For $\beta=0.9$, derive the rollout policy with horizon $H=1$ using base policy $\sigma_k=1$ for every $k\ge0$. Is this base policy usable when $\beta=1$?
+
+::: {.callout-note collapse="true" title="Solution"}
+
+**(i)(a)** With $\beta=1$, $B_1=\begin{bmatrix}0&1\\-9&0\end{bmatrix}$ and $B_2=\begin{bmatrix}0&9\\-1&0\end{bmatrix}$: mode 1 gives $\dot y=z$, $\dot z=-9y$, and mode 2 gives $\dot y=9z$, $\dot z=-y$ -- both undamped oscillators (eigenvalues $\pm3i$), individually marginal rather than stabilizing. Using $V(x)=y^2+z^2$ as a candidate Lyapunov function, $\dot V=2y\dot y+2z\dot z$ evaluates to $\dot V=-16yz$ under mode 1 and $\dot V=16yz$ under mode 2. Switching to whichever mode makes $\dot V$ negative therefore stabilizes the system:
+
+$$\sigma(t)=\begin{cases}1 & \text{if } y(t)z(t)\ge0\\2 & \text{if } y(t)z(t)<0.\end{cases}$$
+
+(The source figure for this problem could not be reproduced here; this policy is verified directly by the sign of $\dot V$ above rather than read off a plot.)
+
+**(i)(b)** Since $\tau=0.1$ is small compared with the oscillation period of either mode ($2\pi/3\approx2.1$), the same state-based rule stabilizes the sampled-data system: $\sigma_k=1$ if $y_kz_k\ge0$, $\sigma_k=2$ if $y_kz_k<0$.
+
+**(ii)(a)** At time $k$, $x_k$ is fixed, so minimizing $x_k^\intercal x_k+x_{k+1}^\intercal x_{k+1}=x_k^\intercal x_k+x_k^\intercal A_{\sigma_k}^\intercal A_{\sigma_k}x_k$ over $\sigma_k$ is equivalent to minimizing $x_k^\intercal A_{\sigma_k}^\intercal A_{\sigma_k}x_k$ alone:
+
+$$\sigma_k=\begin{cases}1 & \text{if } x_k^\intercal(A_1^\intercal A_1-A_2^\intercal A_2)x_k<0\\2 & \text{otherwise.}\end{cases}$$
+
+Computing $A_1,A_2$ numerically: for $\beta=1$, $A_1^\intercal A_1-A_2^\intercal A_2=\begin{bmatrix}0.776&-1.506\\-1.506&-0.776\end{bmatrix}$, an indefinite matrix whose eigenvalues are $\pm1.69$; the switching region boundary is the pair of lines $y=4.12z$ and $y=-0.243z$ through the origin. For $\beta=0.9$ the same computation gives $A_1^\intercal A_1-A_2^\intercal A_2=\begin{bmatrix}0.761&-1.476\\-1.476&-0.761\end{bmatrix}$, with essentially the same boundary lines. What differs between the two cases is the open-loop behaviour of each mode alone: at $\beta=1$, $|{\rm eig}(A_1)|=|{\rm eig}(A_2)|=1$ (marginally stable/undamped, matching (i)); at $\beta=0.9$, $|{\rm eig}(A_1)|=|{\rm eig}(A_2)|=0.99<1$ (each mode is already, if barely, asymptotically stable on its own).
+
+Consequently, at $\beta=1$ the one-step-lookahead MPC policy is exactly the greedy, myopic version of the stabilizing switching rule from (i)(b) -- since $H=2$ only looks one step ahead, it need not accumulate the sustained sign pattern in $y_kz_k$ that true stabilization requires, so MPC does not guarantee stability of the switched system in general (this is the standard caveat that MPC's finite lookahead is not automatically stabilizing). At $\beta=0.9$, stability holds regardless of which mode MPC selects at each step, since both individual modes already contract; the switching decision only affects the transient, not asymptotic stability.
+
+**(ii)(b)** For $\beta=0.9$, $A_1$ is stable ($|{\rm eig}(A_1)|=0.99<1$), so the infinite-horizon cost of the base policy $\sigma_k=1$ for all $k$ is $\sum_{k=0}^\infty x_k^\intercal x_k=x_0^\intercal Px_0$, where $P$ solves the Lyapunov equation $A_1^\intercal PA_1-P=-I$ (the general result proved in Unit 5, Problem 5.4). Numerically, $P=\begin{bmatrix}250.3&-2.15\\-2.15&28.3\end{bmatrix}$ (the large entries reflect that $A_1$ is close to the stability boundary). The $H=1$ rollout policy is then
+
+$$\sigma_k=\begin{cases}1 & \text{if } x_k^\intercal(A_1^\intercal PA_1-A_2^\intercal PA_2)x_k<0\\2 & \text{otherwise.}\end{cases}$$
+
+This base policy cannot be used when $\beta=1$: there, $A_1$ is only marginally stable ($|{\rm eig}(A_1)|=1$), so the Lyapunov equation $A_1^\intercal PA_1-P=-I$ has no positive definite solution, and the cost of applying $\sigma_k=1$ forever is unbounded -- the base policy is not stabilizing and so cannot anchor a rollout.
+
+:::
+
+**Problem 8.3** Consider the system $x_{k+1}=\begin{bmatrix}1&1\\0&1\end{bmatrix}x_k+\begin{bmatrix}0\\1\end{bmatrix}u_k$, $u_k\in\mathbb{R}$, $x_k\in\mathbb{R}^2$, with two available stabilizing controllers $u_k=\begin{bmatrix}-\frac{1}{2}&-1\end{bmatrix}x_k$ and $u_k=\begin{bmatrix}-\frac{1}{3}&-\frac{6}{5}\end{bmatrix}x_k$. The goal is to switch between the two to minimize $\sum_{k=0}^\infty\|x_k\|^2$.
+
+(i) Formulate the problem as optimal control of a switched linear system $x_{k+1}=A_{\sigma_k}x_k$, $\sigma_k\in\{1,2\}$, with cost $\sum_{k=0}^\infty x_k^\intercal Qx_k$ for some positive definite $Q$. Provide $A_1$, $A_2$, $Q$.
+(ii) Using the Lyapunov equation, show that the cost of the base policy $\sigma_k=1$, $\forall k$, takes the form $x_0^\intercal\bar Px_0$. Provide $\bar P$.
+(iii) Considering the same base policy, derive the rollout policy with horizon $H=1$ for $\{\sigma_k\}_{k=0}^\infty$.
+(iv) Let $\hat J(x_0)$ denote the cost when the $H=1$ rollout policy is applied for a given $x_0$. It can be shown that $\hat J(x_0)\le x_0^\intercal\bar Px_0$ for every $x_0$. Use this to establish that the rollout policy asymptotically stabilizes the system.
+
+::: {.callout-note collapse="true" title="Solution"}
+
+**(i)** Substituting each controller into the dynamics, $A_1=A+BK_1=\begin{bmatrix}1&1\\-\frac{1}{2}&0\end{bmatrix}$ and $A_2=A+BK_2=\begin{bmatrix}1&1\\-\frac{1}{3}&-\frac{1}{5}\end{bmatrix}$, and since the cost is $\sum\|x_k\|^2=\sum x_k^\intercal x_k$, $Q=I$.
+
+**(ii)** $A_1$ is asymptotically stable (${\rm eig}(A_1)=0.5\pm0.5i$, $|{\rm eig}(A_1)|=1/\sqrt2$), so by the Lyapunov-equation result of Unit 5, Problem 5.4, the cost of applying $\sigma_k=1$ forever is $x_0^\intercal\bar Px_0$ where $\bar P$ solves $A_1^\intercal\bar PA_1-\bar P=-Q$. Solving exactly gives
+
+$$\bar P=\begin{bmatrix}3&2\\2&4\end{bmatrix}.$$
+
+**(iii)** The $H=1$ rollout policy at state $x_k$ minimizes $x_k^\intercal Qx_k+x_{k+1}^\intercal\bar Px_{k+1}=x_k^\intercal Qx_k+x_k^\intercal A_{\sigma_k}^\intercal\bar PA_{\sigma_k}x_k$ over $\sigma_k\in\{1,2\}$; since the $Q$-term does not depend on $\sigma_k$, this is equivalent to minimizing $x_k^\intercal A_{\sigma_k}^\intercal\bar PA_{\sigma_k}x_k$. Computing exactly, $A_1^\intercal\bar PA_1=\begin{bmatrix}2&2\\2&3\end{bmatrix}$ and $A_2^\intercal\bar PA_2=\begin{bmatrix}19/9&11/5\\11/5&59/25\end{bmatrix}$, so
+
+$$A_1^\intercal\bar PA_1-A_2^\intercal\bar PA_2=\begin{bmatrix}-1/9&-1/5\\-1/5&16/25\end{bmatrix},$$
+
+and, writing $x_k=(y,z)$, the (stationary, since the base-policy cost-to-go $\bar P$ is the same at every stage) rollout policy is
+
+$$\sigma_k=\begin{cases}1 & \text{if } -\frac{1}{9}y^2-\frac{2}{5}yz+\frac{16}{25}z^2<0\\2 & \text{otherwise.}\end{cases}$$
+
+**(iv)** *(This part is not covered by the source solutions; the argument below is derived independently.)* Because the rollout policy is stationary and state-feedback, applying it from any state $x$ gives a well-defined cost $\hat J(x)=\sum_{j\ge0}x_j^\intercal Qx_j$ (trajectory started at $x_0=x$), which decomposes recursively as $\hat J(x_k)=x_k^\intercal Qx_k+\hat J(x_{k+1})$ along the closed-loop trajectory generated by the policy. Combined with the given bound $\hat J(x)\le x^\intercal\bar Px$ (valid for every state, in particular for every $x_k$ visited along the trajectory), $\hat J$ is a valid candidate Lyapunov function for the closed-loop system: it is positive definite ($\hat J(x)\ge0$ since $Q\ge0$, with equality only at $x=0$), finite everywhere (bounded above by $x^\intercal\bar Px<\infty$), and satisfies
+
+$$\hat J(x_k)-\hat J(x_{k+1})=x_k^\intercal Qx_k\ge0,$$
+
+with strict inequality whenever $x_k\neq0$ (since $Q=I>0$). So $\hat J(x_k)$ is non-increasing along the trajectory and strictly decreasing unless $x_k=0$; being bounded below by $0$, it converges, which forces the increments $x_k^\intercal Qx_k\to0$, and since $Q>0$ this means $\|x_k\|\to0$. Hence the $H=1$ rollout policy asymptotically stabilizes the system.
+
+:::
+
+## Additional exercises
+
+**Problem 8.4** Consider $\begin{bmatrix}\dot y(t)\\\dot z(t)\end{bmatrix}=\begin{bmatrix}\cos(\theta(t))\\\sin(\theta(t))\end{bmatrix}$, where $\theta(t)\in[-\pi,\pi)$ is the control input and $x(t)=\begin{bmatrix}y(t)&z(t)\end{bmatrix}^\intercal$ is the state. The input is implemented digitally, $\theta(t)=\theta_k$ for $t\in[k\tau,(k+1)\tau)$, giving the Euler discretization $x_{k+1}=x_k+\tau\begin{bmatrix}\cos(\theta_k)\\\sin(\theta_k)\end{bmatrix}$. The goal is to minimize $\sum_{k=0}^\infty\|x_k\|_Q^2$ for positive definite $Q$.
+
+(i) Show that the MPC policy with horizon $H=2$ is $\theta_k(x_k)=\mu(x_k)$, where
+
+$$\mu(x)=\begin{cases}\arctan\big(\tfrac{v_2(x)}{v_1(x)}\big) & \text{if } v_1(x)\neq0\\\frac{\pi}{2} & \text{if } v_2(x)\ge0,\ v_1(x)=0\\-\frac{\pi}{2} & \text{if } v_2(x)<0,\ v_1(x)=0,\end{cases}$$
+
+and $v(x)=(v_1(x),v_2(x))$ solves $\min_{v\in\mathbb{R}^2}\|x+\tau v\|_Q^2$ s.t. $\|v\|^2=1$.
+(ii) Provide the optimal control input at stage $0$ when $\tau=0.1$, $Q=I$, $x_0=\begin{bmatrix}1&1\end{bmatrix}^\intercal$.
+
+::: {.callout-note collapse="true" title="Solution"}
+
+**(i)** At time $\ell$, the $H=2$ MPC problem is $\min_{\theta_\ell}\|x_\ell\|_Q^2+\|x_{\ell+1}\|_Q^2$; since $x_\ell$ is fixed, this is equivalent to $\min_{\theta_\ell}\|x_\ell+\tau[\cos\theta_\ell,\sin\theta_\ell]^\intercal\|_Q^2$. Because $\{(\cos\theta,\sin\theta):\theta\in[-\pi,\pi)\}=\{v\in\mathbb{R}^2:\|v\|^2=1\}$, this is equivalent to the constrained problem $\min_{v}\|x_\ell+\tau v\|_Q^2$ s.t. $\|v\|^2=1$, with $\cos\theta=v_1$, $\sin\theta=v_2$ recovering $\theta$ via the four-quadrant relation stated (using $\arctan$ on the ratio when $v_1\neq0$, and the two vertical-axis cases otherwise).
+
+**(ii)** With $\tau=0.1$, $Q=I$, $x_0=[1\ \ 1]^\intercal$, the problem is $\min_{v_1,v_2}(1+0.1v_1)^2+(1+0.1v_2)^2$ s.t. $v_1^2+v_2^2=1$. The Lagrangian $L=(1+0.1v_1)^2+(1+0.1v_2)^2+\lambda(v_1^2+v_2^2-1)$ gives, from $\partial L/\partial v_1=\partial L/\partial v_2=0$, $v_1=v_2=\frac{-1}{\lambda+0.1}$; substituting into the constraint gives $\lambda=-0.1\pm\sqrt2$. The two stationary points are
+
+$$(v_1,v_2)=\Big(-\tfrac{1}{\sqrt2},-\tfrac{1}{\sqrt2}\Big)\ \Rightarrow\ \theta=\tfrac{5\pi}{4}\ (\text{minimizer}),\qquad (v_1,v_2)=\Big(\tfrac{1}{\sqrt2},\tfrac{1}{\sqrt2}\Big)\ \Rightarrow\ \theta=\tfrac{\pi}{4}\ (\text{maximizer}).$$
+
+The optimal control input at stage $0$ is therefore $\theta_0=5\pi/4$ (pointing away from the origin's opposite side, i.e. steering back toward the origin from $x_0=[1\ \ 1]^\intercal$).
+
+:::

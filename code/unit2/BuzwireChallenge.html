@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+<script src="BuzwireChallenge_files/libs/clipboard/clipboard.min.js"></script>
+<script src="BuzwireChallenge_files/libs/quarto-html/tabby.min.js"></script>
+<script src="BuzwireChallenge_files/libs/quarto-html/popper.min.js"></script>
+<script src="BuzwireChallenge_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="BuzwireChallenge_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="BuzwireChallenge_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="BuzwireChallenge_files/libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>buzwirechallenge</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="BuzwireChallenge_files/libs/clipboard/clipboard.min.js"></script>
+<script src="BuzwireChallenge_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="BuzwireChallenge_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="BuzwireChallenge_files/libs/quarto-html/popper.min.js"></script>
+<script src="BuzwireChallenge_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="BuzwireChallenge_files/libs/quarto-html/anchor.min.js"></script>
+<link href="BuzwireChallenge_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="BuzwireChallenge_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="BuzwireChallenge_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="BuzwireChallenge_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="BuzwireChallenge_files/libs/bootstrap/bootstrap-4abc06a47da699e2ab6a870919abbcee.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      argmin: ["\\operatorname*{argmin}_{#1}", 1],
+      argmax: ["\\operatorname*{argmax}_{#1}", 1],
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#deterministic-model" id="toc-deterministic-model" class="nav-link active" data-scroll-target="#deterministic-model"><span class="header-section-number">1</span> Deterministic model</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="BuzwireChallenge.html"><i class="bi bi-file-slides"></i>RevealJS</a></li><li><a href="BuzwireChallenge.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>## Buzz wire challenge In the buzz wire game a metal loop is guided along a wire. The goal is to reach the end terminal of the wire without the loop touching the wire, in which case a buzz noise is heard.</p>
+<p>Suppose that the game is played with a robot arm holding the metal loop. This assignment aims at finding a strategy for the robot arm to move as fast as possible from the start to the end terminal of the wire without touching the wire. For simplicity, the following assumptions are considered:</p>
+<ul>
+<li>The wire lies in a plane with <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> coordinates. Moreover, it can be represented by a function <span class="math inline">\(y=f(x)\)</span> as depicted in the figure below, which implies that it does not curve back.</li>
+<li>The metal loop is represented by two small parallel bars, shown in blue in the figure, which form a rigid body with center point represented by a blue circle in the figure. Both the length of each bars and the space between the two bars are set to <span class="math inline">\(4.1\)</span>. The configuration of these parallel linear is characterized by the position of the center point, denoted by <span class="math inline">\((p_x,p_y)\)</span>, and an orientation angle <span class="math inline">\(\theta \in (-\frac{\pi}{2},\frac{\pi}{2})\)</span>, which represents a rotation angle with respect to a frame with origin at the center point; <span class="math inline">\(\theta = 0\)</span> when the two blue bars are parallel to the <span class="math inline">\(x\)</span> axis and <span class="math inline">\(\theta &gt;0\)</span> corresponds to an anti-clockwise rotation. The metal loop touches the wire if one of these parallel bars intersects the wire. This check is performed for a finite set of points of the bottom and top bars.</li>
+<li>The space is discretized such that each coordinate position of the center point <span class="math inline">\((x,y)\)</span> is a natural number, <span class="math inline">\(x \in \{1,2,\dots,N_x\}\)</span>, <span class="math inline">\(y \in \{1,2,\dots,N_y\}\)</span> and the angle belongs to the set <span class="math inline">\(\theta \in \{-\frac{\pi}{2}+i\frac{\pi }{N_\theta+1}\}\)</span>, for <span class="math inline">\(i \in \{1,2,\dots,N_\theta\}\)</span>.</li>
+<li>The game starts at time <span class="math inline">\(k=1\)</span> with <span class="math inline">\(p_{x,1}=1\)</span> and a feasible configuration where the metal looop does not touch the wire.</li>
+<li>The game is over when <span class="math inline">\(p_{x,k}=N_x\)</span> for a given <span class="math inline">\(k=K+1\)</span> and there have been no colisions for every <span class="math inline">\(k\leq K+1\)</span>. <span class="math inline">\(K\)</span> is the number of steps/times since the inital step/time <span class="math inline">\(k=1\)</span>, which should be minimized.</li>
+</ul>
+<p>An example of an environment and a test to check if the metal loop touches the wire is given next (you can click on run Section to avoid running the remainder of the Live Script).</p>
+<div id="secondary-paraguay" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> clear_output</span>
+<span id="cb1-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb1-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib <span class="im">as</span> mpl</span>
+<span id="cb1-6"><a href="" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib <span class="im">import</span> cm</span>
+<span id="cb1-7"><a href="" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mpl_toolkits.mplot3d <span class="im">import</span> Axes3D</span>
+<span id="cb1-8"><a href="" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>matplotlib inline</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="editorial-services" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co">## </span></span>
+<span id="cb2-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># The following four functions are auxiliary functions for the algorithms.</span></span>
+<span id="cb2-3"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> state2coord(i,Ny,Ntheta):</span>
+<span id="cb2-5"><a href="" aria-hidden="true" tabindex="-1"></a>    ix     <span class="op">=</span> np.floor(i<span class="op">/</span>(Ny<span class="op">*</span>Ntheta))<span class="op">+</span><span class="dv">1</span></span>
+<span id="cb2-6"><a href="" aria-hidden="true" tabindex="-1"></a>    iy     <span class="op">=</span> np.floor((i<span class="op">-</span>(ix<span class="op">-</span><span class="dv">1</span>)<span class="op">*</span>(Ny<span class="op">*</span>Ntheta))<span class="op">/</span>Ntheta)<span class="op">+</span><span class="dv">1</span></span>
+<span id="cb2-7"><a href="" aria-hidden="true" tabindex="-1"></a>    itheta <span class="op">=</span> i<span class="op">+</span><span class="dv">1</span><span class="op">-</span>(ix<span class="op">-</span><span class="dv">1</span>)<span class="op">*</span>(Ny<span class="op">*</span>Ntheta)<span class="op">-</span>(iy<span class="op">-</span><span class="dv">1</span>)<span class="op">*</span>Ntheta</span>
+<span id="cb2-8"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">int</span>(ix), <span class="bu">int</span>(iy), <span class="bu">int</span>(itheta)</span>
+<span id="cb2-9"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> coord2state(ix,iy,itheta,Ny,Ntheta):</span>
+<span id="cb2-12"><a href="" aria-hidden="true" tabindex="-1"></a>    i <span class="op">=</span> (ix<span class="op">-</span><span class="dv">1</span>)<span class="op">*</span>Ny<span class="op">*</span>Ntheta <span class="op">+</span> (iy<span class="op">-</span><span class="dv">1</span>)<span class="op">*</span>Ntheta <span class="op">+</span> itheta</span>
+<span id="cb2-13"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> i</span>
+<span id="cb2-14"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> action2coord(j,My,Mtheta):</span>
+<span id="cb2-17"><a href="" aria-hidden="true" tabindex="-1"></a>    jx     <span class="op">=</span> np.floor( j<span class="op">/</span>(My<span class="op">*</span>Mtheta))<span class="op">+</span><span class="dv">1</span></span>
+<span id="cb2-18"><a href="" aria-hidden="true" tabindex="-1"></a>    jy     <span class="op">=</span> np.floor((j<span class="op">-</span>(jx<span class="op">-</span><span class="dv">1</span>)<span class="op">*</span>(My<span class="op">*</span>Mtheta))<span class="op">/</span>Mtheta)<span class="op">+</span><span class="dv">1</span></span>
+<span id="cb2-19"><a href="" aria-hidden="true" tabindex="-1"></a>    jtheta <span class="op">=</span> j<span class="op">+</span><span class="dv">1</span><span class="op">-</span>(jx<span class="op">-</span><span class="dv">1</span>)<span class="op">*</span>(My<span class="op">*</span>Mtheta)<span class="op">-</span>(jy<span class="op">-</span><span class="dv">1</span>)<span class="op">*</span>Mtheta</span>
+<span id="cb2-20"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> jx, jy, jtheta</span>
+<span id="cb2-21"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> coord2action(jx,jy,jtheta,My,Mtheta):</span>
+<span id="cb2-24"><a href="" aria-hidden="true" tabindex="-1"></a>    j <span class="op">=</span> (jx<span class="op">-</span><span class="dv">1</span>)<span class="op">*</span>My<span class="op">*</span>Mtheta <span class="op">+</span> (jy<span class="op">-</span><span class="dv">1</span>)<span class="op">*</span>Mtheta <span class="op">+</span> jtheta</span>
+<span id="cb2-25"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> j</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="genuine-estate" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co">## </span></span>
+<span id="cb3-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># The following function determines the next state given the indices characterizing </span></span>
+<span id="cb3-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># the current state and the control action.</span></span>
+<span id="cb3-4"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nextstate(i,j,Nx,Ny,Ntheta,Mx,My,Mtheta):</span>
+<span id="cb3-6"><a href="" aria-hidden="true" tabindex="-1"></a>    [ix,iy,itheta] <span class="op">=</span> state2coord(i,Ny,Ntheta)</span>
+<span id="cb3-7"><a href="" aria-hidden="true" tabindex="-1"></a>    [jx,jy,jtheta] <span class="op">=</span> action2coord(j,My,Mtheta)</span>
+<span id="cb3-8"><a href="" aria-hidden="true" tabindex="-1"></a>    ix_1     <span class="op">=</span> <span class="bu">min</span>(ix<span class="op">+</span>(jx<span class="op">-</span><span class="dv">1</span>),Nx)</span>
+<span id="cb3-9"><a href="" aria-hidden="true" tabindex="-1"></a>    iy_1     <span class="op">=</span> <span class="bu">min</span>(<span class="bu">max</span>(iy<span class="op">+</span>jy<span class="op">-</span>(My<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span><span class="dv">2</span><span class="op">-</span><span class="dv">1</span>,<span class="dv">1</span>),Ny)</span>
+<span id="cb3-10"><a href="" aria-hidden="true" tabindex="-1"></a>    itheta_1 <span class="op">=</span> <span class="bu">min</span>(<span class="bu">max</span>(itheta<span class="op">+</span>jtheta<span class="op">-</span>(Mtheta<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span><span class="dv">2</span><span class="op">-</span><span class="dv">1</span>,<span class="dv">1</span>),Ntheta)</span>
+<span id="cb3-11"><a href="" aria-hidden="true" tabindex="-1"></a>    i_1 <span class="op">=</span> coord2state(ix_1,iy_1,itheta_1,Ny,Ntheta)</span>
+<span id="cb3-12"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> i_1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="romance-symphony" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co">## </span></span>
+<span id="cb4-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># The following function is an auxiliary function for solving the buzz wire </span></span>
+<span id="cb4-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># problem with stochastic dynamic programming.</span></span>
+<span id="cb4-4"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dpspstoch(M, C, p, Jh):</span>
+<span id="cb4-6"><a href="" aria-hidden="true" tabindex="-1"></a>    n,m  <span class="op">=</span> M.shape[<span class="dv">0</span>:<span class="dv">2</span>]</span>
+<span id="cb4-7"><a href="" aria-hidden="true" tabindex="-1"></a>    np_     <span class="op">=</span> p.shape[<span class="dv">1</span>]</span>
+<span id="cb4-8"><a href="" aria-hidden="true" tabindex="-1"></a>    J      <span class="op">=</span> np.copy(Jh)</span>
+<span id="cb4-9"><a href="" aria-hidden="true" tabindex="-1"></a>    J_     <span class="op">=</span> np.zeros((n,<span class="dv">1</span>))</span>
+<span id="cb4-10"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span>(<span class="dv">1</span>):</span>
+<span id="cb4-12"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb4-13"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> np.<span class="bu">any</span>(C[i,:] <span class="op">!=</span> np.inf):</span>
+<span id="cb4-14"><a href="" aria-hidden="true" tabindex="-1"></a>                caux <span class="op">=</span> np.zeros((<span class="dv">1</span>,m))</span>
+<span id="cb4-15"><a href="" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(m):</span>
+<span id="cb4-16"><a href="" aria-hidden="true" tabindex="-1"></a>                    caux[<span class="dv">0</span>,j] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb4-17"><a href="" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">for</span> l <span class="kw">in</span> <span class="bu">range</span>(np_):</span>
+<span id="cb4-18"><a href="" aria-hidden="true" tabindex="-1"></a>                        caux[<span class="dv">0</span>,j] <span class="op">=</span> caux[<span class="dv">0</span>,j] <span class="op">+</span> p[<span class="dv">0</span>,l]<span class="op">*</span>(C[i,j] <span class="op">+</span> J[M[i,j,l]<span class="op">-</span><span class="dv">1</span>,<span class="dv">0</span>])</span>
+<span id="cb4-19"><a href="" aria-hidden="true" tabindex="-1"></a>                J_[i,<span class="dv">0</span>] <span class="op">=</span> np.<span class="bu">min</span>( caux )</span>
+<span id="cb4-20"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:</span>
+<span id="cb4-21"><a href="" aria-hidden="true" tabindex="-1"></a>                J_[i,<span class="dv">0</span>] <span class="op">=</span> np.inf</span>
+<span id="cb4-22"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> np.<span class="bu">all</span>(J <span class="op">==</span> J_):</span>
+<span id="cb4-23"><a href="" aria-hidden="true" tabindex="-1"></a>            u_ <span class="op">=</span> [[] <span class="cf">for</span> idx <span class="kw">in</span> <span class="bu">range</span>(n)]</span>
+<span id="cb4-24"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> i  <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb4-25"><a href="" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> np.<span class="bu">any</span>(C[i,:] <span class="op">!=</span> np.inf):</span>
+<span id="cb4-26"><a href="" aria-hidden="true" tabindex="-1"></a>                    caux <span class="op">=</span> np.zeros((<span class="dv">1</span>,m))</span>
+<span id="cb4-27"><a href="" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(m):</span>
+<span id="cb4-28"><a href="" aria-hidden="true" tabindex="-1"></a>                        caux[<span class="dv">0</span>,j] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb4-29"><a href="" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">for</span> l <span class="kw">in</span> <span class="bu">range</span>(np_):</span>
+<span id="cb4-30"><a href="" aria-hidden="true" tabindex="-1"></a>                            caux[<span class="dv">0</span>,j] <span class="op">=</span> caux[<span class="dv">0</span>,j] <span class="op">+</span> p[<span class="dv">0</span>,l]<span class="op">*</span>(C[i,j] <span class="op">+</span> J[M[i,j,l]<span class="op">-</span><span class="dv">1</span>,<span class="dv">0</span>])                 </span>
+<span id="cb4-31"><a href="" aria-hidden="true" tabindex="-1"></a>                    <span class="co">#u_[i]       = find(J_(i) == caux )</span></span>
+<span id="cb4-32"><a href="" aria-hidden="true" tabindex="-1"></a>                    u_[i] <span class="op">=</span> np.flatnonzero(J_[i] <span class="op">==</span> caux )</span>
+<span id="cb4-33"><a href="" aria-hidden="true" tabindex="-1"></a>                <span class="cf">else</span>:</span>
+<span id="cb4-34"><a href="" aria-hidden="true" tabindex="-1"></a>                    u_[i] <span class="op">=</span> np.array([<span class="dv">0</span>])</span>
+<span id="cb4-35"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb4-36"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb4-37"><a href="" aria-hidden="true" tabindex="-1"></a>            J <span class="op">=</span> np.copy(J_)</span>
+<span id="cb4-38"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> u_, J_    </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="collective-morgan" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co">## </span></span>
+<span id="cb5-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># The following function is an auxiliary function for solving the buzz wire </span></span>
+<span id="cb5-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># problem with deterministic dynamic programming.</span></span>
+<span id="cb5-4"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dpsp( M, C, Jh):</span>
+<span id="cb5-6"><a href="" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> M.shape[<span class="dv">0</span>]</span>
+<span id="cb5-7"><a href="" aria-hidden="true" tabindex="-1"></a>    J <span class="op">=</span> np.copy(Jh)</span>
+<span id="cb5-8"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="" aria-hidden="true" tabindex="-1"></a>    J_ <span class="op">=</span> np.zeros((n,<span class="dv">1</span>))</span>
+<span id="cb5-10"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span>(<span class="dv">1</span>):</span>
+<span id="cb5-11"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb5-12"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> np.<span class="bu">any</span>(C[i,:] <span class="op">!=</span> np.inf):</span>
+<span id="cb5-13"><a href="" aria-hidden="true" tabindex="-1"></a>                J_[i]  <span class="op">=</span> <span class="bu">min</span>( C[[i],:].T <span class="op">+</span> J[M[i,:]<span class="op">-</span><span class="dv">1</span>] )</span>
+<span id="cb5-14"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:</span>
+<span id="cb5-15"><a href="" aria-hidden="true" tabindex="-1"></a>                J_[i] <span class="op">=</span> np.inf</span>
+<span id="cb5-16"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> np.<span class="bu">all</span>(J <span class="op">==</span> J_):</span>
+<span id="cb5-17"><a href="" aria-hidden="true" tabindex="-1"></a>            u_ <span class="op">=</span> [[] <span class="cf">for</span> idx <span class="kw">in</span> <span class="bu">range</span>(n)]</span>
+<span id="cb5-18"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb5-19"><a href="" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> np.<span class="bu">any</span>(C[i,:] <span class="op">!=</span> np.inf):</span>
+<span id="cb5-20"><a href="" aria-hidden="true" tabindex="-1"></a>                    u_[i] <span class="op">=</span> np.flatnonzero(J_[i] <span class="op">==</span> C[i,:].T <span class="op">+</span> J[M[i,:]<span class="op">-</span><span class="dv">1</span>,<span class="dv">0</span>] )</span>
+<span id="cb5-21"><a href="" aria-hidden="true" tabindex="-1"></a>                <span class="cf">else</span>:</span>
+<span id="cb5-22"><a href="" aria-hidden="true" tabindex="-1"></a>                    u_[i] <span class="op">=</span> np.array([<span class="dv">0</span>])</span>
+<span id="cb5-23"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb5-24"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb5-25"><a href="" aria-hidden="true" tabindex="-1"></a>            J <span class="op">=</span> np.copy(J_)</span>
+<span id="cb5-26"><a href="" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb5-27"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> u_, J_</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="lonely-count" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co">## </span></span>
+<span id="cb6-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># The following function solves the buzz wire deterministic problem with the </span></span>
+<span id="cb6-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># Dijkstra's algorithm.</span></span>
+<span id="cb6-4"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> buzzwiredijkstra(Nx,Ny,Ntheta,Mx,My,Mtheta,wirefunction,x0):</span>
+<span id="cb6-6"><a href="" aria-hidden="true" tabindex="-1"></a>    inode    <span class="op">=</span> coord2state(<span class="op">*</span>x0[<span class="dv">0</span>,:], Ny, Ntheta)</span>
+<span id="cb6-7"><a href="" aria-hidden="true" tabindex="-1"></a>    nmax     <span class="op">=</span> Nx<span class="op">*</span>Ny<span class="op">*</span>Ntheta          <span class="co"># max number of nodes</span></span>
+<span id="cb6-8"><a href="" aria-hidden="true" tabindex="-1"></a>    m        <span class="op">=</span> Mx<span class="op">*</span>My<span class="op">*</span>Mtheta</span>
+<span id="cb6-9"><a href="" aria-hidden="true" tabindex="-1"></a>    openT    <span class="op">=</span> np.column_stack((np.zeros(nmax), np.inf<span class="op">*</span>np.ones(nmax), np.zeros(nmax))) <span class="co"># prealocate memory</span></span>
+<span id="cb6-10"><a href="" aria-hidden="true" tabindex="-1"></a>    decT     <span class="op">=</span> np.zeros((<span class="dv">1</span>,nmax))           <span class="co"># simply to keep track of optimal decisions, not necesary for the algorithm</span></span>
+<span id="cb6-11"><a href="" aria-hidden="true" tabindex="-1"></a>    nopenT   <span class="op">=</span> <span class="dv">1</span>                     <span class="co"># number of nodes in openT</span></span>
+<span id="cb6-12"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="" aria-hidden="true" tabindex="-1"></a>    openT[<span class="dv">0</span>,:] <span class="op">=</span> np.array([[inode, <span class="dv">0</span>, <span class="op">-</span><span class="dv">1</span>]])        <span class="co">#(node,cost-to-come to inode,prev. node)</span></span>
+<span id="cb6-14"><a href="" aria-hidden="true" tabindex="-1"></a>    closedT    <span class="op">=</span> np.column_stack((np.zeros(nmax), np.inf<span class="op">*</span>np.ones(nmax), np.zeros(nmax))) <span class="co"># prealocate memory</span></span>
+<span id="cb6-15"><a href="" aria-hidden="true" tabindex="-1"></a>    nclosed    <span class="op">=</span> <span class="dv">0</span>                         <span class="co"># number of nodes in closedT</span></span>
+<span id="cb6-16"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-17"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span>(<span class="dv">1</span>):</span>
+<span id="cb6-18"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="co"># shortest distance -(cur)node, add to closed, stop if terminal</span></span>
+<span id="cb6-19"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="co"># curnodeind is index -&gt; -1 compared to MATLAB</span></span>
+<span id="cb6-20"><a href="" aria-hidden="true" tabindex="-1"></a>        curnodeind          <span class="op">=</span> np.argmin(openT[:,<span class="dv">1</span>])</span>
+<span id="cb6-21"><a href="" aria-hidden="true" tabindex="-1"></a>        curnode             <span class="op">=</span> openT[curnodeind,<span class="dv">0</span>]</span>
+<span id="cb6-22"><a href="" aria-hidden="true" tabindex="-1"></a>        curnodecost         <span class="op">=</span> openT[curnodeind,<span class="dv">1</span>]</span>
+<span id="cb6-23"><a href="" aria-hidden="true" tabindex="-1"></a>        nclosed             <span class="op">=</span> nclosed <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb6-24"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> nclosed <span class="op">&gt;</span> closedT.shape[<span class="dv">0</span>]:</span>
+<span id="cb6-25"><a href="" aria-hidden="true" tabindex="-1"></a>            closedT <span class="op">=</span> np.vstack((closedT, openT[curnodeind,:]))</span>
+<span id="cb6-26"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb6-27"><a href="" aria-hidden="true" tabindex="-1"></a>            closedT[nclosed<span class="op">-</span><span class="dv">1</span>,:]  <span class="op">=</span> openT[curnodeind,:]</span>
+<span id="cb6-28"><a href="" aria-hidden="true" tabindex="-1"></a>        ix_ <span class="op">=</span> state2coord(curnode<span class="op">-</span><span class="dv">1</span>,Ny,Ntheta)[<span class="dv">0</span>]</span>
+<span id="cb6-29"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> ix_ <span class="op">==</span> Nx:</span>
+<span id="cb6-30"><a href="" aria-hidden="true" tabindex="-1"></a>            fnode <span class="op">=</span> curnode</span>
+<span id="cb6-31"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb6-32"><a href="" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-33"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="co"># remove curnode from open, move last to its position</span></span>
+<span id="cb6-34"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> nopenT <span class="op">&gt;</span> <span class="dv">1</span>:</span>
+<span id="cb6-35"><a href="" aria-hidden="true" tabindex="-1"></a>            openT[curnodeind,:] <span class="op">=</span> openT[nopenT<span class="op">-</span><span class="dv">1</span>,:]</span>
+<span id="cb6-36"><a href="" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-37"><a href="" aria-hidden="true" tabindex="-1"></a>        openT[nopenT<span class="op">-</span><span class="dv">1</span>,:] <span class="op">=</span> (<span class="dv">0</span>, np.inf, <span class="dv">0</span>)</span>
+<span id="cb6-38"><a href="" aria-hidden="true" tabindex="-1"></a>        nopenT <span class="op">=</span> nopenT<span class="op">-</span><span class="dv">1</span></span>
+<span id="cb6-39"><a href="" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-40"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="co"># update neighboors of curnode</span></span>
+<span id="cb6-41"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Obtain all valid neighboors that do not touch the wire</span></span>
+<span id="cb6-42"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>,m<span class="op">+</span><span class="dv">1</span>):</span>
+<span id="cb6-43"><a href="" aria-hidden="true" tabindex="-1"></a>            xneigh <span class="op">=</span> nextstate(curnode<span class="op">-</span><span class="dv">1</span>,j<span class="op">-</span><span class="dv">1</span>,Nx,Ny,Ntheta,Mx,My,Mtheta)</span>
+<span id="cb6-44"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="kw">not</span> <span class="bu">any</span>(closedT[:,<span class="dv">0</span>] <span class="op">==</span> xneigh): <span class="co"># if it in closed, skip it</span></span>
+<span id="cb6-45"><a href="" aria-hidden="true" tabindex="-1"></a>                [ix_2,iy_2,itheta_2] <span class="op">=</span> state2coord(xneigh<span class="op">-</span><span class="dv">1</span>,Ny,Ntheta)</span>
+<span id="cb6-46"><a href="" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> metaltoucheswire(ix_2,iy_2,itheta_2,Nx,Ntheta,wirefunction):</span>
+<span id="cb6-47"><a href="" aria-hidden="true" tabindex="-1"></a>                    <span class="co"># in neigh touches the wire put it in the closed list</span></span>
+<span id="cb6-48"><a href="" aria-hidden="true" tabindex="-1"></a>                    nclosed <span class="op">=</span> nclosed<span class="op">+</span><span class="dv">1</span></span>
+<span id="cb6-49"><a href="" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">if</span> nclosed <span class="op">&gt;</span> closedT.shape[<span class="dv">0</span>]:</span>
+<span id="cb6-50"><a href="" aria-hidden="true" tabindex="-1"></a>                        closedT <span class="op">=</span> np.vstack((closedT, openT[<span class="bu">int</span>(xneigh)<span class="op">-</span><span class="dv">1</span>,:]))</span>
+<span id="cb6-51"><a href="" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">else</span>:</span>
+<span id="cb6-52"><a href="" aria-hidden="true" tabindex="-1"></a>                        closedT[nclosed<span class="op">-</span><span class="dv">1</span>,:] <span class="op">=</span> openT[<span class="bu">int</span>(xneigh)<span class="op">-</span><span class="dv">1</span>,:]</span>
+<span id="cb6-53"><a href="" aria-hidden="true" tabindex="-1"></a>                <span class="cf">else</span>:</span>
+<span id="cb6-54"><a href="" aria-hidden="true" tabindex="-1"></a>                    <span class="co"># if neigh does not touches the wire put it in open list if</span></span>
+<span id="cb6-55"><a href="" aria-hidden="true" tabindex="-1"></a>                    <span class="co"># it is not there already, or otherwise update it</span></span>
+<span id="cb6-56"><a href="" aria-hidden="true" tabindex="-1"></a>                    auxvec <span class="op">=</span> openT[:,<span class="dv">0</span>] <span class="op">==</span> xneigh</span>
+<span id="cb6-57"><a href="" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">if</span> <span class="bu">any</span>(auxvec): <span class="co"># if it is in the open list update</span></span>
+<span id="cb6-58"><a href="" aria-hidden="true" tabindex="-1"></a>                        indneighopen <span class="op">=</span> np.flatnonzero(auxvec)</span>
+<span id="cb6-59"><a href="" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">if</span>  curnodecost <span class="op">+</span> <span class="dv">1</span> <span class="op">&lt;</span> openT[indneighopen,<span class="dv">1</span>]:</span>
+<span id="cb6-60"><a href="" aria-hidden="true" tabindex="-1"></a>                            openT[indneighopen,<span class="dv">1</span>] <span class="op">=</span> curnodecost <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb6-61"><a href="" aria-hidden="true" tabindex="-1"></a>                            openT[indneighopen,<span class="dv">2</span>] <span class="op">=</span> curnode</span>
+<span id="cb6-62"><a href="" aria-hidden="true" tabindex="-1"></a>                            decT[<span class="dv">0</span>,<span class="bu">int</span>(curnode)<span class="op">-</span><span class="dv">1</span>] <span class="op">=</span> j</span>
+<span id="cb6-63"><a href="" aria-hidden="true" tabindex="-1"></a>                        </span>
+<span id="cb6-64"><a href="" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">else</span>: <span class="co"># if not, add it to open</span></span>
+<span id="cb6-65"><a href="" aria-hidden="true" tabindex="-1"></a>                        nopenT <span class="op">=</span> nopenT <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb6-66"><a href="" aria-hidden="true" tabindex="-1"></a>                        openT[nopenT<span class="op">-</span><span class="dv">1</span>,<span class="dv">0</span>] <span class="op">=</span> xneigh</span>
+<span id="cb6-67"><a href="" aria-hidden="true" tabindex="-1"></a>                        openT[nopenT<span class="op">-</span><span class="dv">1</span>,<span class="dv">1</span>] <span class="op">=</span> curnodecost <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb6-68"><a href="" aria-hidden="true" tabindex="-1"></a>                        openT[nopenT<span class="op">-</span><span class="dv">1</span>,<span class="dv">2</span>] <span class="op">=</span> curnode</span>
+<span id="cb6-69"><a href="" aria-hidden="true" tabindex="-1"></a>                        decT[<span class="dv">0</span>,<span class="bu">int</span>(curnode)<span class="op">-</span><span class="dv">1</span>] <span class="op">=</span> j</span>
+<span id="cb6-70"><a href="" aria-hidden="true" tabindex="-1"></a>                    </span>
+<span id="cb6-71"><a href="" aria-hidden="true" tabindex="-1"></a>    optconfpathx, optconfpathy, optconfpaththeta <span class="op">=</span> state2coord(fnode<span class="op">-</span><span class="dv">1</span>,Ny,Ntheta)</span>
+<span id="cb6-72"><a href="" aria-hidden="true" tabindex="-1"></a>    optconfpath   <span class="op">=</span> np.array([[optconfpathx, optconfpathy, optconfpaththeta]])</span>
+<span id="cb6-73"><a href="" aria-hidden="true" tabindex="-1"></a>    optstateindex <span class="op">=</span> fnode</span>
+<span id="cb6-74"><a href="" aria-hidden="true" tabindex="-1"></a>    node <span class="op">=</span> fnode</span>
+<span id="cb6-75"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span>( node <span class="op">!=</span> inode ):</span>
+<span id="cb6-76"><a href="" aria-hidden="true" tabindex="-1"></a>        indnode <span class="op">=</span> np.flatnonzero( closedT[:,<span class="dv">0</span>] <span class="op">==</span> node)</span>
+<span id="cb6-77"><a href="" aria-hidden="true" tabindex="-1"></a>        node <span class="op">=</span> closedT[indnode,<span class="dv">2</span>]</span>
+<span id="cb6-78"><a href="" aria-hidden="true" tabindex="-1"></a>        optconfpathx, optconfpathy, optconfpaththeta <span class="op">=</span> state2coord(node<span class="op">-</span><span class="dv">1</span>,Ny,Ntheta)</span>
+<span id="cb6-79"><a href="" aria-hidden="true" tabindex="-1"></a>        optconfpath   <span class="op">=</span> np.vstack((np.hstack([optconfpathx, optconfpathy, optconfpaththeta]), optconfpath))</span>
+<span id="cb6-80"><a href="" aria-hidden="true" tabindex="-1"></a>        optstateindex <span class="op">=</span> np.hstack((node, optstateindex))</span>
+<span id="cb6-81"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-82"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> optconfpath, optstateindex, decT</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="specialized-spectrum" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co">## </span></span>
+<span id="cb7-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># The following function solves the buzz wire problem with uncertainty with </span></span>
+<span id="cb7-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># stochastic dynamic programming.</span></span>
+<span id="cb7-4"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> buzzwiredpstoch(Nx,Ny,Ntheta,Mx,My,Mtheta,wirefunction,CW,p,flag<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb7-6"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="" aria-hidden="true" tabindex="-1"></a>    np_ <span class="op">=</span> p.shape[<span class="dv">1</span>]</span>
+<span id="cb7-8"><a href="" aria-hidden="true" tabindex="-1"></a>    pcases <span class="op">=</span> np.array([[<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>],<span class="op">\</span></span>
+<span id="cb7-9"><a href="" aria-hidden="true" tabindex="-1"></a>        [<span class="dv">0</span>, <span class="dv">1</span>],<span class="op">\</span></span>
+<span id="cb7-10"><a href="" aria-hidden="true" tabindex="-1"></a>        [<span class="dv">1</span>, <span class="dv">1</span>],<span class="op">\</span></span>
+<span id="cb7-11"><a href="" aria-hidden="true" tabindex="-1"></a>        [<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>],<span class="op">\</span></span>
+<span id="cb7-12"><a href="" aria-hidden="true" tabindex="-1"></a>        [<span class="dv">0</span>, <span class="dv">0</span>],<span class="op">\</span></span>
+<span id="cb7-13"><a href="" aria-hidden="true" tabindex="-1"></a>        [<span class="dv">1</span>, <span class="dv">0</span>],<span class="op">\</span></span>
+<span id="cb7-14"><a href="" aria-hidden="true" tabindex="-1"></a>        [<span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>],<span class="op">\</span></span>
+<span id="cb7-15"><a href="" aria-hidden="true" tabindex="-1"></a>        [<span class="dv">0</span>, <span class="op">-</span><span class="dv">1</span>],<span class="op">\</span></span>
+<span id="cb7-16"><a href="" aria-hidden="true" tabindex="-1"></a>        [<span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>]])</span>
+<span id="cb7-17"><a href="" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> Nx<span class="op">*</span>Ny<span class="op">*</span>Ntheta</span>
+<span id="cb7-18"><a href="" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> Mx<span class="op">*</span>My<span class="op">*</span>Mtheta</span>
+<span id="cb7-19"><a href="" aria-hidden="true" tabindex="-1"></a>    D  <span class="op">=</span> np.zeros((n<span class="op">+</span><span class="dv">1</span>,m,np_),<span class="st">'int'</span>)</span>
+<span id="cb7-20"><a href="" aria-hidden="true" tabindex="-1"></a>    C  <span class="op">=</span> np.zeros((n<span class="op">+</span><span class="dv">1</span>,m))</span>
+<span id="cb7-21"><a href="" aria-hidden="true" tabindex="-1"></a>    Jh      <span class="op">=</span> np.inf<span class="op">*</span>np.ones((n<span class="op">+</span><span class="dv">1</span>,<span class="dv">1</span>))</span>
+<span id="cb7-22"><a href="" aria-hidden="true" tabindex="-1"></a>    Jh[n] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb7-23"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-24"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb7-25"><a href="" aria-hidden="true" tabindex="-1"></a>        [ix,iy,itheta] <span class="op">=</span> state2coord(i,Ny,Ntheta)</span>
+<span id="cb7-26"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="co"># terminal cost</span></span>
+<span id="cb7-27"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> ix <span class="op">==</span> Nx:</span>
+<span id="cb7-28"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="kw">not</span> metaltoucheswire(ix,iy,itheta,Nx,Ntheta,wirefunction):</span>
+<span id="cb7-29"><a href="" aria-hidden="true" tabindex="-1"></a>                Jh[i] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb7-30"><a href="" aria-hidden="true" tabindex="-1"></a>                C[i,:] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb7-31"><a href="" aria-hidden="true" tabindex="-1"></a>                D[i,:,:] <span class="op">=</span> n<span class="op">+</span><span class="dv">1</span></span>
+<span id="cb7-32"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:</span>
+<span id="cb7-33"><a href="" aria-hidden="true" tabindex="-1"></a>                Jh[i] <span class="op">=</span> np.inf</span>
+<span id="cb7-34"><a href="" aria-hidden="true" tabindex="-1"></a>                C[i,:] <span class="op">=</span> np.inf</span>
+<span id="cb7-35"><a href="" aria-hidden="true" tabindex="-1"></a>                D[i,:,:] <span class="op">=</span> n<span class="op">+</span><span class="dv">1</span></span>
+<span id="cb7-36"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb7-37"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> metaltoucheswire(ix,iy,itheta,Nx,Ntheta,wirefunction):</span>
+<span id="cb7-38"><a href="" aria-hidden="true" tabindex="-1"></a>                C[i,:]   <span class="op">=</span> CW</span>
+<span id="cb7-39"><a href="" aria-hidden="true" tabindex="-1"></a>                D[i,:,:] <span class="op">=</span> n<span class="op">+</span><span class="dv">1</span></span>
+<span id="cb7-40"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:</span>
+<span id="cb7-41"><a href="" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(m):</span>
+<span id="cb7-42"><a href="" aria-hidden="true" tabindex="-1"></a>                    C[i,j]    <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb7-43"><a href="" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">for</span> ell <span class="kw">in</span> <span class="bu">range</span>(np_):</span>
+<span id="cb7-44"><a href="" aria-hidden="true" tabindex="-1"></a>                        ix, iy, itheta <span class="op">=</span> state2coord(i,Ny,Ntheta)</span>
+<span id="cb7-45"><a href="" aria-hidden="true" tabindex="-1"></a>                        jx, jy, jtheta <span class="op">=</span> action2coord(j,My,Mtheta)</span>
+<span id="cb7-46"><a href="" aria-hidden="true" tabindex="-1"></a>                        ix_1       <span class="op">=</span> <span class="bu">min</span>(<span class="bu">max</span>(ix<span class="op">+</span>(jx<span class="op">-</span><span class="dv">1</span>)<span class="op">+</span>pcases[ell,<span class="dv">0</span>],<span class="dv">1</span>),Nx)</span>
+<span id="cb7-47"><a href="" aria-hidden="true" tabindex="-1"></a>                        iy_1       <span class="op">=</span> <span class="bu">min</span>(<span class="bu">max</span>(iy<span class="op">+</span>jy<span class="op">-</span>(My<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span><span class="dv">2</span><span class="op">-</span><span class="dv">1</span><span class="op">+</span>pcases[ell,<span class="dv">1</span>],<span class="dv">1</span>),Ny)</span>
+<span id="cb7-48"><a href="" aria-hidden="true" tabindex="-1"></a>                        itheta_1   <span class="op">=</span> <span class="bu">min</span>(<span class="bu">max</span>(itheta<span class="op">+</span>jtheta<span class="op">-</span>(Mtheta<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span><span class="dv">2</span><span class="op">-</span><span class="dv">1</span>,<span class="dv">1</span>),Ntheta)</span>
+<span id="cb7-49"><a href="" aria-hidden="true" tabindex="-1"></a>                        D[i,j,ell] <span class="op">=</span> coord2state(ix_1,iy_1,itheta_1,Ny,Ntheta)</span>
+<span id="cb7-50"><a href="" aria-hidden="true" tabindex="-1"></a>                    </span>
+<span id="cb7-51"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-52"><a href="" aria-hidden="true" tabindex="-1"></a>    D[n,:] <span class="op">=</span> n<span class="op">+</span><span class="dv">1</span></span>
+<span id="cb7-53"><a href="" aria-hidden="true" tabindex="-1"></a>    C[n,:] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb7-54"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-55"><a href="" aria-hidden="true" tabindex="-1"></a>    mu_,J_ <span class="op">=</span> dpspstoch( D, C, p, Jh)</span>
+<span id="cb7-56"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-57"><a href="" aria-hidden="true" tabindex="-1"></a>    J  <span class="op">=</span> np.zeros((Nx,Ny,Ntheta))</span>
+<span id="cb7-58"><a href="" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> [[[[] <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(Ntheta)] <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(Ny)] <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(Nx)]</span>
+<span id="cb7-59"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb7-60"><a href="" aria-hidden="true" tabindex="-1"></a>        ix,iy,itheta    <span class="op">=</span> state2coord(i,Ny,Ntheta)</span>
+<span id="cb7-61"><a href="" aria-hidden="true" tabindex="-1"></a>        J[ix<span class="op">-</span><span class="dv">1</span>,iy<span class="op">-</span><span class="dv">1</span>,itheta<span class="op">-</span><span class="dv">1</span>]   <span class="op">=</span> J_[i] </span>
+<span id="cb7-62"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> flag <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb7-63"><a href="" aria-hidden="true" tabindex="-1"></a>            [jx,jy,jtheta]     <span class="op">=</span> action2coord(mu_[i][<span class="dv">0</span>],My,Mtheta)</span>
+<span id="cb7-64"><a href="" aria-hidden="true" tabindex="-1"></a>            mu[ix<span class="op">-</span><span class="dv">1</span>][iy<span class="op">-</span><span class="dv">1</span>][itheta<span class="op">-</span><span class="dv">1</span>] <span class="op">=</span> [jx<span class="op">-</span><span class="dv">1</span>,jy<span class="op">-</span>(My<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span><span class="dv">2</span><span class="op">-</span><span class="dv">1</span>,jtheta<span class="op">-</span>(Mtheta<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span><span class="dv">2</span><span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb7-65"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb7-66"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(mu_[i])):</span>
+<span id="cb7-67"><a href="" aria-hidden="true" tabindex="-1"></a>                jx,jy,jtheta       <span class="op">=</span> action2coord(mu_[i][j],My,Mtheta)</span>
+<span id="cb7-68"><a href="" aria-hidden="true" tabindex="-1"></a>                mu[ix<span class="op">-</span><span class="dv">1</span>][iy<span class="op">-</span><span class="dv">1</span>][itheta<span class="op">-</span><span class="dv">1</span>][j,<span class="dv">0</span>:<span class="dv">2</span>] <span class="op">=</span> [jx<span class="op">-</span><span class="dv">1</span>,jy<span class="op">-</span>(My<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span><span class="dv">2</span><span class="op">-</span><span class="dv">1</span>,jtheta<span class="op">-</span>(Mtheta<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span><span class="dv">2</span><span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb7-69"><a href="" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb7-70"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> mu, J         </span>
+<span id="cb7-71"><a href="" aria-hidden="true" tabindex="-1"></a>        </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="tamil-blond" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co">## </span></span>
+<span id="cb8-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># The following function solved the buzz wire problem with dynamic programming.</span></span>
+<span id="cb8-3"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> buzzwiredp(Nx,Ny,Ntheta,Mx,My,Mtheta,wirefunction,flag<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb8-5"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> Nx<span class="op">*</span>Ny<span class="op">*</span>Ntheta</span>
+<span id="cb8-7"><a href="" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> Mx<span class="op">*</span>My<span class="op">*</span>Mtheta</span>
+<span id="cb8-8"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="" aria-hidden="true" tabindex="-1"></a>    D  <span class="op">=</span> np.zeros((n,m), <span class="st">'int'</span>)</span>
+<span id="cb8-10"><a href="" aria-hidden="true" tabindex="-1"></a>    C  <span class="op">=</span> np.zeros((n,m))</span>
+<span id="cb8-11"><a href="" aria-hidden="true" tabindex="-1"></a>    Jh <span class="op">=</span> np.inf<span class="op">*</span>np.ones((n,<span class="dv">1</span>))</span>
+<span id="cb8-12"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n): <span class="co"># i is index -&gt; MATLAB_i - 1</span></span>
+<span id="cb8-13"><a href="" aria-hidden="true" tabindex="-1"></a>        [ix,iy,itheta] <span class="op">=</span> state2coord(i,Ny,Ntheta)</span>
+<span id="cb8-14"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="co"># terminal cost</span></span>
+<span id="cb8-15"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> ix <span class="op">==</span> Nx:</span>
+<span id="cb8-16"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="kw">not</span> metaltoucheswire(ix,iy,itheta,Nx,Ntheta,wirefunction):</span>
+<span id="cb8-17"><a href="" aria-hidden="true" tabindex="-1"></a>                Jh[i] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb8-18"><a href="" aria-hidden="true" tabindex="-1"></a>                C[i,:] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb8-19"><a href="" aria-hidden="true" tabindex="-1"></a>                D[i,:] <span class="op">=</span> i<span class="op">+</span><span class="dv">1</span></span>
+<span id="cb8-20"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:</span>
+<span id="cb8-21"><a href="" aria-hidden="true" tabindex="-1"></a>                Jh[i] <span class="op">=</span> np.inf</span>
+<span id="cb8-22"><a href="" aria-hidden="true" tabindex="-1"></a>                C[i,:] <span class="op">=</span> np.inf</span>
+<span id="cb8-23"><a href="" aria-hidden="true" tabindex="-1"></a>                D[i,:] <span class="op">=</span> i<span class="op">+</span><span class="dv">1</span></span>
+<span id="cb8-24"><a href="" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb8-25"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb8-26"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> metaltoucheswire(ix,iy,itheta,Nx,Ntheta,wirefunction):</span>
+<span id="cb8-27"><a href="" aria-hidden="true" tabindex="-1"></a>                C[i,:] <span class="op">=</span> np.inf</span>
+<span id="cb8-28"><a href="" aria-hidden="true" tabindex="-1"></a>                D[i,:] <span class="op">=</span> i<span class="op">+</span><span class="dv">1</span></span>
+<span id="cb8-29"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:</span>
+<span id="cb8-30"><a href="" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(m): <span class="co"># j is index -&gt; MATLAB_j - 1</span></span>
+<span id="cb8-31"><a href="" aria-hidden="true" tabindex="-1"></a>                    C[i,j]    <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb8-32"><a href="" aria-hidden="true" tabindex="-1"></a>                    D[i,j]    <span class="op">=</span> nextstate(i,j,Nx,Ny,Ntheta,Mx,My,Mtheta)</span>
+<span id="cb8-33"><a href="" aria-hidden="true" tabindex="-1"></a>                </span>
+<span id="cb8-34"><a href="" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb8-35"><a href="" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb8-36"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-37"><a href="" aria-hidden="true" tabindex="-1"></a>    [mu_,J_] <span class="op">=</span> dpsp( D, C, Jh)</span>
+<span id="cb8-38"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-39"><a href="" aria-hidden="true" tabindex="-1"></a>    J  <span class="op">=</span> np.zeros((Nx,Ny,Ntheta))</span>
+<span id="cb8-40"><a href="" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> [[[[] <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(Ntheta)] <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(Ny)] <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(Nx)]</span>
+<span id="cb8-41"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb8-42"><a href="" aria-hidden="true" tabindex="-1"></a>        [ix,iy,itheta]    <span class="op">=</span> state2coord(i,Ny,Ntheta)</span>
+<span id="cb8-43"><a href="" aria-hidden="true" tabindex="-1"></a>        J[ix<span class="op">-</span><span class="dv">1</span>,iy<span class="op">-</span><span class="dv">1</span>,itheta<span class="op">-</span><span class="dv">1</span>]   <span class="op">=</span> J_[i] </span>
+<span id="cb8-44"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> flag <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb8-45"><a href="" aria-hidden="true" tabindex="-1"></a>            [jx,jy,jtheta]     <span class="op">=</span> action2coord(mu_[i][<span class="dv">0</span>],My,Mtheta)</span>
+<span id="cb8-46"><a href="" aria-hidden="true" tabindex="-1"></a>            mu[ix<span class="op">-</span><span class="dv">1</span>][iy<span class="op">-</span><span class="dv">1</span>][itheta<span class="op">-</span><span class="dv">1</span>] <span class="op">=</span> [jx<span class="op">-</span><span class="dv">1</span>,jy<span class="op">-</span>(My<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span><span class="dv">2</span><span class="op">-</span><span class="dv">1</span>,jtheta<span class="op">-</span>(Mtheta<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span><span class="dv">2</span><span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb8-47"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>: </span>
+<span id="cb8-48"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(mu_[i])):</span>
+<span id="cb8-49"><a href="" aria-hidden="true" tabindex="-1"></a>                [jx,jy,jtheta]       <span class="op">=</span> action2coord(mu_[i][j],My,Mtheta)</span>
+<span id="cb8-50"><a href="" aria-hidden="true" tabindex="-1"></a>                mu[ix<span class="op">-</span><span class="dv">1</span>][iy<span class="op">-</span><span class="dv">1</span>][itheta<span class="op">-</span><span class="dv">1</span>][j,<span class="dv">0</span>:<span class="dv">2</span>] <span class="op">=</span> [jx<span class="op">-</span><span class="dv">1</span>,jy<span class="op">-</span>(My<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span><span class="dv">2</span><span class="op">-</span><span class="dv">1</span>,jtheta<span class="op">-</span>(Mtheta<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span><span class="dv">2</span><span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb8-51"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-52"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> mu,J       </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="immune-jungle" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co">## </span></span>
+<span id="cb9-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># The follwoing is a key function determining when the metal touches the wire.</span></span>
+<span id="cb9-3"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> metaltoucheswire(ix,iy,itheta,Nx,Ntheta,wirefunction):</span>
+<span id="cb9-5"><a href="" aria-hidden="true" tabindex="-1"></a>    spacingfingers <span class="op">=</span> <span class="fl">4.1</span></span>
+<span id="cb9-6"><a href="" aria-hidden="true" tabindex="-1"></a>    deltatheta  <span class="op">=</span> np.pi<span class="op">/</span>(Ntheta<span class="op">+</span><span class="dv">1</span>)</span>
+<span id="cb9-7"><a href="" aria-hidden="true" tabindex="-1"></a>    theta       <span class="op">=</span> itheta<span class="op">*</span>deltatheta<span class="op">-</span>np.pi<span class="op">/</span><span class="dv">2</span></span>
+<span id="cb9-8"><a href="" aria-hidden="true" tabindex="-1"></a>    deltawire   <span class="op">=</span> (Nx<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span>(wirefunction.shape[<span class="dv">0</span>]<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb9-9"><a href="" aria-hidden="true" tabindex="-1"></a>    xwire       <span class="op">=</span> ix</span>
+<span id="cb9-10"><a href="" aria-hidden="true" tabindex="-1"></a>    ywire       <span class="op">=</span> wirefunction[<span class="bu">round</span>((xwire<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span>deltawire)]</span>
+<span id="cb9-11"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> np.<span class="bu">abs</span>(ywire<span class="op">-</span>iy)<span class="op">&gt;</span>spacingfingers:</span>
+<span id="cb9-12"><a href="" aria-hidden="true" tabindex="-1"></a>        boolean <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb9-13"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb9-14"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="co"># four corners</span></span>
+<span id="cb9-15"><a href="" aria-hidden="true" tabindex="-1"></a>        R  <span class="op">=</span> np.array([[np.cos(theta), <span class="op">-</span>np.sin(theta)],[np.sin(theta), np.cos(theta)]])</span>
+<span id="cb9-16"><a href="" aria-hidden="true" tabindex="-1"></a>        d  <span class="op">=</span> spacingfingers<span class="op">/</span><span class="dv">2</span></span>
+<span id="cb9-17"><a href="" aria-hidden="true" tabindex="-1"></a>        pu1 <span class="op">=</span> np.array([[ix], [iy]]) <span class="op">+</span> R<span class="op">@</span>np.array([[<span class="op">-</span>d, d]]).T</span>
+<span id="cb9-18"><a href="" aria-hidden="true" tabindex="-1"></a>        pu2 <span class="op">=</span> np.array([[ix], [iy]]) <span class="op">+</span> R<span class="op">@</span>np.array([[d, d]]).T</span>
+<span id="cb9-19"><a href="" aria-hidden="true" tabindex="-1"></a>        pl1 <span class="op">=</span> np.array([[ix], [iy]]) <span class="op">+</span> R<span class="op">@</span>np.array([[<span class="op">-</span>d, <span class="op">-</span>d]]).T</span>
+<span id="cb9-20"><a href="" aria-hidden="true" tabindex="-1"></a>        pl2 <span class="op">=</span> np.array([[ix], [iy]]) <span class="op">+</span> R<span class="op">@</span>np.array([[d, <span class="op">-</span>d]]).T</span>
+<span id="cb9-21"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> pu2[<span class="dv">0</span>, <span class="dv">0</span>] <span class="op">&lt;</span> <span class="dv">1</span> <span class="kw">or</span> pu1[<span class="dv">0</span>, <span class="dv">0</span>] <span class="op">&gt;</span> Nx: <span class="co"># if the full metal arm is outside of the environemnt possibly the wire is such that it does not touch</span></span>
+<span id="cb9-22"><a href="" aria-hidden="true" tabindex="-1"></a>            cu <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb9-23"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb9-24"><a href="" aria-hidden="true" tabindex="-1"></a>            indleftlimu  <span class="op">=</span> <span class="bu">round</span>((<span class="bu">max</span>(<span class="bu">min</span>(pu1[<span class="dv">0</span>,<span class="dv">0</span>],Nx),<span class="dv">1</span>)<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span>deltawire)</span>
+<span id="cb9-25"><a href="" aria-hidden="true" tabindex="-1"></a>            indrightlimu <span class="op">=</span> <span class="bu">round</span>((<span class="bu">max</span>(<span class="bu">min</span>(pu2[<span class="dv">0</span>,<span class="dv">0</span>],Nx),<span class="dv">1</span>)<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span>deltawire)</span>
+<span id="cb9-26"><a href="" aria-hidden="true" tabindex="-1"></a>            indtestu     <span class="op">=</span> np.arange(indleftlimu,indrightlimu<span class="op">+</span><span class="dv">1</span>)</span>
+<span id="cb9-27"><a href="" aria-hidden="true" tabindex="-1"></a>            xwireu <span class="op">=</span> np.zeros((<span class="dv">1</span>,indtestu.shape[<span class="dv">0</span>]))</span>
+<span id="cb9-28"><a href="" aria-hidden="true" tabindex="-1"></a>            ywireu <span class="op">=</span> np.zeros((<span class="dv">1</span>,indtestu.shape[<span class="dv">0</span>]))</span>
+<span id="cb9-29"><a href="" aria-hidden="true" tabindex="-1"></a>            ymetalu <span class="op">=</span> np.zeros((<span class="dv">1</span>,indtestu.shape[<span class="dv">0</span>]))</span>
+<span id="cb9-30"><a href="" aria-hidden="true" tabindex="-1"></a>            cu <span class="op">=</span> np.zeros((<span class="dv">1</span>,indtestu.shape[<span class="dv">0</span>]))</span>
+<span id="cb9-31"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(indtestu.shape[<span class="dv">0</span>]):</span>
+<span id="cb9-32"><a href="" aria-hidden="true" tabindex="-1"></a>                xwireu[<span class="dv">0</span>, i]   <span class="op">=</span> <span class="dv">1</span><span class="op">+</span>(indtestu[i])<span class="op">*</span>deltawire</span>
+<span id="cb9-33"><a href="" aria-hidden="true" tabindex="-1"></a>                ywireu[<span class="dv">0</span>, i]   <span class="op">=</span> wirefunction[indtestu[i]]</span>
+<span id="cb9-34"><a href="" aria-hidden="true" tabindex="-1"></a>                ymetalu[<span class="dv">0</span>, i]  <span class="op">=</span> pu1[<span class="dv">1</span>, <span class="dv">0</span>]<span class="op">+</span> (pu2[<span class="dv">1</span>, <span class="dv">0</span>]<span class="op">-</span>pu1[<span class="dv">1</span>, <span class="dv">0</span>])<span class="op">/</span>(pu2[<span class="dv">0</span>, <span class="dv">0</span>]<span class="op">-</span>pu1[<span class="dv">0</span>, <span class="dv">0</span>])<span class="op">*</span>(xwireu[<span class="dv">0</span>, i]<span class="op">-</span>pu1[<span class="dv">0</span>, <span class="dv">0</span>])</span>
+<span id="cb9-35"><a href="" aria-hidden="true" tabindex="-1"></a>                cu[<span class="dv">0</span>, i]       <span class="op">=</span> ymetalu[<span class="dv">0</span>, i]<span class="op">-</span>ywireu[<span class="dv">0</span>, i] <span class="op">&gt;</span> <span class="dv">0</span></span>
+<span id="cb9-36"><a href="" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb9-37"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> pl2[<span class="dv">0</span>, <span class="dv">0</span>] <span class="op">&lt;</span> <span class="dv">1</span> <span class="kw">or</span> pl1[<span class="dv">0</span>, <span class="dv">0</span>] <span class="op">&gt;</span> Nx:</span>
+<span id="cb9-38"><a href="" aria-hidden="true" tabindex="-1"></a>            cl <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb9-39"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb9-40"><a href="" aria-hidden="true" tabindex="-1"></a>            indleftliml  <span class="op">=</span> <span class="bu">round</span>((<span class="bu">max</span>(<span class="bu">min</span>(pl1[<span class="dv">0</span>,<span class="dv">0</span>],Nx),<span class="dv">1</span>)<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span>deltawire)</span>
+<span id="cb9-41"><a href="" aria-hidden="true" tabindex="-1"></a>            indrightliml <span class="op">=</span> <span class="bu">round</span>((<span class="bu">max</span>(<span class="bu">min</span>(pl2[<span class="dv">0</span>,<span class="dv">0</span>],Nx),<span class="dv">1</span>)<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span>deltawire)</span>
+<span id="cb9-42"><a href="" aria-hidden="true" tabindex="-1"></a>            indtestl     <span class="op">=</span> np.arange(indleftliml,indrightliml<span class="op">+</span><span class="dv">1</span>)</span>
+<span id="cb9-43"><a href="" aria-hidden="true" tabindex="-1"></a>            xwirel <span class="op">=</span> np.zeros((<span class="dv">1</span>,indtestl.shape[<span class="dv">0</span>]))</span>
+<span id="cb9-44"><a href="" aria-hidden="true" tabindex="-1"></a>            ywirel <span class="op">=</span> np.zeros((<span class="dv">1</span>,indtestl.shape[<span class="dv">0</span>]))</span>
+<span id="cb9-45"><a href="" aria-hidden="true" tabindex="-1"></a>            ymetall <span class="op">=</span> np.zeros((<span class="dv">1</span>,indtestl.shape[<span class="dv">0</span>]))</span>
+<span id="cb9-46"><a href="" aria-hidden="true" tabindex="-1"></a>            cl<span class="op">=</span> np.zeros((<span class="dv">1</span>,indtestl.shape[<span class="dv">0</span>]))</span>
+<span id="cb9-47"><a href="" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(indtestl.shape[<span class="dv">0</span>]):</span>
+<span id="cb9-48"><a href="" aria-hidden="true" tabindex="-1"></a>                xwirel[<span class="dv">0</span>, i]   <span class="op">=</span> <span class="dv">1</span><span class="op">+</span>(indtestl[i])<span class="op">*</span>deltawire</span>
+<span id="cb9-49"><a href="" aria-hidden="true" tabindex="-1"></a>                ywirel[<span class="dv">0</span>, i]   <span class="op">=</span> wirefunction[indtestl[i]]</span>
+<span id="cb9-50"><a href="" aria-hidden="true" tabindex="-1"></a>                ymetall[<span class="dv">0</span>, i]  <span class="op">=</span> pl1[<span class="dv">1</span>, <span class="dv">0</span>]<span class="op">+</span> (pl2[<span class="dv">1</span>, <span class="dv">0</span>]<span class="op">-</span>pl1[<span class="dv">1</span>, <span class="dv">0</span>])<span class="op">/</span>(pl2[<span class="dv">0</span>, <span class="dv">0</span>]<span class="op">-</span>pl1[<span class="dv">0</span>, <span class="dv">0</span>])<span class="op">*</span>(xwirel[<span class="dv">0</span>, i]<span class="op">-</span>pl1[<span class="dv">0</span>, <span class="dv">0</span>])</span>
+<span id="cb9-51"><a href="" aria-hidden="true" tabindex="-1"></a>                cl[<span class="dv">0</span>, i]       <span class="op">=</span> ymetall[<span class="dv">0</span>, i]<span class="op">-</span>ywirel[<span class="dv">0</span>, i] <span class="op">&lt;</span> <span class="dv">0</span></span>
+<span id="cb9-52"><a href="" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb9-53"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> np.<span class="bu">all</span>(cu <span class="op">==</span> <span class="dv">1</span>) <span class="op">&amp;</span> np.<span class="bu">all</span>(cl <span class="op">==</span> <span class="dv">1</span>):</span>
+<span id="cb9-54"><a href="" aria-hidden="true" tabindex="-1"></a>            boolean <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb9-55"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb9-56"><a href="" aria-hidden="true" tabindex="-1"></a>            boolean <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb9-57"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-58"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> boolean        </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="awful-ceremony" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co">## </span></span>
+<span id="cb10-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># This function plots the environment and output a handler for the metal object </span></span>
+<span id="cb10-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># to be used by other functions.</span></span>
+<span id="cb10-4"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plotenvironment(Nx,Ny,Ntheta,wirefunction,ax):</span>
+<span id="cb10-6"><a href="" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-7"><a href="" aria-hidden="true" tabindex="-1"></a>    deltawire  <span class="op">=</span> (Nx<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span>((wirefunction.shape[<span class="dv">0</span>])<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb10-8"><a href="" aria-hidden="true" tabindex="-1"></a>    spacingfingers <span class="op">=</span> <span class="fl">4.1</span></span>
+<span id="cb10-9"><a href="" aria-hidden="true" tabindex="-1"></a>    d  <span class="op">=</span> spacingfingers<span class="op">/</span><span class="dv">2</span></span>
+<span id="cb10-10"><a href="" aria-hidden="true" tabindex="-1"></a>    plt.plot( [<span class="dv">0</span>, <span class="dv">0</span>],[<span class="dv">0</span>, Ny<span class="op">+</span><span class="dv">1</span>],linewidth<span class="op">=</span><span class="dv">2</span>,color<span class="op">=</span><span class="st">'black'</span>)</span>
+<span id="cb10-11"><a href="" aria-hidden="true" tabindex="-1"></a>    plt.plot( [Nx<span class="op">+</span><span class="dv">1</span>, Nx<span class="op">+</span><span class="dv">1</span>],[<span class="dv">0</span>, Ny<span class="op">+</span><span class="dv">1</span>], linewidth<span class="op">=</span><span class="dv">2</span>, color<span class="op">=</span><span class="st">'black'</span>)</span>
+<span id="cb10-12"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> ix <span class="kw">in</span> <span class="bu">range</span>(Nx):</span>
+<span id="cb10-13"><a href="" aria-hidden="true" tabindex="-1"></a>        plt.plot( [ix,ix],[<span class="dv">0</span>, Ny<span class="op">+</span><span class="dv">1</span>], linewidth<span class="op">=</span><span class="dv">1</span>, color<span class="op">=</span><span class="st">'black'</span>)</span>
+<span id="cb10-14"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> iy <span class="kw">in</span> <span class="bu">range</span>(Ny):</span>
+<span id="cb10-16"><a href="" aria-hidden="true" tabindex="-1"></a>        plt.plot([<span class="dv">0</span>, Nx<span class="op">+</span><span class="dv">1</span>],[iy, iy], linewidth<span class="op">=</span><span class="dv">1</span>, color<span class="op">=</span><span class="st">'black'</span>)</span>
+<span id="cb10-17"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="" aria-hidden="true" tabindex="-1"></a>    plt.plot([<span class="dv">0</span>, Nx<span class="op">+</span><span class="dv">1</span>],[<span class="dv">0</span>, <span class="dv">0</span>], linewidth<span class="op">=</span><span class="dv">2</span>, color<span class="op">=</span><span class="st">'black'</span>)</span>
+<span id="cb10-19"><a href="" aria-hidden="true" tabindex="-1"></a>    plt.plot([<span class="dv">0</span>, Nx<span class="op">+</span><span class="dv">1</span>],[Ny<span class="op">+</span><span class="dv">1</span>, Ny<span class="op">+</span><span class="dv">1</span>], linewidth<span class="op">=</span><span class="dv">2</span>, color<span class="op">=</span><span class="st">'black'</span>)</span>
+<span id="cb10-20"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-21"><a href="" aria-hidden="true" tabindex="-1"></a>    x_ <span class="op">=</span> np.arange(<span class="dv">1</span>,Nx<span class="op">+</span>deltawire,deltawire)</span>
+<span id="cb10-22"><a href="" aria-hidden="true" tabindex="-1"></a>    plt.plot(x_,wirefunction, linewidth<span class="op">=</span><span class="dv">2</span>, color<span class="op">=</span><span class="st">'red'</span>)</span>
+<span id="cb10-23"><a href="" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-24"><a href="" aria-hidden="true" tabindex="-1"></a>    tfinger1 <span class="op">=</span> mpl.lines.Line2D([<span class="op">-</span>d ,d],[d, d])</span>
+<span id="cb10-25"><a href="" aria-hidden="true" tabindex="-1"></a>    tfinger2 <span class="op">=</span> mpl.lines.Line2D([<span class="op">-</span>d ,d],[<span class="op">-</span>d, <span class="op">-</span>d])</span>
+<span id="cb10-26"><a href="" aria-hidden="true" tabindex="-1"></a>    tcircle  <span class="op">=</span> mpl.patches.Circle([<span class="dv">0</span>,<span class="dv">0</span>],<span class="fl">0.5</span>)</span>
+<span id="cb10-27"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-28"><a href="" aria-hidden="true" tabindex="-1"></a>    ax.add_line(tfinger1)</span>
+<span id="cb10-29"><a href="" aria-hidden="true" tabindex="-1"></a>    ax.add_line(tfinger2)</span>
+<span id="cb10-30"><a href="" aria-hidden="true" tabindex="-1"></a>    ax.add_patch(tcircle)</span>
+<span id="cb10-31"><a href="" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-32"><a href="" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">'x'</span>)</span>
+<span id="cb10-33"><a href="" aria-hidden="true" tabindex="-1"></a>    ax.set_ylabel(<span class="st">'y'</span>)</span>
+<span id="cb10-34"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-35"><a href="" aria-hidden="true" tabindex="-1"></a>    tmetal <span class="op">=</span> [tfinger1, tfinger2, tcircle]</span>
+<span id="cb10-36"><a href="" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-37"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span>  tmetal</span>
+<span id="cb10-38"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-39"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-40"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co">## </span></span>
+<span id="cb10-41"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># This functions plots the metal.</span></span>
+<span id="cb10-42"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-43"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plotmetal(pmetal,tmetal,Ntheta,ax):</span>
+<span id="cb10-44"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-45"><a href="" aria-hidden="true" tabindex="-1"></a>    itheta     <span class="op">=</span> pmetal[<span class="dv">2</span>]</span>
+<span id="cb10-46"><a href="" aria-hidden="true" tabindex="-1"></a>    deltatheta <span class="op">=</span> np.pi<span class="op">/</span>(Ntheta<span class="op">+</span><span class="dv">1</span>)</span>
+<span id="cb10-47"><a href="" aria-hidden="true" tabindex="-1"></a>    theta      <span class="op">=</span> itheta<span class="op">*</span>deltatheta<span class="op">-</span>np.pi<span class="op">/</span><span class="dv">2</span></span>
+<span id="cb10-48"><a href="" aria-hidden="true" tabindex="-1"></a>    rot <span class="op">=</span>mpl.transforms.Affine2D().rotate(theta).translate(pmetal[<span class="dv">0</span>],pmetal[<span class="dv">1</span>]) <span class="op">+</span> ax.transData</span>
+<span id="cb10-49"><a href="" aria-hidden="true" tabindex="-1"></a>    tmetal[<span class="dv">0</span>].set_transform(rot)</span>
+<span id="cb10-50"><a href="" aria-hidden="true" tabindex="-1"></a>    tmetal[<span class="dv">1</span>].set_transform(rot)</span>
+<span id="cb10-51"><a href="" aria-hidden="true" tabindex="-1"></a>    tmetal[<span class="dv">2</span>].set_transform(rot)</span>
+<span id="cb10-52"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-53"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> liveplot(Nx,Ny,Ntheta,wirefunction,pmetal):</span>
+<span id="cb10-54"><a href="" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-55"><a href="" aria-hidden="true" tabindex="-1"></a>    f, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>)</span>
+<span id="cb10-56"><a href="" aria-hidden="true" tabindex="-1"></a>    clear_output(wait<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb10-57"><a href="" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-58"><a href="" aria-hidden="true" tabindex="-1"></a>    tmetal <span class="op">=</span> plotenvironment(Nx,Ny,Ntheta,wirefunction,ax)</span>
+<span id="cb10-59"><a href="" aria-hidden="true" tabindex="-1"></a>    plotmetal(pmetal,tmetal,Ntheta,ax)</span>
+<span id="cb10-60"><a href="" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-61"><a href="" aria-hidden="true" tabindex="-1"></a>    plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="distinct-building" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-2"><a href="" aria-hidden="true" tabindex="-1"></a>Nx     <span class="op">=</span> <span class="dv">30</span></span>
+<span id="cb11-3"><a href="" aria-hidden="true" tabindex="-1"></a>Ny     <span class="op">=</span> <span class="dv">20</span></span>
+<span id="cb11-4"><a href="" aria-hidden="true" tabindex="-1"></a>Ntheta <span class="op">=</span> <span class="dv">17</span></span>
+<span id="cb11-5"><a href="" aria-hidden="true" tabindex="-1"></a>Mx     <span class="op">=</span> <span class="dv">4</span></span>
+<span id="cb11-6"><a href="" aria-hidden="true" tabindex="-1"></a>My     <span class="op">=</span> <span class="dv">5</span></span>
+<span id="cb11-7"><a href="" aria-hidden="true" tabindex="-1"></a>Mtheta <span class="op">=</span> <span class="dv">5</span></span>
+<span id="cb11-8"><a href="" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> Nx<span class="op">*</span>Ny<span class="op">*</span>Ntheta</span>
+<span id="cb11-9"><a href="" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> Mx<span class="op">*</span>My<span class="op">*</span>Mtheta</span>
+<span id="cb11-10"><a href="" aria-hidden="true" tabindex="-1"></a>deltawire <span class="op">=</span> <span class="fl">0.1</span></span>
+<span id="cb11-11"><a href="" aria-hidden="true" tabindex="-1"></a>x_ <span class="op">=</span> np.arange(<span class="dv">1</span>, Nx<span class="op">+</span>deltawire, deltawire) </span>
+<span id="cb11-12"><a href="" aria-hidden="true" tabindex="-1"></a>wirefunction <span class="op">=</span> <span class="dv">10</span><span class="op">*</span>np.ones((x_.shape))<span class="op">+</span><span class="dv">5</span><span class="op">*</span>np.sin(<span class="fl">0.2</span><span class="op">*</span>x_)</span>
+<span id="cb11-13"><a href="" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(metaltoucheswire(<span class="dv">5</span>,<span class="dv">15</span>,<span class="dv">10</span>,Nx,Ntheta,wirefunction))</span>
+<span id="cb11-14"><a href="" aria-hidden="true" tabindex="-1"></a>liveplot(Nx,Ny,Ntheta,wirefunction,[<span class="dv">5</span>, <span class="dv">15</span>, <span class="dv">14</span>])</span>
+<span id="cb11-15"><a href="" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(metaltoucheswire(<span class="dv">5</span>,<span class="dv">15</span>,<span class="dv">14</span>,Nx,Ntheta,wirefunction))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="BuzwireChallenge_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>1</code></pre>
+</div>
+</div>
+<section id="deterministic-model" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="deterministic-model"><span class="header-section-number">1</span> Deterministic model</h2>
+<p>A purely kinematic model for the robot holding the metal loop is considered and it is assumed that the joint angles are such that the robot can reach all the configurations of interest, therefore (using the robot kinematics) we can assume that <span class="math inline">\(x\)</span>, <span class="math inline">\(y\)</span>, and <span class="math inline">\(\theta\)</span> can be controlled directly. The following discrete-time model is considered</p>
+<p><span class="math display">\[  p_{x,k+1} =\min\{\max\{p_{x,k}+ u_{x,k},1\},N_x\} \]</span></p>
+<p><span class="math display">\[ p_{y,k+1} =\min\{\max\{p_{y,k}+ u_{y,k},1\},N_y \}\]</span></p>
+<p><span class="math display">\[\theta_{k+1} =\min\{\max\{\theta_k+ \frac{ \pi}{N_\theta+1} u_{\theta,k},-\pi
+\frac{ (N_\theta-1)/2}{N_\theta+1} \},\pi\frac{ (N_\theta-1)/2}{N_\theta+1}
+\}\]</span></p>
+<p>with <span class="math inline">\(u_{x,k}\in \{0,1,\dots,M_x-1\}\)</span>, <span class="math inline">\(u_{y,k}\in \{-(M_y-1)/2,-(M_y-1)/2+1,\dots,(M_y-1)/2\}\)</span>, <span class="math inline">\(u_{\theta,k}\in \{-(M_\theta-1)/2,-(M_\theta-1)/2+1,\dots,(M_\theta-1)/2\}\)</span> for odd <span class="math inline">\(M_y\)</span> and <span class="math inline">\(M_\theta\)</span>. Stochastic model A more advanced stochastic model can specify that even if an action tries to enforce that the metal loop arrives at a given configuration, this might not be the case due to disturbances. Disturbances are assumed to only change the position and not the angle. The exact discrete time model considered is the following</p>
+<p><span class="math display">\[  p_{x,k+1} =\min \{\max\{p_{x,k}+ u_{x,k}+d_{x,k},1\},N_x\} \]</span></p>
+<p><span class="math display">\[ p_{y,k+1} =\min\{\max\{p_{y,k}+ u_{y,k}+d_{y,k},1\},N_y \}\]</span></p>
+<p><span class="math display">\[\theta_{k+1} =\min\{\max\{\theta_k+ \frac{ \pi}{N_\theta+1} u_{\theta,k},-\pi
+\frac{ (N_\theta-1)/2}{N_\theta+1} \},\pi\frac{ (N_\theta-1)/2}{N_\theta+1}
+\}\]</span></p>
+<p>where <span class="math inline">\(d_{x,k} \in \{-1,0,1\}\)</span> and <span class="math inline">\(d_{y,k}\in \{-1,0,1\}\)</span>. The probabilities of all the possible events are summarized in a vector <span class="math inline">\(p = [p_1 \; p_2 \, p_3
+\,\dots p_9]\)</span></p>
+<p><span class="math display">\[ \text{Prob}[(d_{x,k},d_{y,k})=c_i]=p_i, i \in \{1,\dots,9\},\]</span></p>
+<p>with <span class="math inline">\(c_1=(-1,1)\)</span>, <span class="math inline">\(c_2=(0,1)\)</span>, <span class="math inline">\(c_3=(1,1)\)</span>, <span class="math inline">\(c_4=(-1,0)\)</span>, <span class="math inline">\(c_5=(0,0)\)</span>, <span class="math inline">\(c_6=(1,0)\)</span>, <span class="math inline">\(c_7=(-1,-1)\)</span>, <span class="math inline">\(c_8=(0,-1)\)</span>, <span class="math inline">\(c_9=(1,-1)\)</span>.</p>
+<p>Since the model is stochastic it might be the case that collisions do occur, even if uninteded (i.e., these would not occur if <span class="math inline">\((d_{x,k},d_{y,k})=(0,0)\)</span> ). If a collision occurs the game stops and a typically large positive penalty <span class="math inline">\(C_W\)</span> is incurred. Note that if the metal wire is far from the end goal it might be optimal to hit the wire (or risk to hit it) and incur a penaly CW instead of incurring in a penalty coincinding with the time to reach the end.</p>
+<p><em>Implementation</em></p>
+<p>The following script allows to visualize the behavior of the dynamic programming (stochflag = 0) and stochastic dynamic programming (stochflag = 1) policies for the parameters given above (note that these will not work if the parameters are changed). Note that the optimal policies and optimal paths are not unique (only the costs-to-go and optimal number of steps are unique) and therefore your implementation might and in general will lead to a different path.</p>
+<div id="wrong-fifth" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="" aria-hidden="true" tabindex="-1"></a>stochflag <span class="op">=</span> <span class="dv">0</span>  <span class="co">#0 DP, 1 -Stoch DP</span></span>
+<span id="cb13-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"stochflag </span><span class="sc">{</span>stochflag<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb13-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> stochflag <span class="op">==</span> <span class="dv">1</span>:</span>
+<span id="cb13-4"><a href="" aria-hidden="true" tabindex="-1"></a>    CW <span class="op">=</span> <span class="dv">14</span></span>
+<span id="cb13-5"><a href="" aria-hidden="true" tabindex="-1"></a>    p  <span class="op">=</span> np.array([[<span class="fl">0.04</span>, <span class="fl">0.12</span>, <span class="fl">0.04</span>, <span class="fl">0.12</span>, <span class="fl">0.36</span>, <span class="fl">0.12</span>, <span class="fl">0.04</span>, <span class="fl">0.12</span>, <span class="fl">0.04</span>]])</span>
+<span id="cb13-6"><a href="" aria-hidden="true" tabindex="-1"></a>    mu, J <span class="op">=</span> buzzwiredpstoch(Nx, Ny, Ntheta, Mx, My, Mtheta, wirefunction, CW, p)</span>
+<span id="cb13-7"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb13-8"><a href="" aria-hidden="true" tabindex="-1"></a>    mu,J <span class="op">=</span> buzzwiredp(Nx, Ny, Ntheta, Mx, My, Mtheta, wirefunction)</span>
+<span id="cb13-9"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># optimal time (only for deterministic dp</span></span>
+<span id="cb13-11"><a href="" aria-hidden="true" tabindex="-1"></a>x0 <span class="op">=</span> np.array([[<span class="dv">1</span>, <span class="dv">10</span>, <span class="dv">14</span>]])</span>
+<span id="cb13-12"><a href="" aria-hidden="true" tabindex="-1"></a>T  <span class="op">=</span> J[x0[<span class="dv">0</span>,<span class="dv">0</span>]<span class="op">-</span><span class="dv">1</span>,x0[<span class="dv">0</span>,<span class="dv">1</span>]<span class="op">-</span><span class="dv">1</span>,x0[<span class="dv">0</span>,<span class="dv">2</span>]<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb13-13"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-14"><a href="" aria-hidden="true" tabindex="-1"></a>X,Y   <span class="op">=</span> np.meshgrid(np.arange(<span class="dv">1</span>,Nx<span class="op">+</span><span class="dv">1</span>),np.arange(<span class="dv">1</span>,Ny<span class="op">+</span><span class="dv">1</span>), indexing<span class="op">=</span><span class="st">'xy'</span>)</span>
+<span id="cb13-15"><a href="" aria-hidden="true" tabindex="-1"></a>J_2     <span class="op">=</span> np.inf<span class="op">*</span>np.ones((Ny,Nx))</span>
+<span id="cb13-16"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ix <span class="kw">in</span> <span class="bu">range</span>(Nx):</span>
+<span id="cb13-17"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> iy <span class="kw">in</span> <span class="bu">range</span>(Ny):</span>
+<span id="cb13-18"><a href="" aria-hidden="true" tabindex="-1"></a>        J_2[iy,ix] <span class="op">=</span> np.<span class="bu">min</span>(J[ix,iy,:])</span>
+<span id="cb13-19"><a href="" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-20"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-21"><a href="" aria-hidden="true" tabindex="-1"></a>J_2[J_2 <span class="op">==</span> np.inf] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb13-22"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-23"><a href="" aria-hidden="true" tabindex="-1"></a>fig1 <span class="op">=</span> plt.figure()</span>
+<span id="cb13-24"><a href="" aria-hidden="true" tabindex="-1"></a>ax1 <span class="op">=</span> Axes3D(fig1)</span>
+<span id="cb13-25"><a href="" aria-hidden="true" tabindex="-1"></a>ax1.plot_surface(X,Y,J_2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>stochflag 0</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="BuzwireChallenge_files/figure-html/cell-13-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="terminal-college" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># animation</span></span>
+<span id="cb15-2"><a href="" aria-hidden="true" tabindex="-1"></a>u <span class="op">=</span> np.zeros((<span class="dv">3</span>,<span class="dv">0</span>))</span>
+<span id="cb15-3"><a href="" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> x0.T</span>
+<span id="cb15-4"><a href="" aria-hidden="true" tabindex="-1"></a>k <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb15-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span>(<span class="va">True</span>):</span>
+<span id="cb15-6"><a href="" aria-hidden="true" tabindex="-1"></a>    liveplot(Nx,Ny,Ntheta,wirefunction,np.array([x[<span class="dv">0</span>,k], x[<span class="dv">1</span>,k], x[<span class="dv">2</span>,k]]))</span>
+<span id="cb15-7"><a href="" aria-hidden="true" tabindex="-1"></a>    u <span class="op">=</span> np.hstack((u, np.atleast_2d(mu[<span class="bu">int</span>(x[<span class="dv">0</span>,k])<span class="op">-</span><span class="dv">1</span>][<span class="bu">int</span>(x[<span class="dv">1</span>,k])<span class="op">-</span><span class="dv">1</span>][<span class="bu">int</span>(x[<span class="dv">2</span>,k])<span class="op">-</span><span class="dv">1</span>]).T))</span>
+<span id="cb15-8"><a href="" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> np.hstack((x, np.array([ <span class="op">\</span></span>
+<span id="cb15-9"><a href="" aria-hidden="true" tabindex="-1"></a>            [<span class="bu">min</span>(x[<span class="dv">0</span>,k]<span class="op">+</span>u[<span class="dv">0</span>,k],Nx)], <span class="op">\</span></span>
+<span id="cb15-10"><a href="" aria-hidden="true" tabindex="-1"></a>            [<span class="bu">min</span>(<span class="bu">max</span>(x[<span class="dv">1</span>,k]<span class="op">+</span>u[<span class="dv">1</span>,k],<span class="dv">1</span>),Ny)], <span class="op">\</span></span>
+<span id="cb15-11"><a href="" aria-hidden="true" tabindex="-1"></a>            [<span class="bu">min</span>(<span class="bu">max</span>(x[<span class="dv">2</span>,k]<span class="op">+</span>u[<span class="dv">2</span>,k],<span class="dv">1</span>),Ntheta)] <span class="op">\</span></span>
+<span id="cb15-12"><a href="" aria-hidden="true" tabindex="-1"></a>        ])))</span>
+<span id="cb15-13"><a href="" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> x[<span class="dv">0</span>,k<span class="op">+</span><span class="dv">1</span>] <span class="op">==</span> Nx:</span>
+<span id="cb15-14"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span></span>
+<span id="cb15-15"><a href="" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> k<span class="op">+</span><span class="dv">1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="BuzwireChallenge_files/figure-html/cell-14-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="academic-cancellation" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co">## </span></span>
+<span id="cb16-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># The following code allows you to check the behavior of the Dijkstra's algorithm.</span></span>
+<span id="cb16-3"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="" aria-hidden="true" tabindex="-1"></a>x0            <span class="op">=</span> np.array([[<span class="dv">1</span>, <span class="dv">10</span>, <span class="dv">14</span>]])</span>
+<span id="cb16-5"><a href="" aria-hidden="true" tabindex="-1"></a>optpath <span class="op">=</span> buzzwiredijkstra(Nx, Ny, Ntheta, Mx, My, Mtheta, wirefunction, x0)[<span class="dv">0</span>]</span>
+<span id="cb16-6"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># figure</span></span>
+<span id="cb16-8"><a href="" aria-hidden="true" tabindex="-1"></a>liveplot(Nx,Ny,Ntheta,wirefunction,np.array([x[<span class="dv">0</span>,k<span class="op">+</span><span class="dv">1</span>], x[<span class="dv">1</span>,k<span class="op">+</span><span class="dv">1</span>], x[<span class="dv">2</span>,k<span class="op">+</span><span class="dv">1</span>]]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="BuzwireChallenge_files/figure-html/cell-15-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="robust-trigger" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co">## </span></span>
+<span id="cb17-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb17-3"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="" aria-hidden="true" tabindex="-1"></a>Toptpath      <span class="op">=</span> optpath.shape[<span class="dv">0</span>]</span>
+<span id="cb17-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(Toptpath):</span>
+<span id="cb17-6"><a href="" aria-hidden="true" tabindex="-1"></a>    liveplot(Nx,Ny,Ntheta,wirefunction,np.array([optpath[k,<span class="dv">0</span>], optpath[k,<span class="dv">1</span>], optpath[k,<span class="dv">2</span>]]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="BuzwireChallenge_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

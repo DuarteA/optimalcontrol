@@ -1,0 +1,60 @@
+---
+title: "4SC000 -- Optimal Control and Reinforcement Learning"
+subtitle: "Course materials -- Eindhoven University of Technology"
+format:
+  html:
+    toc: false
+---
+
+<!--
+Landing page for the rendered site. Added 2026-10-02 so the published
+site has a real entry point (the _output/index.html that existed before
+was a stale leftover from an earlier index.qmd and had an empty body).
+
+html only on purpose: there is no reason to produce an index.pdf, and
+adding `pdf` here would put this page in the pdf render path too.
+
+Linked targets are the RENDERED .html files, so the relative links
+resolve inside _output (and therefore on GitHub Pages / any static
+host). Templates (lecture-template.qmd, exercise-template.qmd) and the
+unit 9 deck are rendered by the project but deliberately not linked
+here.
+
+Keep the table in sync when a unit is added: one row per unit, four
+columns of links.
+-->
+
+Each unit comes in three parallel forms: a **slide deck** used in the
+lecture, a set of **notes** written as connected prose for reading on
+their own, and a sheet of **exercises** with worked solutions. Units
+that have accompanying code also have a page of **Jupyter notebooks**
+that can be downloaded and run.
+
+The notes carry interactive demonstrations -- collapsible panels with
+sliders and animations -- that are not in the slides. They need
+JavaScript, so they only work in the HTML version of the notes.
+
+::: {.callout-note title="Draft under review"}
+These materials are being revised. Comments on anything -- content,
+ordering, notation, the interactive demos, typos in the captions -- are
+welcome.
+:::
+
+## Units
+
+| | Notes | Slides | Exercises | Code |
+|:--|:--|:--|:--|:--|
+| **1 -- Introduction to optimal control and the dynamic programming algorithm** | [notes](notes/unit1-notes.html) | [slides](lectures/lecture01-introduction-and-dp.html) | [exercises](exercises/unit1-exercises.html) | [notebooks](code/unit1/notebooks.html) |
+| **2 -- Stochastic dynamic programming and applications** | [notes](notes/unit2-notes.html) | [slides](lectures/lecture02-stochastic-dp.html) | [exercises](exercises/unit2-exercises.html) | [notebooks](code/unit2/notebooks.html) |
+| **3 -- Search methods in graphs** | [notes](notes/unit3-notes.html) | [slides](lectures/lecture03-graph-search.html) | [exercises](exercises/unit3-exercises.html) | [notebooks](code/unit3/notebooks.html) |
+| **4 -- Partially observable Markov decision processes and the Bayes' filter** | [notes](notes/unit4-notes.html) | [slides](lectures/lecture04-pomdp-bayes-filter.html) | [exercises](exercises/unit4-exercises.html) | [notebooks](code/unit4/notebooks.html) |
+| **5 -- Stage decision problems and the linear quadratic regulator** | [notes](notes/unit5-notes.html) | [slides](lectures/lecture05-lqr.html) | [exercises](exercises/unit5-exercises.html) | [notebooks](code/unit5/notebooks.html) |
+| **6 -- Stochastic and output-feedback linear quadratic control: the Kalman filter and LQG** | [notes](notes/unit6-notes.html) | [slides](lectures/lecture06-kalman-lqg.html) | [exercises](exercises/unit6-exercises.html) | [notebooks](code/unit6/notebooks.html) |
+| **7 -- Beyond exact dynamic programming: discretization and static optimization** | [notes](notes/unit7-notes.html) | [slides](lectures/lecture07-discretization-static-opt.html) | [exercises](exercises/unit7-exercises.html) | [notebooks](code/unit7/notebooks.html) |
+| **8 -- Approximate dynamic programming: online replanning, MPC and rollout** | [notes](notes/unit8-notes.html) | [slides](lectures/lecture08-approximate-dp.html) | [exercises](exercises/unit8-exercises.html) | [notebooks](code/unit8/notebooks.html) |
+
+: Units 1--8. Each row links to the four forms of the same material. {tbl-colwidths="[40,15,15,15,15]"}
+
+A PDF of any notes or exercise page can be produced from the same source
+(`quarto render notes/unit7-notes.qmd --to pdf`); the HTML version is the
+one to read, since it is the one with the interactive panels.

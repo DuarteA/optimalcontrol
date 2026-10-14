@@ -1,0 +1,55 @@
+---
+title: "Problem Set N -- Template"
+subtitle: "4SC000 Optimal Control and Reinforcement Learning"
+format:
+  html:
+    toc: false
+  pdf: default
+---
+
+<!--
+TEMPLATE showing the collapsible-solution mechanic, not a real PS1 problem --
+I made up a small, fully-worked toy example below so the demo solution is
+guaranteed correct, rather than risking a wrong/unverified derivation of your
+actual course content. When we convert real PS1-3 problems, the format is the
+same: problem statement, then a callout div holding the solution, collapsed
+by default.
+
+Renders to both html (students click "Solution" to expand -- e.g. as a course
+webpage) and pdf (for a printable version -- collapsed callouts show as a
+clearly marked "Solution" box, still present but visually separated, useful
+if you want the PDF to double as a solutions manual).
+-->
+
+**Problem T.1** Consider a 2-stage inventory problem with state $\state_k \in \{0,1,2\}$
+(units in stock) and decision $\action_k \in \{0,1\}$ (order 0 or 1 unit),
+horizon $N=2$. The dynamics are $\state_{k+1} = \min(\state_k + \action_k, 2)$,
+and the stage cost is $g_k(\state_k,\action_k) = \action_k + (2-\state_k)$
+(ordering cost plus a shortage penalty), with terminal cost
+$\costtogo_2(\state_2) = 0$. Given $\state_0 = 0$, compute the optimal policy
+$\policy_0^\star, \policy_1^\star$ and the optimal cost using the DP
+algorithm.
+
+::: {.callout-note collapse="true" title="Solution"}
+
+Backward recursion, $\costtogo_2(\state_2)=0$ for all $\state_2$.
+
+**Stage 1** ($\state_1 \in \{0,1,2\}$):
+$$
+\costtogo_1(\state_1) = \min_{\action_1 \in \{0,1\}} \; \action_1 + (2-\state_1) + \costtogo_2(\min(\state_1+\action_1,2))
+$$
+Since $\costtogo_2 \equiv 0$, the minimizing choice is always $\action_1=0$
+(ordering never helps with one stage left and no terminal cost), giving
+$\costtogo_1(\state_1) = 2-\state_1$, $\policy_1^\star(\state_1) = 0$.
+
+**Stage 0** ($\state_0 = 0$):
+$$
+\costtogo_0(0) = \min_{\action_0\in\{0,1\}} \; \action_0 + 2 + \costtogo_1(\min(\action_0,2))
+$$
+- $\action_0=0$: cost $= 0 + 2 + \costtogo_1(0) = 0+2+2 = 4$
+- $\action_0=1$: cost $= 1 + 2 + \costtogo_1(1) = 1+2+1 = 4$
+
+Both are optimal here (tie); take $\policy_0^\star(0)=1$ to end stage 0 with
+more stock. Optimal cost $\costtogo_0(0) = 4$.
+
+:::

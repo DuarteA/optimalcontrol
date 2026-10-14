@@ -1,0 +1,87 @@
+---
+title: "Unit 2 -- Jupyter notebooks"
+subtitle: "4SC000 Optimal Control and Reinforcement Learning"
+format:
+  html:
+    toc: false
+---
+
+<!--
+Landing page for the Unit 2 notebooks, linked from the header of
+notes/unit2-notes.qmd -- same pattern as code/unit1/notebooks.qmd. Each
+entry is a one-paragraph description plus a direct download link to the
+.ipynb sitting next to this file. The notebooks are NOT rendered by
+Quarto (see the render/resources lists in _quarto.yml); they are copied
+into _output verbatim, so these relative links resolve in the rendered
+site. Ordered roughly by increasing complexity, with the buzz wire
+challenge last since it is an open-ended assignment rather than a worked
+example.
+-->
+
+The notebooks below accompany Unit 2. They are ordinary Jupyter
+notebooks and need only `numpy` (plus `matplotlib` for the plots); open
+them in JupyterLab, VS Code, or any notebook environment.
+
+## Inventory control with a stochastic demand
+
+The inventory control problem of Unit 1, now with the demand random
+rather than known, which is what forces the *stochastic* dynamic
+programming algorithm. The stock still evolves as
+$x_{k+1}=\max\{x_k+u_k-d_k,0\}$, but the recursion now minimizes an
+expected cost, averaging the cost-to-go over the demand distribution at
+each stage. A good first notebook for seeing what changes, and what does
+not, when expectations enter the DP recursion.
+
+[Download `A_2_StochInventoryControl.ipynb`](A_2_StochInventoryControl.ipynb){download="A_2_StochInventoryControl.ipynb"}
+
+## Robot path planning: deterministic vs. stochastic
+
+A robot must cross an environment with obstacles from left to right in
+minimum time. The same problem is solved twice -- once assuming the
+robot's moves are executed exactly, and once assuming each commanded move
+succeeds only with some probability -- so that the deterministic and
+stochastic policies can be compared directly. This is the example behind
+the point, made in the notes, that planning as though the world were
+deterministic and then simply replanning is not the same as accounting
+for the uncertainty in the first place.
+
+[Download `A_2_RobotPlanningStochastic.ipynb`](A_2_RobotPlanningStochastic.ipynb){download="A_2_RobotPlanningStochastic.ipynb"}
+
+## Temperature control: why a thermostat switches rarely
+
+A thermostat does not act at every time step, unlike most controllers --
+it switches the heating on or off only when the temperature has drifted
+far enough, which reduces wear on the equipment. This notebook shows that
+such a switching rule is not merely a practical convenience but is
+actually *optimal* for a simple stochastic model of the temperature
+dynamics, recovering the familiar dead-band behaviour from the stochastic
+dynamic programming algorithm.
+
+[Download `A_2_K_TempControl.ipynb`](A_2_K_TempControl.ipynb){download="A_2_K_TempControl.ipynb"}
+
+## Stochastic dynamic programming in Pac-Man's grid world
+
+Pac-Man as a pursuit-evasion game: a ghost must chase Pac-Man across a
+grid of 77 cells, where each may move to an adjacent cell or stay put at
+every step. The notebook computes a policy for the ghost using stochastic
+dynamic programming, with Pac-Man's moves treated as the disturbance. It
+is the largest of the Unit 2 examples and gives a concrete feel for how
+quickly the state space grows once the state has to describe *both*
+players' positions.
+
+[Download `A_2_A_Stochastic_DP_policy_pacman.ipynb`](A_2_A_Stochastic_DP_policy_pacman.ipynb){download="A_2_A_Stochastic_DP_policy_pacman.ipynb"}
+
+## The buzz wire challenge
+
+An open-ended assignment rather than a worked example. In the buzz wire
+game a metal loop must be guided along a bent wire from one end to the
+other without touching it; here the loop is held by a robot arm, and the
+task is to find a strategy that traverses the wire as fast as possible.
+The loop's configuration is its centre position $(p_x,p_y)$ together with
+an orientation angle $\theta$, and both a deterministic model and a
+stochastic one -- in which disturbances knock the position off the
+commanded cell -- are set up, so the deterministic and stochastic dynamic
+programming algorithms can be compared on a problem with a genuinely
+three-dimensional state.
+
+[Download `BuzwireChallenge.ipynb`](BuzwireChallenge.ipynb){download="BuzwireChallenge.ipynb"}

@@ -1,0 +1,111 @@
+---
+title: "Unit 5 -- Jupyter notebooks"
+subtitle: "4SC000 Optimal Control and Reinforcement Learning"
+format:
+  html:
+    toc: false
+---
+
+<!--
+Landing page for the Unit 5 notebooks, linked from the header of
+notes/unit5-notes.qmd -- same pattern as code/unit1..4/notebooks.qmd.
+Each entry is a one-paragraph description plus a direct download link to
+the .ipynb sitting next to this file. The notebooks are NOT rendered by
+Quarto (see the render/resources lists in _quarto.yml); they are copied
+into _output verbatim, so these relative links resolve in the rendered
+site. Ordered roughly by increasing complexity: the core Riccati
+machinery first, then the applications.
+
+The instructor asked for these by their JupyterNotebooks/ names
+(B_1_*); in course-quarto they carry the A_5_ prefix used for every
+other unit. B_1_K_game.ipynb (the min-max quadratic game) is NOT
+listed here: it belongs to Unit 6 and lives in code/unit6/ as
+A_6_K_quadraticgame.ipynb. It was briefly moved here on 2026-10-01 and
+moved back the same day once the instructor confirmed the Unit 6
+placement was right; do not re-file it by its B_1_ prefix.
+-->
+
+The notebooks below accompany Unit 5. They are ordinary Jupyter
+notebooks and need only `numpy` (plus `matplotlib` for the plots, and
+`control`/`slycot` for a few of the continuous-time models); open them
+in JupyterLab, VS Code, or any notebook environment. A lighter,
+dependency-free Python version of the core recursion is in
+[`riccati.py`](riccati.py) -- see [`README.md`](README.md).
+
+## Finite-horizon LQR for a double integrator
+
+The worked example of the lecture: the finite-horizon cost
+$\sum_{k=0}^{h-1}x_k^\intercal Qx_k+u_k^\intercal Ru_k+x_h^\intercal Q_hx_h$
+applied to a double integrator. Every parameter is exposed, so it is the
+one to open first if you want to feel what $Q$, $R$, $Q_h$ and the
+horizon $h$ actually do to the closed loop -- raise $R$ and watch the
+input get lazier, raise $Q_h$ and watch the terminal state get pulled in
+harder.
+
+[Download `A_5_LQfinhorizondoubleintegrator.ipynb`](A_5_LQfinhorizondoubleintegrator.ipynb){download="A_5_LQfinhorizondoubleintegrator.ipynb"}
+
+## Riccati equations and the infinite-horizon limit
+
+The same double integrator, but with the horizon pushed out: the
+notebook iterates the backward Riccati recursion and shows
+$P_k\to\bar P$ and $K_k\to\bar K$, so the solution of the *algebraic*
+Riccati equation appears as the limit of the finite-horizon one. This is
+the computational counterpart of the convergence argument in the notes.
+
+[Download `A_5_Riccatiequations.ipynb`](A_5_Riccatiequations.ipynb){download="A_5_Riccatiequations.ipynb"}
+
+## Reference tracking with LQR
+
+Stabilization drives the state to zero; tracking asks it to follow a
+reference $r_k$. Minimizing
+$\sum_k\|Mx_k-r_k\|^2+u_k^\intercal Ru_k$ by dynamic programming gives an
+optimal policy of the affine form $u_k=K_kx_k+L_k$, where -- and this is
+the point worth taking away -- the gains $K_k$ are *exactly* those of the
+stabilization problem, and all the reference information is carried by
+the feedforward term $L_k$.
+
+[Download `A_5_N_referencetrackinglqr.ipynb`](A_5_N_referencetrackinglqr.ipynb){download="A_5_N_referencetrackinglqr.ipynb"}
+
+## LQR for the inverted pendulum
+
+The infinite-horizon regulator applied to the linearized
+inverted-pendulum-on-a-cart, under full state feedback -- the same plant
+that returns in Unit 6 once the state has to be estimated rather than
+measured. A good reference point for how much the LQG controller of the
+next unit gives up when only a noisy cart position is available.
+
+[Download `A_5_K_LQRinvertedpendulum.ipynb`](A_5_K_LQRinvertedpendulum.ipynb){download="A_5_K_LQRinvertedpendulum.ipynb"}
+
+## Positioning a flexible head-disk drive
+
+A genuinely industrial example: positioning the read/write head of a disk
+drive, where the arm is flexible, so the torque applied at the base and
+the angle of the head are separated by a lightly damped resonance. The
+model is the two-inertia system of Franklin, Powell and Emami-Naeini,
+and it shows what LQR does with a plant whose dynamics actively fight a
+fast response.
+
+[Download `A_5_K_PositioningHeadDisk.ipynb`](A_5_K_PositioningHeadDisk.ipynb){download="A_5_K_PositioningHeadDisk.ipynb"}
+
+## Tracking an ellipsoidal trajectory under disturbances
+
+A particle with first-order velocity dynamics in the plane is asked to
+follow an ellipsoidal reference while random disturbances push it off
+course, and the cost penalizes the variance of the tracking error. It
+combines the reference-tracking formulation above with the stochastic
+setting that opens Unit 6.
+
+[Download `A_5_K_Tracking_lqr.ipynb`](A_5_K_Tracking_lqr.ipynb){download="A_5_K_Tracking_lqr.ipynb"}
+
+## Smooth trajectory generation with LQR
+
+The least obvious use of the machinery in this unit. Given $N$ waypoints
+in 3D and the times at which they must be met, the task is to produce a
+trajectory through them that is smooth up to a given derivative order.
+Posing this as an LQR problem -- the control being the highest
+derivative, the cost penalizing deviation from a piecewise-linear
+interpolant -- turns a trajectory-design question into exactly the
+Riccati recursion of this unit. Worth reading as evidence that "linear
+quadratic" is a much wider hammer than "drive the state to zero".
+
+[Download `A_5_A_LQR_Smoothing.ipynb`](A_5_A_LQR_Smoothing.ipynb){download="A_5_A_LQR_Smoothing.ipynb"}

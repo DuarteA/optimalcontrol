@@ -1,0 +1,77 @@
+/*-- scss:defaults --*/
+// TU/e red sampled directly from the logo on your title slide (Lecture1.pdf,
+// page 1): rgb(199,33,36) -> #c72124. Adjust here if TU/e's official brand
+// guide specifies a different hex -- this one column change updates every
+// lecture/exercise that uses this theme.
+$body-bg: #ffffff;
+$body-color: #1a1a1a;
+$link-color: #c72124;
+$presentation-heading-color: #1a1a1a;
+$code-block-bg: #f5f5f5;
+
+// Gill Sans, matching the font used in Lecture1.pdf. This is a licensed
+// Monotype font (pre-installed on macOS as "Gill Sans"), not a free web
+// font -- so it will render correctly on your Mac, but anyone viewing the
+// deck without it installed (e.g. most Windows/Linux machines, or the PDF
+// export unless built with xelatex+fontspec) silently falls back to the
+// sans-serif at the end of this stack. Say the word if you'd rather use a
+// freely-embeddable look-alike so it renders identically for everyone.
+$presentation-font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+
+/*-- scss:rules --*/
+.reveal, .reveal h1, .reveal h2, .reveal h3, .reveal p, .reveal li {
+  font-family: $presentation-font-family;
+}
+.reveal h1, .reveal h2 {
+  font-weight: 600;
+}
+.reveal .slide-number {
+  color: #999;
+}
+.reveal figcaption {
+  text-align: center;
+}
+
+// Rounded-rectangle box used to highlight a boxed equation/result, matching
+// the hand-drawn boxes around the DP equation on the original Keynote
+// slides (e.g. Lecture 2 "Stochastic Dynamic Prog. algorithm"). Wrap content
+// in a fenced div: ::: {.dp-box} ... :::
+.dp-box {
+  border: 2px solid #1a1a1a;
+  border-radius: 14px;
+  padding: 0.6em 1em;
+  margin: 0.3em 0;
+}
+
+// Used by the hand-built title slide (see lectures/*.qmd) for the
+// course-code / author lines beneath the logo.
+.title-slide-meta {
+  text-align: center;
+  color: #555;
+  margin-top: 0.6em;
+  line-height: 1.6em;
+}
+
+// Full grid rules for tables that reproduce a boxed table from the original
+// slides (Unit 7's recap table). Quarto/Bootstrap style tables with
+// horizontal rules only; wrapping one in ::: {.gridtable} puts the vertical
+// rules back, so the html matches the pdf (which draws its own -- see the
+// content-visible when-format="pdf" block beside it in the .qmd).
+.gridtable table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.gridtable table th,
+.gridtable table td {
+  border: 1px solid #1a1a1a;
+  padding: 0.45em 0.6em;
+  vertical-align: top;
+}
+.gridtable table thead th {
+  border-bottom: 2px solid #1a1a1a;
+  font-weight: 600;
+}
+.gridtable table ul {
+  margin-bottom: 0;
+  padding-left: 1.1em;
+}

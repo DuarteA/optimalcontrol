@@ -1,0 +1,1798 @@
+---
+title: "Unit 4 -- Partially Observable Markov Decision Processes and the Bayes' Filter"
+subtitle: "4SC000 Optimal Control and Reinforcement Learning"
+format:
+  html:
+    toc: true
+  pdf: default
+---
+
+<!--
+Textbook-prose companion to lectures/lecture04-pomdp-bayes-filter.qmd,
+intended as a booklet chapter for readers who did not attend the lecture.
+Same content and figures as the slides, but written as connected prose
+rather than bullet points, so it can stand on its own. Figures are the
+same ones already cropped/verified for the slide deck, referenced from
+../lectures/figures/lecture4/ rather than duplicated. First pass: same
+scope as the original units 1-3 notes (straightforward prose conversion
+with figures and math); interactive examples/exercises, if wanted, would
+be added in a later pass. Appendices A, B and C are folded into
+collapsible callouts placed near the main-text section they extend,
+rather than kept as trailing appendix sections. The two "Results" video
+slides (pg24/pg25) had no video files available in the course folder, so
+they are represented as a plain-text note, same as in the slides.
+-->
+
+[Slides](../lectures/lecture04-pomdp-bayes-filter.html) &middot; [Exercises](../exercises/unit4-exercises.html) &middot; [Jupyter notebooks](../code/unit4/notebooks.html)
+
+## Problem formulation
+
+In several control problems considered so far, we implicitly assumed
+that the full state $x_k$ is available for feedback. In many practical
+situations this is not the case: only an *output*, a subset or a noisy
+function of the state, can actually be measured. For instance, when
+controlling the position of a mass on a surface using only position
+sensors, the state -- which also includes velocity -- is not fully
+known. More generally, the available output might carry only partial
+information about the state. This unit studies *Partially Observable
+Markov Decision Processes* (POMDPs), the framework for optimal control
+under this kind of limited information, and the *Bayes' filter*, the
+tool that turns a stream of partial measurements into a running estimate
+of the state. Most of the unit is devoted to the Bayes' filter itself,
+since it is useful well beyond the control problems that motivate it
+here.
+
+A POMDP has the same dynamic model and cost as the discrete decision
+problems of Unit 2,
+
+$$
+x_{k+1} = f_k(x_k, u_k, w_k), \qquad
+\text{cost} = \sum_{k=0}^{h-1} g_k(x_k, u_k, w_k) + g_h(x_h),
+$$
+
+but now the decision-maker does not observe $x_k$ directly. Instead, at
+every stage $k$ it receives an *output*
+
+$$
+y_k = h_k(x_k, n_k),
+$$
+
+where $n_k$ is measurement noise, and the state, input and disturbances
+live in the same sets as in Unit 2, while the output $y_k$ and the noise
+$n_k$ live in finite sets $Y_k:=\{1,\dots,q_{k,i}\}$,
+$N_k:=\{1,\dots,\nu_{k,i}\}$ (possibly depending on the current state
+$x_k=i$). All the information available to the decision-maker at stage
+$k$ is collected in the *information set*
+
+$$
+I_0 = (y_0), \qquad
+I_k = (y_0, y_1, \dots, y_k, u_0, u_1, \dots, u_{k-1}), \quad k \geq 1,
+$$
+
+and decisions must be functions of this information set,
+$u_k = \mu_k(I_k)$, rather than of the state itself. The problem is to
+find a policy $\pi = \{\mu_0,\dots,\mu_{h-1}\}$ minimizing
+
+$$
+J_\pi = \mathbb{E}\Big[\sum_{k=0}^{h-1} g_k(x_k, \mu_k(I_k), w_k) + g_h(x_h)\Big].
+$$
+
+:::: {.callout-tip collapse="false" title="Quick exercise: partial information in inventory control and robot path planning"}
+
+Justify a model with partial state information for the inventory control
+problem and the robot path planning problem considered in Unit 2, and
+write such problems in the framework just described.
+
+::::
+
+:::: {.callout-note collapse="true" title="Solution"}
+
+**Inventory control.** A shop rarely knows its stock level $x_k$
+exactly and in real time. Physical counts are typically done
+periodically rather than continuously, and even then they are not
+perfectly reliable: items can be misplaced, damaged, or stolen without
+this being recorded, and barcode or RFID scanners occasionally fail to
+register an item during a count. So what is actually available at each
+stage is a noisy count of the stock, not the true value $x_k$.
+
+The dynamic model and cost are unchanged from Units 1-2, with the
+demand $d_k$ playing the role of the disturbance $w_k$,
+$$
+x_{k+1} = f_k(x_k,u_k,w_k) = \max\{x_k+u_k-w_k,\,0\}, \qquad u_k \in \{0,1,\dots,N-x_k\},
+$$
+$$
+g_k(x_k,u_k,w_k) = \big(c_1(x_k) + c\,u_k + c_{tr}\lVert u_k\rVert_0\big) - p\min\{w_k,x_k+u_k\}.
+$$
+For the output, model the periodic count as being off by one item with
+some small probability $q$, independently of everything else (a single
+missed or misplaced item being the typical failure mode, rather than
+large miscounts):
+$$
+y_k = h_k(x_k,n_k) = \max\{x_k-n_k,\,0\}, \qquad n_k \in \{0,1\}, \qquad \text{Prob}[n_k=1]=q,\ \ \text{Prob}[n_k=0]=1-q,
+$$
+so that $y_k \in Y_k=\{0,\dots,N\}$, exactly as required by the general
+framework. The information set is then
+$I_k=(y_0,\dots,y_k,u_0,\dots,u_{k-1})$, and the shop must decide how
+much to order, $u_k=\mu_k(I_k)$, based on this history of noisy counts
+and past orders rather than on the true (unknown) stock level $x_k$.
+
+**Robot path planning.** A robot moving through the grid of Unit 2
+likewise has no direct way of reading off its exact row $x_k$: there is
+typically no GPS indoors, and dead-reckoning from wheel encoders drifts
+over time. A cheap sensor, however -- e.g. an infrared proximity sensor
+-- can reliably detect whether the robot is currently forced against a
+wall or an obstacle, without revealing which row it is actually in. This
+is exactly the same kind of binary, "contact-only" output already used
+for Sensor II in this unit's grid-world example.
+
+The dynamic model and cost are again unchanged from Unit 2's
+(deterministic- or stochastic-disturbance) robot-grid problem,
+$$
+x_{k+1}=f_k(x_k,u_k,w_k), \qquad g_k(x_k,u_k,w_k),
+$$
+with $x_k=i\in\{1,\dots,n\}$ the row and $u_k\in\{\text{up},\text{straight},\text{down}\}$
+the decision (a singleton at wall or obstacle rows). Writing
+$\text{touch}(i)=1$ if row $i$ is a wall row ($i\in\{1,n\}$) or an
+obstacle row, and $\text{touch}(i)=0$ otherwise, the output is a
+possibly-flipped version of this contact bit,
+$$
+y_k = h_k(x_k,n_k) = \text{touch}(x_k)\oplus n_k, \qquad n_k \in \{0,1\}, \qquad \text{Prob}[n_k=1]=\varepsilon,\ \ \text{Prob}[n_k=0]=1-\varepsilon,
+$$
+where $\oplus$ denotes addition modulo $2$ and $\varepsilon$ is a small
+sensor-error probability, so that $y_k \in Y_k=\{0,1\}$. The information
+set is $I_k=(y_0,\dots,y_k,u_0,\dots,u_{k-1})$, and the robot chooses its
+next move $u_k=\mu_k(I_k)$ based only on this history of (possibly
+mistaken) wall/obstacle contact readings and its own past decisions, not
+on its actual row $x_k$.
+
+::::
+
+### Two approaches, and the role of the Bayes' filter
+
+A first, direct approach is to reformulate the partial-information
+problem as an ordinary full-information problem by treating the
+*information set itself* as the state: since $I_k$ evolves in a known
+way as $y_{k+1}$ and $u_k$ are appended to it, dynamic programming
+applies directly, with $I_k$ playing the role of $x_k$. The trouble is
+that the size of the information set grows very quickly with $k$ --
+already after just two stages, the space of possible information sets
+is large, as illustrated in @fig-info-growth -- so the number of
+"states" of this reformulated problem grows exponentially with time,
+making the direct approach impractical for essentially any application
+of interest.
+
+::: {style="text-align: center;"}
+![The measurement/information space grows quickly with the stage: at stage $0$ there are as many possible information sets as values of $y_0$; at stage $1$, as many as pairs $(y_0,y_1)$; and so on.](../lectures/figures/lecture4/pg05-infoset.png){#fig-info-growth width="90%" fig-align="center"}
+:::
+
+A second, much more economical approach exploits a key fact: it can be
+shown that the conditional probability distribution of the current state
+given all information gathered so far, $P_{x_k\mid I_k}$, is a
+*sufficient statistic* for optimal decision-making -- that is, an
+optimal policy can always be written as $u_k=\mu_k(P_{x_k\mid I_k})$,
+a function of this distribution rather than of the raw information set
+$I_k$ itself (@fig-belief-decomp). Since $P_{x_k\mid I_k}$ lives in a
+fixed-dimensional space (the simplex of probability distributions over
+the states), regardless of $k$, this sidesteps the exponential blow-up
+of the first approach entirely.
+
+::: {style="text-align: center;"}
+![As decisions and observations accumulate, the belief $P_{x_k\mid I_k}$ always lives in the same fixed-dimensional probability space, however the raw information set $I_k$ itself keeps growing.](../lectures/figures/lecture4/pg06-belief-decomp.png){#fig-belief-decomp width="80%" fig-align="center"}
+:::
+
+This has an appealing structural consequence for the optimal
+decision-maker, proved at the end of this section: it can always be
+decomposed into a *state estimator*, which computes $P_{x_k\mid I_k}$
+from the measurements $y_k$ and past decisions $u_{k-1}$, and an
+*actuator*, which maps this belief to a decision $u_k=\mu_k(P_{x_k\mid I_k})$
+(@fig-decomposition). This is exactly the classical *separation*
+between estimation and control that recurs throughout control theory.
+
+::: {style="text-align: center;"}
+![The optimal POMDP policy decomposes into a state estimator, producing the belief $P_{x_k\mid I_k}$, and an actuator (the optimal policy $\mu_k$) mapping that belief to a decision $u_k$.](../lectures/figures/lecture4/pg07-decomposition.png){#fig-decomposition width="80%" fig-align="center"}
+:::
+
+The first approach is therefore typically impractical, while the second
+is the one used in practice; a crucial ingredient in computing
+$P_{x_k\mid I_k}$ is Bayes' rule, and the resulting state estimator is
+precisely the Bayes filter, which is the focus of most of this unit. How
+to solve POMDPs -- i.e., how to obtain the actuator $\mu_k$ -- is
+addressed only briefly, toward the end.
+
+It will be convenient throughout to work with the transition
+probabilities already introduced in Unit 2,
+$$
+[P_k(j)]_{ri} = \text{Prob}[x_{k+1}=r\mid x_k=i,u_k=j],
+$$
+which collapses to a single matrix $P$ if there is no input and the
+model is time-invariant. Likewise, the output model
+$y_k=h_k(x_k,n_k)$ can be represented by matrices
+$$
+[R_k]_{\ell i} = \text{Prob}[y_k=\ell\mid x_k=i],
+$$
+which collapses to a single matrix $R$ if the output is time-invariant.
+Assuming, for simplicity, that the input, disturbance, output and noise
+spaces do not depend on the state (though they may still depend on
+time), $x_k\in\{1,\dots,\bar n_k\}$, $u_k\in\{1,\dots,m_k\}$,
+$w_k\in\{1,\dots,\omega_k\}$, $y_k\in\{1,\dots,\bar q_k\}$,
+$n_k\in\{1,\dots,\nu_k\}$, these matrices have the following dimensions,
+for each $j\in\{1,\dots,m_k\}$ and each $k\in\{0,\dots,h-1\}$:
+
+| | dimensions | Components |
+|---|:---:|---|
+| state transition matrices $P_k(j)$ | $\bar n_{k+1}\times\bar n_k$ | $[P_k(j)]_{ri}=\text{Prob}[x_{k+1}=r\mid x_k=i,u_k=j]$ |
+| output matrices $R_k$ | $\bar q_k\times\bar n_k$ | $[R_k]_{\ell i}=\text{Prob}[y_k=\ell\mid x_k=i]$ |
+
+:::: {.callout-note collapse="true" title="Proof: the belief is a sufficient statistic, and the optimal decision-maker decomposes into an estimator and an actuator"}
+We prove the claim made above: the optimal cost-to-go, and an optimal
+action, at every stage $k$ depend on the information set $I_k$ only
+through the belief $p_{k,i}:=\text{Prob}[x_k=i\mid I_k]$,
+$i\in\{1,\dots,\bar n_k\}$. In particular, the optimal policy can always
+be written as a function of $p_k$ alone, $u_k=\tilde\mu_k(p_k)$ (the
+*actuator*), and $p_k$ can itself be updated recursively from $p_{k-1}$,
+$u_{k-1}$ and $y_k$ alone, without needing the rest of $I_k$ (the *state
+estimator*).
+
+Consider the full-information reformulation of the POMDP with $I_k$ as
+the state, introduced above. Applying the DP algorithm to this
+reformulation, backward from $k=h$,
+$$
+J_h(I_h) = \mathbb{E}[g_h(x_h)\mid I_h],
+$$
+$$
+J_k(I_k) = \min_{u_k}\ \mathbb{E}\big[g_k(x_k,u_k,w_k) + J_{k+1}(I_{k+1}) \mid I_k,u_k\big], \quad k\in\{h-1,\dots,0\}.
+$$
+We show, by backward induction on $k$, that $J_k(I_k)$ depends on $I_k$
+only through $p_k$; whenever this holds, write $J_k(I_k)=\tilde J_k(p_k)$.
+
+*Base case.* At $k=h$,
+$$
+J_h(I_h) = \mathbb{E}[g_h(x_h)\mid I_h] = \sum_{i=1}^{\bar n_h} g_h(i)\,p_{h,i} =: \tilde J_h(p_h),
+$$
+manifestly a function of $p_h$ alone.
+
+*Inductive step.* Assume $J_{k+1}(I_{k+1})=\tilde J_{k+1}(p_{k+1})$.
+Splitting the expectation defining $J_k(I_k)$ into its two terms: first,
+$$
+\mathbb{E}[g_k(x_k,u_k,w_k)\mid I_k,u_k] = \sum_{i=1}^{\bar n_k} p_{k,i}\,\bar g_k(i,u_k), \qquad \bar g_k(i,u_k):=\mathbb{E}_{w_k}[g_k(i,u_k,w_k)],
+$$
+already a function of $p_k$ and $u_k$ alone. Second, condition on the
+next output $y_{k+1}=\ell$: by the Markov property of the state
+transitions and of the output map,
+$$
+\text{Prob}[x_{k+1}=r,\,y_{k+1}=\ell\mid I_k,u_k] = [R_k]_{\ell r}\sum_{i=1}^{\bar n_k} [P_k(u_k)]_{ri}\,p_{k,i},
+$$
+which depends on $I_k$ only through $p_k$. Summing over $r$ gives
+$\text{Prob}[y_{k+1}=\ell\mid I_k,u_k]$, and dividing gives the updated
+belief after observing $\ell$,
+$$
+p_{k+1,r}(\ell) = \frac{[R_k]_{\ell r}\sum_{i=1}^{\bar n_k} [P_k(u_k)]_{ri}\,p_{k,i}}{\text{Prob}[y_{k+1}=\ell\mid I_k,u_k]},
+$$
+both again functions of $(p_k,u_k,\ell)$ alone -- and no other part of
+$I_k$. Hence
+$$
+\mathbb{E}[J_{k+1}(I_{k+1})\mid I_k,u_k] = \sum_{\ell} \text{Prob}[y_{k+1}=\ell\mid p_k,u_k]\,\tilde J_{k+1}\big(p_{k+1}(\ell)\big)
+$$
+is also a function of $p_k$ and $u_k$ alone. Adding the two terms and
+minimizing over $u_k$,
+$$
+J_k(I_k) = \min_{u_k}\Big[\sum_{i} p_{k,i}\,\bar g_k(i,u_k) + \sum_{\ell} \text{Prob}[y_{k+1}=\ell\mid p_k,u_k]\,\tilde J_{k+1}\big(p_{k+1}(\ell)\big)\Big] =: \tilde J_k(p_k),
+$$
+depends on $I_k$ only through $p_k$, completing the induction.
+
+In particular, a minimizer $u_k$ in the last display is itself a function
+of $p_k$ alone, so the optimal policy is $u_k=\tilde\mu_k(p_k)$: this is
+the *actuator*. Moreover, the update formula for $p_{k+1}(\ell)$ derived
+above shows that the belief can be maintained online using only $p_k$,
+$u_k$, and the realized output $y_{k+1}$ -- never needing to store or
+revisit the rest of $I_k$: this recursive update is exactly the Bayes
+filter, worked out concretely in the next section, and is the *state
+estimator*. Together, these two facts establish the claimed
+decomposition.
+::::
+
+## The Bayes' filter
+
+### Bayes' rule
+
+The Bayes filter is built on the ordinary Bayes' rule from probability
+theory. For random variables $x\in\{1,\dots,n\}$, $y\in\{1,\dots,m\}$,
+
+::: {.dp-box style="font-size: 0.85em;"}
+$$
+\text{Prob}[x=i\mid y=j] = \frac{\text{Prob}[y=j\mid x=i]\,\text{Prob}[x=i]}{\text{Prob}[y=j]}
+= \frac{\text{Prob}[y=j\mid x=i]\,\text{Prob}[x=i]}{\sum_{\ell=1}^n \text{Prob}[y=j\mid x=\ell]\,\text{Prob}[x=\ell]}.
+$$
+:::
+
+Thinking of $y$ as a sensor measurement and $x$ as the state
+(@fig-probspace), Bayes' rule lets us infer something about the state
+*a posteriori* of a measurement, $\text{Prob}[x=i\mid y=j]$, starting
+from *a priori* information $\text{Prob}[y=j\mid x=i]$ (how the sensor
+behaves in each state) and $\text{Prob}[x=i]$ (how likely each state was
+to begin with).
+
+::: {style="text-align: center;"}
+![A joint probability space for a discrete state $x\in\{1,2,3\}$ and a discrete measurement $y\in\{1,2,3\}$: the colored region shows how probability mass is shared between the possible values of $y$ within each value of $x$.](../lectures/figures/lecture4/pg11-probspace.png){#fig-probspace width="55%" fig-align="center"}
+:::
+
+:::: {.callout-tip collapse="false" title="Quick exercise: reading conditional probabilities off the picture"}
+
+In @fig-probspace the whole rectangle is the sample space, split by the
+two vertical lines into the strips $x=1$, $x=2$ and $x=3$. Inside the
+ellipse, the red part is $y=1$ and the blue part is $y=2$; everything
+outside the ellipse (the grey background) is $y=3$.
+
+Writing $|R|$ for the area of a region $R$, and $\{x=3\}$ for the strip
+$x=3$, which of the following gives $\text{Prob}[y=j\mid x=3]$ for
+$j\in\{1,2,3\}$? Exactly one is correct.
+
+**(a)**
+
+$$
+\begin{aligned}
+\text{Prob}[y=1\mid x=3] &= 0, \\
+\text{Prob}[y=2\mid x=3] &= \frac{|\text{blue}\cap\{x=3\}|}{|\text{whole rectangle}|}, \\
+\text{Prob}[y=3\mid x=3] &= \frac{|\text{grey}\cap\{x=3\}|}{|\text{whole rectangle}|}.
+\end{aligned}
+$$
+
+**(b)**
+
+$$
+\begin{aligned}
+\text{Prob}[y=1\mid x=3] &= 0, \\
+\text{Prob}[y=2\mid x=3] &= \frac{|\text{blue}\cap\{x=3\}|}{|\{x=3\}|}, \\
+\text{Prob}[y=3\mid x=3] &= \frac{|\text{grey}\cap\{x=3\}|}{|\{x=3\}|}.
+\end{aligned}
+$$
+
+**(c)**
+
+$$
+\begin{aligned}
+\text{Prob}[y=1\mid x=3] &= 0, \\
+\text{Prob}[y=2\mid x=3] &= \frac{|\text{blue}\cap\{x=3\}|}{|\text{blue}|}, \\
+\text{Prob}[y=3\mid x=3] &= \frac{|\text{grey}\cap\{x=3\}|}{|\text{grey}|}.
+\end{aligned}
+$$
+
+::::
+
+:::: {.callout-note collapse="true" title="Solution"}
+
+**(b) is correct.**
+
+All three options agree that $\text{Prob}[y=1\mid x=3]=0$, and that much
+is simply read off the figure: the red region lies entirely to the left
+of the second vertical line, so it has no overlap at all with the strip
+$x=3$. A measurement $y=1$ is impossible when the state is $3$.
+
+The three options differ only in what the remaining areas are divided
+by, and that is the whole point of the exercise. Conditioning on $x=3$
+means *restricting attention to the strip $x=3$ and treating it as the
+new sample space*, so the areas must be normalized by the area of that
+strip. Within the strip the ellipse contributes only blue, and the rest
+is grey, so the two probabilities add up to $1$ as they must.
+
+Option **(a)** divides by the area of the whole rectangle instead. Those
+are the *joint* probabilities $\text{Prob}[y=j \text{ and } x=3]$, not
+the conditional ones; they add up to $\text{Prob}[x=3]$, which is less
+than $1$.
+
+Option **(c)** normalizes each measurement value by its own total area,
+which conditions the wrong way round: it computes
+$\text{Prob}[x=3\mid y=j]$, the probability of the state given the
+measurement, rather than the probability of the measurement given the
+state. Keeping these two apart is exactly what Bayes' rule is for --
+the rule above is precisely the recipe for turning one into the other.
+
+::::
+
+:::: {.callout-tip collapse="false" title="Quick exercise: now the other way round"}
+
+Still reading off @fig-probspace, and with the same notation $|R|$ for
+the area of a region $R$, compute $\text{Prob}[x=2\mid y=1]$ in terms of
+areas of regions in the figure.
+
+::::
+
+:::: {.callout-note collapse="true" title="Solution"}
+
+$$
+\text{Prob}[x=2\mid y=1] = \frac{|\text{red}\cap\{x=2\}|}{|\text{red}|}.
+$$
+
+Conditioning on $y=1$ means restricting attention to the red region and
+treating *it* as the new sample space -- exactly as conditioning on
+$x=3$ in the previous exercise meant restricting attention to the strip
+$x=3$. The event $x=2$ then corresponds to the part of the red region
+lying to the right of the first vertical line, and its probability is
+that part's share of the red region as a whole.
+
+Note that this is the quantity option (c) of the previous exercise was
+really computing. It is the *a posteriori* probability of the state
+given the measurement -- what we actually want when a sensor reading
+arrives -- whereas $\text{Prob}[y=j\mid x=i]$ is the sensor model we are
+given. Bayes' rule is what connects the two, and in this picture it is
+the almost trivial observation that both are ratios of the same
+overlapping area, differing only in what they are normalized by.
+
+::::
+
+
+::: {.callout-note collapse="true" title="A one-shot application of Bayes' rule: should she buy the alarm?"}
+Bayes' rule is useful even outside of a filtering/tracking context,
+whenever a single a-posteriori probability needs to be computed from a
+single measurement. Here is a simple illustration.
+
+An international student is deciding whether it is worthwhile to install
+a hobby alarm (an ultrasound sensor near the door) to detect burglars
+while she is away for the Christmas break. The alarm is faulty and
+characterized by
+
+| | Burglar breaks in $B$ | Burglar does not break in $\neg B$ |
+|---|:---:|:---:|
+| Alarm does not go off $\neg A$ | $\text{Prob}[\neg A\mid B]=0.01$ | $\text{Prob}[\neg A\mid \neg B]=0.9$ |
+| Alarm goes off $A$ | $\text{Prob}[A\mid B]=0.99$ | $\text{Prob}[A\mid \neg B]=0.1$ |
+
+and historical data shows that $2$ out of every $100$ rooms are
+burgled each Christmas, i.e. $\text{Prob}[B]=0.02$,
+$\text{Prob}[\neg B]=0.98$. Her belongings are worth $2000$ euros, and
+calling a security agency to check the room whenever the alarm goes off
+costs $300$ euros; she will only call if
+$\text{Prob}[B\mid A]\cdot2000 > 300$, i.e. if
+$\text{Prob}[B\mid A] > 0.15$. Should she buy the alarm?
+
+By Bayes' rule,
+$$
+\text{Prob}[B\mid A] = \frac{\text{Prob}[A\mid B]\,\text{Prob}[B]}{\text{Prob}[A\mid B]\,\text{Prob}[B] + \text{Prob}[A\mid\neg B]\,\text{Prob}[\neg B]}
+= \frac{0.99\times0.02}{0.99\times0.02 + 0.1\times0.98} = \frac{0.0198}{0.1178} \approx 0.168,
+$$
+which exceeds $0.15$ -- so yes, she should buy the alarm (and call the
+agency whenever it goes off).
+:::
+
+### Example: tracking a robot behind a door
+
+A robot can be at one of $8$ positions on a circular floor with a door
+(@fig-floor). It moves around the circle with some slip, according to
+
+$$
+\text{Prob}[p_{k+1}=i\mid p_k=i] = 0.1,
+$$
+$$
+\text{Prob}[p_{k+1}=i\oplus 2\mid p_k=i] = 0.2,
+$$
+$$
+\text{Prob}[p_{k+1}=i\oplus 1\mid p_k=i] = 0.7,
+$$
+
+where $i\oplus r := ((i-1+r)\bmod 8)+1$ wraps around the $8$ positions.
+
+::: {style="text-align: center;"}
+![A robot moving in a circular fashion among $8$ positions on a floor with a door; a sensor may detect the door when the robot is close to it.](../lectures/figures/lecture4/pg12-floor.png){#fig-floor width="42%" fig-align="center"}
+:::
+
+If the robot is close to the door, a sensor might detect it ($y_k=1$)
+with
+$$
+\text{Prob}[y_k=1\mid p_k=2]=1, \qquad
+\text{Prob}[y_k=1\mid p_k=1]=\text{Prob}[y_k=1\mid p_k=3]=0.4,
+$$
+and if $p_k\notin\{1,2,3\}$ then $y_k=0$ with probability one. Suppose
+the robot starts at $p_0=1$; we would like to compute
+$\text{Prob}[p_2\mid p_0=1]$ and, once a measurement is available,
+$\text{Prob}[p_2\mid p_0=1,y_2=1]$.
+
+The first quantity can be obtained by simply following the branching
+probabilities two steps forward, as in @fig-tree.
+
+::: {style="text-align: center;"}
+![Propagating $\text{Prob}[p_0=1]$ two steps forward through the transition probabilities $0.1,0.2,0.7$ to obtain $\text{Prob}[p_2=i\mid p_0=1]$ for every $i$.](../lectures/figures/lecture4/pg13-tree.png){#fig-tree width="85%" fig-align="center"}
+:::
+
+Equivalently, and more systematically, define the transition matrix
+$P_{ij}=\text{Prob}[x_{k+1}=i\mid x_k=j]$ and the probability vector
+$p_k$ with entries $\text{Prob}[x_k=i\mid x_0=1]$:
+
+$$
+P = \begin{bmatrix}0.1&0&0&0&0&0&0&0\\0.7&0.1&0&0&0&0&0&0\\0.2&0.7&0.1&0&0&0&0&0\\0&0.2&0.7&0.1&0&0&0&0\\0&0&0.2&0.7&0.1&0&0&0\\0&0&0&0.2&0.7&0.1&0&0\\0&0&0&0&0.2&0.7&0.1&0\\0&0&0&0&0&0.2&0.7&0.1\end{bmatrix},
+$$
+$$
+p_0=\begin{bmatrix}1\\0\\\vdots\\0\end{bmatrix},\qquad
+p_1=\begin{bmatrix}0.1\\0.7\\0.2\\0\\0\\0\\0\\0\end{bmatrix},\qquad
+p_2=\begin{bmatrix}0.01\\0.14\\0.53\\0.28\\0.04\\0\\0\\0\end{bmatrix},
+$$
+
+obtained simply by iterating $p_{k+1}=Pp_k$.
+
+To fold in the measurement $y_2=1$, apply Bayes' rule (with normalizing
+factor $\alpha=1/\text{Prob}[y_2=1\mid p_0=1]$):
+
+$$
+\text{Prob}[p_2=i\mid p_0=1,y_2=1] = \frac{1}{\alpha}\,\text{Prob}[y_2=1\mid p_0=1,p_2=i]\,\text{Prob}[p_2=i\mid p_0=1].
+$$
+
+Writing the sensor model as a diagonal matrix
+$R=\text{diag}(0.4,\,1,\,0.4,\,0,\,0,\,0,\,0,\,0)$ (the probability of
+$y_2=1$ at each possible position), this becomes a simple matrix-vector
+product followed by a normalization:
+
+$$
+Rp_2 = \begin{bmatrix}0.004\\0.14\\0.212\\0\\0\\0\\0\\0\end{bmatrix}, \qquad \alpha = 0.004+0.14+0.212=0.356,
+$$
+$$
+\text{Prob}[p_2\mid p_0=1,y_2=1] = \begin{bmatrix}0.0112\\0.3933\\0.5955\\0\\0\\0\\0\\0\end{bmatrix}.
+$$
+
+In general, multiplying by the diagonal matrix
+$D(y_k)=\text{diag}([R]_{y_k,1},\dots,[R]_{y_k,\bar n})$ -- apart from
+the normalizing factor -- is exactly how a measurement updates the
+belief, and this is the essence of the *correction* step of the Bayes
+filter, formalized next.
+
+:::: {.callout-tip collapse="false" title="Quick exercise: a different starting position and measurement"}
+
+Repeat the computation above for a robot that starts at $p_0=2$ instead
+of $p_0=1$, and suppose that at stage $2$ the door is *not* detected,
+$y_2=0$, instead of detected. Compute $\text{Prob}[p_2\mid p_0=2,y_2=0]$.
+
+::::
+
+:::: {.callout-note collapse="true" title="Solution"}
+
+**Prediction.** Iterating $p_{k+1}=Pp_k$ from $p_0=2$ (i.e.,
+$p_0=\begin{bmatrix}0&1&0&0&0&0&0&0\end{bmatrix}^\top$),
+
+$$
+p_1=\begin{bmatrix}0\\0.1\\0.7\\0.2\\0\\0\\0\\0\end{bmatrix}, \qquad
+p_2=\begin{bmatrix}0\\0.01\\0.14\\0.53\\0.28\\0.04\\0\\0\end{bmatrix}.
+$$
+
+This is exactly the $p_2$ found earlier for $p_0=1$, shifted by one
+position around the circle -- as expected, since the dynamics (unlike
+the sensor model) are the same at every position.
+
+**Correction.** Since $y_2=0$ instead of $y_2=1$, the relevant sensor
+row is now $\text{Prob}[y_2=0\mid p_2=i]=1-\text{Prob}[y_2=1\mid p_2=i]$,
+i.e. the diagonal matrix
+$D(0)=\text{diag}(0.6,\,0,\,0.6,\,1,\,1,\,1,\,1,\,1)$. Then
+
+$$
+D(0)\,p_2 = \begin{bmatrix}0\\0\\0.084\\0.53\\0.28\\0.04\\0\\0\end{bmatrix}, \qquad \alpha = 0.084+0.53+0.28+0.04=0.934,
+$$
+$$
+\text{Prob}[p_2\mid p_0=2,y_2=0] = \begin{bmatrix}0\\0\\0.0899\\0.5675\\0.2998\\0.0428\\0\\0\end{bmatrix}.
+$$
+
+Two things are worth noting. First, position $2$ (where the door
+sensor would fire with certainty) is ruled out entirely once $y_2=0$
+is observed, and position $1$ also drops out since it started with
+negligible mass. Second, compared to the *prediction* $p_2$ above, the
+belief shifts further away from the door (positions $1$-$3$) and
+concentrates more on position $4$, since observing "no door" is
+evidence *against* being close to it.
+
+::::
+
+::: {.callout-important collapse="true" title="Interactive example: run the Bayes filter yourself"}
+
+The interactive panel below lets you run the Bayes filter yourself on
+the robot-and-door example of @fig-floor (the very same image is used
+here). Choose an initial belief $p_0$ over the $8$ positions -- any
+nonnegative numbers, automatically normalized to sum to one -- then
+build a sequence of measurements ($y=1$: door detected, $y=0$: door
+not detected), one per stage. "Step" advances the filter by one
+half-step at a time (first the *prediction*, then the *correction*
+using the next measurement in the sequence); "Play" runs through the
+whole sequence automatically. The number shown at each position, and
+the intensity of its highlight, is the current belief
+$\text{Prob}[x_k=i\mid I_k]$ at that position.
+
+```{=html}
+<div id="bf-wrap" style="max-width:560px;margin:1.5em auto;border:1px solid #ccc;border-radius:8px;padding:1em;">
+  <div style="margin-bottom:0.6em;">
+    <strong>Initial belief p&#8320; (values are normalized to sum to 1):</strong>
+    <div id="bf-p0-inputs" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;"></div>
+    <div style="margin-top:6px;">
+      <button id="bf-preset-uniform" type="button">Uniform</button>
+      <button id="bf-preset-pos1" type="button">All at position 1</button>
+    </div>
+  </div>
+  <div style="margin-bottom:0.6em;">
+    <strong>Measurement sequence (one per stage):</strong>
+    <div style="margin-top:4px;">
+      <button id="bf-add-y0" type="button">+ y = 0 (no door)</button>
+      <button id="bf-add-y1" type="button">+ y = 1 (door)</button>
+      <button id="bf-undo" type="button">Remove last</button>
+      <button id="bf-clear-seq" type="button">Clear</button>
+    </div>
+    <div id="bf-seq-display" style="margin-top:6px; font-family: monospace; font-size:0.9em; color:#333;"></div>
+  </div>
+  <div style="margin-bottom:0.6em;">
+    <button id="bf-play" type="button">&#9654; Play</button>
+    <button id="bf-step" type="button">Step</button>
+    <button id="bf-reset" type="button">&#8635; Reset</button>
+  </div>
+  <div id="bf-status" style="margin-bottom:0.6em; font-size:0.92em; color:#333; min-height:2.4em;"></div>
+  <div id="bf-imgwrap" style="position:relative; width:100%; max-width:480px; margin:0 auto;">
+    <img src="../lectures/figures/lecture4/pg12-floor.png" alt="Robot on a circular floor with a door" style="width:100%; display:block;" />
+  </div>
+</div>
+<script>
+(function () {
+  const wrapEl = document.getElementById('bf-wrap');
+  if (!wrapEl) return;
+
+  const N = 8;
+  function wrapIdx(i, r) { return ((i - 1 + r) % N) + 1; }
+  const detect = [0.4, 1, 0.4, 0, 0, 0, 0, 0]; // Prob[y=1|state=i], i=1..8
+
+  function predict(p) {
+    const out = new Array(N).fill(0);
+    for (let j = 1; j <= N; j++) {
+      const pj = p[j - 1];
+      if (!pj) continue;
+      out[j - 1] += pj * 0.1;
+      out[wrapIdx(j, 1) - 1] += pj * 0.7;
+      out[wrapIdx(j, 2) - 1] += pj * 0.2;
+    }
+    return out;
+  }
+  function correct(pbar, y) {
+    const q = pbar.map((v, idx) => v * (y === 1 ? detect[idx] : (1 - detect[idx])));
+    const s = q.reduce((a, b) => a + b, 0);
+    if (s < 1e-9) return { ok: false, p: pbar.slice() };
+    return { ok: true, p: q.map(v => v / s) };
+  }
+
+  const p0Container = document.getElementById('bf-p0-inputs');
+  const inputs = [];
+  for (let i = 1; i <= N; i++) {
+    const col = document.createElement('div');
+    col.style.textAlign = 'center';
+    const lab = document.createElement('div');
+    lab.textContent = String(i);
+    lab.style.fontSize = '0.75em';
+    lab.style.color = '#555';
+    const inp = document.createElement('input');
+    inp.type = 'number';
+    inp.min = '0';
+    inp.step = '0.1';
+    inp.value = (i === 1 ? '1' : '0');
+    inp.style.width = '42px';
+    col.appendChild(lab);
+    col.appendChild(inp);
+    p0Container.appendChild(col);
+    inputs.push(inp);
+  }
+
+  function normalizedP0() {
+    const raw = inputs.map(inp => Math.max(0, parseFloat(inp.value) || 0));
+    const s = raw.reduce((a, b) => a + b, 0);
+    if (s <= 0) return new Array(N).fill(1 / N);
+    return raw.map(v => v / s);
+  }
+
+  document.getElementById('bf-preset-uniform').addEventListener('click', () => {
+    inputs.forEach(inp => { inp.value = '1'; });
+    resetToInitial();
+  });
+  document.getElementById('bf-preset-pos1').addEventListener('click', () => {
+    inputs.forEach((inp, idx) => { inp.value = (idx === 0 ? '1' : '0'); });
+    resetToInitial();
+  });
+
+  let sequence = [];
+  const seqDisplay = document.getElementById('bf-seq-display');
+  function renderSeq() {
+    seqDisplay.textContent = sequence.length ? ('y: ' + sequence.join(' -> ')) : '(no measurements added yet)';
+  }
+  document.getElementById('bf-add-y0').addEventListener('click', () => { sequence.push(0); renderSeq(); });
+  document.getElementById('bf-add-y1').addEventListener('click', () => { sequence.push(1); renderSeq(); });
+  document.getElementById('bf-undo').addEventListener('click', () => { sequence.pop(); renderSeq(); });
+  document.getElementById('bf-clear-seq').addEventListener('click', () => { sequence = []; renderSeq(); resetToInitial(); });
+  renderSeq();
+
+  const posFrac = {
+    1: [0.274, 0.421], 2: [0.479, 0.421], 3: [0.682, 0.421],
+    4: [0.824, 0.608], 5: [0.716, 0.840], 6: [0.479, 0.881],
+    7: [0.242, 0.840], 8: [0.155, 0.608]
+  };
+  const imgWrap = document.getElementById('bf-imgwrap');
+  const badges = {};
+  for (let i = 1; i <= N; i++) {
+    const b = document.createElement('div');
+    b.style.position = 'absolute';
+    b.style.left = (posFrac[i][0] * 100) + '%';
+    b.style.top = (posFrac[i][1] * 100) + '%';
+    b.style.transform = 'translate(-50%,-50%)';
+    b.style.minWidth = '34px';
+    b.style.padding = '2px 4px';
+    b.style.borderRadius = '4px';
+    b.style.fontSize = '0.82em';
+    b.style.fontWeight = '600';
+    b.style.textAlign = 'center';
+    b.style.transition = 'background-color 0.35s, color 0.35s';
+    b.style.pointerEvents = 'none';
+    b.textContent = '0.00';
+    imgWrap.appendChild(b);
+    badges[i] = b;
+  }
+
+  function colorFor(v) {
+    const a = Math.min(1, v * 1.6);
+    return 'rgba(37,99,235,' + a.toFixed(3) + ')';
+  }
+  function textColorFor(v) { return v > 0.55 ? '#fff' : '#111'; }
+
+  function renderBelief(p) {
+    for (let i = 1; i <= N; i++) {
+      const v = p[i - 1];
+      badges[i].textContent = v.toFixed(2);
+      badges[i].style.backgroundColor = colorFor(v);
+      badges[i].style.color = textColorFor(v);
+    }
+  }
+
+  const statusEl = document.getElementById('bf-status');
+
+  let currentP = normalizedP0();
+  let stageIdx = 0;
+  let phase = 'initial'; // 'initial' | 'predict' | 'correct'
+  let playing = false;
+  let timer = null;
+
+  function resetToInitial() {
+    stopPlay();
+    currentP = normalizedP0();
+    stageIdx = 0;
+    phase = 'initial';
+    renderBelief(currentP);
+    statusEl.textContent = 'Initial belief p0 (before any measurement).';
+  }
+
+  function stepOnce() {
+    if (stageIdx >= sequence.length) {
+      statusEl.textContent = 'All measurements in the sequence have been used. Add more, or reset.';
+      return false;
+    }
+    if (phase !== 'predict') {
+      const pbar = predict(currentP);
+      currentP = pbar;
+      phase = 'predict';
+      renderBelief(currentP);
+      statusEl.textContent = 'Stage ' + stageIdx + ' -> ' + (stageIdx + 1) + ': prediction (before observing y_' + (stageIdx + 1) + ' = ' + sequence[stageIdx] + ').';
+      return true;
+    } else {
+      const y = sequence[stageIdx];
+      const res = correct(currentP, y);
+      if (!res.ok) {
+        statusEl.textContent = 'y_' + (stageIdx + 1) + ' = ' + y + ' has probability 0 given the predicted belief -- this measurement is impossible here. Try a different sequence.';
+        return false;
+      }
+      currentP = res.p;
+      stageIdx += 1;
+      phase = 'correct';
+      renderBelief(currentP);
+      statusEl.textContent = 'Stage ' + stageIdx + ': correction using y_' + stageIdx + ' = ' + y + '.';
+      return stageIdx < sequence.length;
+    }
+  }
+
+  function stopPlay() { playing = false; if (timer) { clearTimeout(timer); timer = null; } }
+
+  document.getElementById('bf-step').addEventListener('click', () => { stopPlay(); stepOnce(); });
+  document.getElementById('bf-reset').addEventListener('click', resetToInitial);
+  document.getElementById('bf-play').addEventListener('click', () => {
+    if (playing) return;
+    resetToInitial();
+    playing = true;
+    function loop() {
+      if (!playing) return;
+      const more = stepOnce();
+      if (more) {
+        timer = setTimeout(loop, 1000);
+      } else {
+        playing = false;
+      }
+    }
+    timer = setTimeout(loop, 400);
+  });
+
+  resetToInitial();
+})();
+</script>
+```
+
+:::
+
+### The Bayes' filter algorithm
+
+Write the belief $P_{x_k\mid I_k}$ as the vector
+$p_k=\begin{bmatrix}p_{k,1}&\dots&p_{k,\bar n}\end{bmatrix}^\top$,
+$p_{k,i}=\text{Prob}[x_k=i\mid I_k]$. When there is no input and the
+model is time-invariant (@fig-filter-noinput), the Bayes filter alternates
+a *prediction* step, which propagates the belief through the dynamics,
+and a *correction* step, which folds in the new measurement:
+
+**Prediction** $\quad \bar p_{k+1} = Pp_k$
+
+**Correction** $\quad q_{k+1} = D(y_{k+1})\bar p_{k+1} \qquad p_{k+1} = \dfrac{q_{k+1}}{\mathbb{1}^\top q_{k+1}}$
+
+**Initial condition** $\quad p_0 = \dfrac{q_0}{\mathbb{1}^\top q_0} \qquad q_0 = D(y_0)\tilde p_0 \qquad \tilde p_{0,i} = \text{Prob}[x_0=i]$
+
+::: {style="text-align: center;"}
+![The Bayes filter (no input, time-invariant case): a state estimator that alternates a prediction step and an update (correction) step to produce the belief $P_{x_k\mid I_k}$ from the measurements $y_k$.](../lectures/figures/lecture4/pg16-filterblock.png){#fig-filter-noinput width="85%" fig-align="center"}
+:::
+
+In the general case, with an input and possibly time-varying dynamics
+and output maps (@fig-filter-general), the prediction step simply uses
+the transition matrix corresponding to the decision actually taken:
+
+**Prediction** $\quad \bar p_{k+1} = P_k(u_k)p_k$
+
+**Correction** $\quad q_{k+1} = D(y_{k+1})\bar p_{k+1} \qquad p_{k+1} = \dfrac{q_{k+1}}{\mathbb{1}^\top q_{k+1}}$
+
+**Initial condition** $\quad p_0 = \dfrac{q_0}{\mathbb{1}^\top q_0} \qquad q_0 = D(y_0)\tilde p_0 \qquad \tilde p_{0,i} = \text{Prob}[x_0=i]$
+
+::: {style="text-align: center;"}
+![The Bayes filter, general case: dynamics and output map may depend on time and on the applied input $u_k$.](../lectures/figures/lecture4/pg17-filterblock.png){#fig-filter-general width="80%" fig-align="center"}
+:::
+
+::: {.callout-note collapse="true" title="Derivation of the Bayes filter"}
+Both steps of the filter follow directly from the Markov property and
+Bayes' rule.
+
+**Prediction step.** Define
+$\bar p_k=\begin{bmatrix}\bar p_{k,1}&\dots&\bar p_{k,\bar n_k}\end{bmatrix}^\top$,
+$\bar p_{k,i}=\text{Prob}[x_k=i\mid I_{k-1},u_{k-1}]$. Conditioning on
+$x_k$,
+$$
+\bar p_{k+1,i} = \text{Prob}[x_{k+1}=i\mid I_k,u_k]
+= \sum_{\tau=1}^{\bar n_k}\text{Prob}[x_{k+1}=i\mid x_k=\tau,I_k,u_k]\,\text{Prob}[x_k=\tau\mid I_k,u_k].
+$$
+Since $x_k$ is independent of $u_k$ (the decision at stage $k$ cannot
+influence the state already reached at stage $k$), and by the Markov
+property $\text{Prob}[x_{k+1}=i\mid x_k=\tau,I_k,u_k]=\text{Prob}[x_{k+1}=i\mid x_k=\tau,u_k]=[P_k(u_k)]_{i\tau}$,
+this becomes
+$$
+\bar p_{k+1,i} = \sum_{\tau=1}^{\bar n_k} [P_k(u_k)]_{i\tau}\,p_{k,\tau},
+\qquad\text{i.e., in matrix form}\qquad
+\bar p_{k+1} = P_k(u_k)p_k.
+$$
+
+**Correction step.** Suppose a measurement $y_{k+1}=\theta$ arrives.
+Then, by Bayes' rule (conditioning on the third variable $I_k,u_k$) and
+again the Markov property ($y_{k+1}$ depends on $x_{k+1}$ only),
+$$
+p_{k+1,i} = \text{Prob}[x_{k+1}=i\mid I_k,y_{k+1}=\theta,u_k]
+= \alpha\,\text{Prob}[y_{k+1}=\theta\mid x_{k+1}=i]\,\text{Prob}[x_{k+1}=i\mid I_k,u_k],
+$$
+with $\alpha=1/\text{Prob}[y_{k+1}=\theta\mid I_k,u_k]$. In matrix form,
+$p_{k+1}=\alpha q_{k+1}$ with $q_{k+1}=D(y_{k+1})\bar p_{k+1}$; since
+$p_{k+1}$ must sum to one, $\alpha=1/\mathbb{1}^\top q_{k+1}$, giving
+$$
+p_{k+1} = \frac{q_{k+1}}{\mathbb{1}^\top q_{k+1}}.
+$$
+:::
+
+## Applications of the Bayes filter
+
+### Tracking a robot in a grid world
+
+A more involved, but structurally identical, example is tracking the
+position of a robot moving in a grid-world environment. Every cell of
+the environment is labeled $i\in\{1,\dots,n\}$, and $x_k=i$ indicates
+that the robot's position coincides with the centre of cell $i$
+(@fig-gridworld). The robot moves according to a fixed, autonomous
+policy, $x_{k+1}=f(x_k,w_k)$ (there is no control input in this
+example, so the derivations above specialize immediately, simply
+dropping $u_k$). Without disturbances, the motion follows a fixed
+*vector field* (@fig-vectorfield).
+
+::: {style="text-align: center;"}
+![A grid-world environment: every cell is labeled $i\in\{1,\dots,n\}$, and the robot's state $x_k$ is the cell it currently occupies.](../lectures/figures/lecture4/pg19-gridworld.png){#fig-gridworld width="55%" fig-align="center"}
+:::
+
+::: {style="text-align: center;"}
+![The deterministic vector field driving the robot's motion (no disturbances), zoomed in on a small region of the grid on the right.](../lectures/figures/lecture4/pg20-vectorfield.png){#fig-vectorfield width="85%" fig-align="center"}
+:::
+
+With disturbances, the next state $x_{k+1}=f(x_k,w_k)$ is uncertain and
+takes values in a neighbourhood of the deterministic next state
+$f(x_k,0)$, with probabilities that decay with distance
+(@fig-disturbance): the most likely outcome, $p_1=0.65$, is the
+deterministic one, while cells $1$, $2$, and $3$ steps away receive
+successively smaller probabilities $p_2$, $p_3$, $p_4$.
+
+::: {style="text-align: center;"}
+![Disturbance model: given the deterministic next cell (green), the actual next cell is uncertain and spreads over a neighbourhood with decreasing probability $p_1>p_2>p_3>p_4$ as illustrated on the (zoomed-in) grid on the right.](../lectures/figures/lecture4/pg21-disturbance.png){#fig-disturbance width="95%" fig-align="center"}
+:::
+
+Two different sensor models are considered for this example. In the
+first, the measurement $y_k=h(x_k,n_k)$ is itself uncertain and spreads
+over a neighbourhood of the true state $x_k$, in the same decaying-with-distance
+fashion as the disturbance model, with its own probabilities
+$q_1=0.5,q_2,q_3,q_4$ (@fig-sensor1). In the second, the measurement
+$y_k=h(x_k)$ is deterministic and simply reports whether there is an
+object or wall within a distance $M=5$ cell-lengths of the robot, and if
+so, whether the closest one is to the left (L), right (R), up (U) or
+down (D) -- or "no object close" (NO) if none is within range
+(@fig-sensor2).
+
+::: {style="text-align: center;"}
+![Sensor model I: the measurement $y_k$ spreads probabilistically over a neighbourhood of the true state, in the same fashion as the disturbance model (zoomed-in view on the right).](../lectures/figures/lecture4/pg22-sensor1.png){#fig-sensor1 width="95%" fig-align="center"}
+:::
+
+::: {style="text-align: center;"}
+![Sensor model II: a deterministic measurement reporting the direction (Left, Right, Up, Down) of the nearest object/wall within a fixed range, or "No object close" (NO) if none is in range.](../lectures/figures/lecture4/pg23-sensor2.png){#fig-sensor2 width="75%" fig-align="center"}
+:::
+
+Running the Bayes filter on these two sensor models produces the videos
+below, which track the evolving belief over the grid as the robot moves
+and measurements arrive. In both, the left panel shows the environment --
+walls and the central obstacle in yellow -- with the robot (green
+marker) driving anticlockwise along the red circular path, and prints
+the true position, the measurement $y_k$ actually received, and the
+stage counter $k$. The right panel shows the belief
+$P_{x_k\mid I_k}$ that the filter maintains over the whole grid,
+brighter meaning more probable.
+
+With **sensor model I**, the measurement is a noisy position: $y_k$ is a
+pair of coordinates scattered around the true one, and the belief stays
+collapsed onto a near-point blob that follows the robot around the
+circle.
+
+```{=html}
+<div style="text-align:center; margin: 1em 0;">
+  <video controls playsinline style="max-width:100%; width:720px;">
+    <source src="../lectures/figures/lecture4/LEC4sensor1.mp4" type="video/mp4">
+    Your browser does not support embedded video. You can download the
+    video directly instead.
+  </video>
+</div>
+```
+
+With **sensor model II**, the measurement is the deterministic
+directional reading, so $y_k$ is a single symbol rather than a pair of
+coordinates and carries much less information per stage. The belief is
+correspondingly broader, and -- more tellingly -- it is *elongated*: at
+any moment it smears out along the direction that the current reading
+cannot resolve, stretching horizontally, diagonally or vertically as the
+robot works its way around the obstacle. Compare the two right-hand
+panels side by side; this is the picture to keep in mind of what a
+weaker sensor costs you.
+
+```{=html}
+<div style="text-align:center; margin: 1em 0;">
+  <video controls playsinline style="max-width:100%; width:720px;">
+    <source src="../lectures/figures/lecture4/LEC4sensor2.mp4" type="video/mp4">
+    Your browser does not support embedded video. You can download the
+    video directly instead.
+  </video>
+</div>
+```
+
+::: {.callout-important collapse="true" title="Interactive example: build your own environment and run the Bayes filter"}
+
+The same ideas can be explored interactively. In the demo below the
+environment is yours to design: **click any cell** to turn it into a
+wall or clear it again, exactly as in the Dijkstra demo of Unit 3. The
+robot then moves stochastically through whatever environment you have
+built -- at every stage it stays put or steps to one of its free
+orthogonal neighbours, all equally likely, which is the motion model of
+`A_4_K_gridworldBayes.ipynb` -- and the Bayes filter tracks it using
+**sensor model II**: the robot only gets feedback when it is close to
+something, reporting the direction (U, D, L or R) of the nearest wall
+within $M$ cells, or `NO` when nothing is within range.
+
+The left panel shows the environment and the robot's true position
+(green), with a red arrow towards the wall it is currently sensing. The
+right panel shows the belief $P_{x_k\mid I_k}$, brightest where the
+robot is most likely to be, with the true cell outlined in red.
+
+Because this sensor is *deterministic*, the correction step does
+something very easy to see: it simply rules out every cell whose reading
+differs from the one just received, and renormalizes over the rest. So
+the bright region is exactly the set of positions still consistent with
+the whole history of readings, and the counter below the panels tracks
+how many those are. Watch what happens as the robot moves along a wall
+and then out into the open -- in open space every cell reports `NO`, the
+measurements stop discriminating, and the belief spreads back out.
+
+```{=html}
+<div id="gw-wrap" style="margin:1em 0; text-align:center;">
+  <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+    <div>
+      <div style="font-size:0.85em; color:#555; margin-bottom:3px;">Environment and true position</div>
+      <div id="gw-left"></div>
+    </div>
+    <div>
+      <div style="font-size:0.85em; color:#555; margin-bottom:3px;">Belief over the grid</div>
+      <div id="gw-right"></div>
+    </div>
+  </div>
+  <div id="gw-status" style="font-size:0.9em; margin:0.6em 0; min-height:1.4em;"></div>
+  <div style="margin-bottom:0.5em;">
+    <button id="gw-step" style="padding:4px 12px; font-size:0.9em;">Step</button>
+    <button id="gw-play" style="padding:4px 12px; font-size:0.9em; margin-left:0.4em;">Play</button>
+    <button id="gw-newrun" style="padding:4px 12px; font-size:0.9em; margin-left:0.4em;">New run</button>
+    <button id="gw-reset" style="padding:4px 12px; font-size:0.9em; margin-left:0.4em;">Reset grid</button>
+    <label style="margin-left:0.8em; font-size:0.9em;">sensor range M
+      <select id="gw-range">
+        <option value="2" selected>2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+    </label>
+  </div>
+  <div style="font-size:0.8em; color:#555; line-height:1.6;">
+    <span style="display:inline-block; width:12px; height:12px; background:#2c3e50; border-radius:2px; vertical-align:middle;"></span> wall
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:12px; height:12px; background:#27ae60; border-radius:50%; vertical-align:middle;"></span> true position
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:16px; height:3px; background:#c0392b; vertical-align:middle;"></span> sensed direction
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:36px; height:12px; background:linear-gradient(90deg,#121858,#20a0be,#f5e13c); border-radius:2px; vertical-align:middle;"></span> belief, low to high
+  </div>
+</div>
+<script>
+(function () {
+  const COLS = 19, ROWS = 13, CELL = 20;
+  const DIRS = [['U', -1, 0], ['D', 1, 0], ['L', 0, -1], ['R', 0, 1]]; // fixed tie-break order
+  const key = (r, c) => r + ',' + c;
+
+  function defaultObstacles() {
+    const s = new Set();
+    for (let r = 0; r <= 5; r++) s.add(key(r, 6));
+    for (let c = 6; c <= 10; c++) s.add(key(5, c));
+    for (let r = 7; r < ROWS; r++) s.add(key(r, 12));
+    for (let c = 2; c <= 5; c++) s.add(key(9, c));
+    for (const [r, c] of [[2,14],[2,15],[3,14],[3,15]]) s.add(key(r, c));
+    return s;
+  }
+
+  let obstacles = defaultObstacles();
+  let M = 2;
+  let model = null, belief = null, truth = -1, k = 0, lastY = null, playing = false, timer = null;
+
+  function buildModel() {
+    const isWall = (r, c) => (r < 0 || r >= ROWS || c < 0 || c >= COLS) ? true : obstacles.has(key(r, c));
+    const free = [], idx = new Map();
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++)
+      if (!isWall(r, c)) { idx.set(key(r, c), free.length); free.push([r, c]); }
+    const succ = free.map(([r, c]) => {
+      const out = [idx.get(key(r, c))];
+      for (const [, dr, dc] of DIRS) if (!isWall(r + dr, c + dc)) out.push(idx.get(key(r + dr, c + dc)));
+      return out;
+    });
+    const obs = free.map(([r, c]) => {
+      let best = 'NO', bestd = Infinity;
+      for (const [name, dr, dc] of DIRS)
+        for (let d = 1; d <= M; d++)
+          if (isWall(r + dr * d, c + dc * d)) { if (d < bestd) { bestd = d; best = name; } break; }
+      return best;
+    });
+    model = { free, idx, N: free.length, succ, obs, isWall };
+  }
+
+  function predict(p) {
+    const q = new Float64Array(model.N);
+    for (let j = 0; j < model.N; j++) {
+      if (p[j] === 0) continue;
+      const s = model.succ[j], w = p[j] / s.length;
+      for (const i of s) q[i] += w;
+    }
+    return q;
+  }
+  function correct(p, y) {
+    const q = new Float64Array(model.N);
+    let Z = 0;
+    for (let i = 0; i < model.N; i++) if (model.obs[i] === y) { q[i] = p[i]; Z += p[i]; }
+    if (Z === 0) return null;
+    for (let i = 0; i < model.N; i++) q[i] /= Z;
+    return q;
+  }
+
+  function newRun() {
+    buildModel();
+    if (model.N === 0) { belief = null; truth = -1; return; }
+    truth = Math.floor(Math.random() * model.N);
+    k = 0;
+    belief = new Float64Array(model.N).fill(1 / model.N);
+    lastY = model.obs[truth];
+    belief = correct(belief, lastY);
+  }
+
+  function step() {
+    if (!model || model.N === 0) return;
+    const s = model.succ[truth];
+    truth = s[Math.floor(Math.random() * s.length)];
+    k++;
+    belief = predict(belief);
+    lastY = model.obs[truth];
+    belief = correct(belief, lastY);
+  }
+
+  // dark navy -> cyan -> yellow, echoing the MATLAB videos above
+  function heat(t) {
+    t = Math.max(0, Math.min(1, t));
+    const stops = [[18, 24, 90], [32, 160, 190], [245, 225, 60]];
+    const i = t < 0.5 ? 0 : 1, u = t < 0.5 ? t / 0.5 : (t - 0.5) / 0.5;
+    const a = stops[i], b = stops[i + 1];
+    return 'rgb(' + Math.round(a[0] + u * (b[0] - a[0])) + ',' +
+                    Math.round(a[1] + u * (b[1] - a[1])) + ',' +
+                    Math.round(a[2] + u * (b[2] - a[2])) + ')';
+  }
+
+  const wrapL = document.getElementById('gw-left'), wrapR = document.getElementById('gw-right');
+  const statusEl = document.getElementById('gw-status');
+  function mkCanvas(wrap) {
+    const cv = document.createElement('canvas');
+    cv.width = COLS * CELL + 1; cv.height = ROWS * CELL + 1;
+    cv.style.border = '1px solid #999'; cv.style.cursor = 'pointer';
+    cv.style.maxWidth = '100%';
+    wrap.appendChild(cv);
+    return cv;
+  }
+  const cvL = mkCanvas(wrapL), cvR = mkCanvas(wrapR);
+  const ctxL = cvL.getContext('2d'), ctxR = cvR.getContext('2d');
+
+  function gridlines(ctx) {
+    ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1;
+    for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r * CELL + 0.5); ctx.lineTo(COLS * CELL, r * CELL + 0.5); ctx.stroke(); }
+    for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c * CELL + 0.5, 0); ctx.lineTo(c * CELL + 0.5, ROWS * CELL); ctx.stroke(); }
+  }
+
+  function draw() {
+    // left: environment + true position
+    ctxL.clearRect(0, 0, cvL.width, cvL.height);
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      ctxL.fillStyle = obstacles.has(key(r, c)) ? '#2c3e50' : '#ffffff';
+      ctxL.fillRect(c * CELL + 1, r * CELL + 1, CELL - 1, CELL - 1);
+    }
+    gridlines(ctxL);
+    if (model && truth >= 0 && truth < model.N) {
+      const [r, c] = model.free[truth];
+      const cx = c * CELL + CELL / 2, cy = r * CELL + CELL / 2;
+      ctxL.fillStyle = '#27ae60';
+      ctxL.beginPath(); ctxL.arc(cx, cy, CELL / 2 - 3, 0, 2 * Math.PI); ctxL.fill();
+      if (lastY && lastY !== 'NO') {           // arrow towards the detected wall
+        const d = DIRS.find(x => x[0] === lastY);
+        ctxL.strokeStyle = '#c0392b'; ctxL.lineWidth = 2.5;
+        ctxL.beginPath();
+        ctxL.moveTo(cx, cy);
+        ctxL.lineTo(cx + d[2] * CELL * 0.9, cy + d[1] * CELL * 0.9);
+        ctxL.stroke();
+      }
+    }
+    // right: belief
+    ctxR.clearRect(0, 0, cvR.width, cvR.height);
+    let mx = 0;
+    if (belief) for (let i = 0; i < model.N; i++) if (belief[i] > mx) mx = belief[i];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      let fill = '#2c3e50';
+      if (!obstacles.has(key(r, c))) {
+        const i = model ? model.idx.get(key(r, c)) : undefined;
+        fill = (belief && i !== undefined && mx > 0) ? heat(belief[i] / mx) : '#121858';
+      }
+      ctxR.fillStyle = fill;
+      ctxR.fillRect(c * CELL + 1, r * CELL + 1, CELL - 1, CELL - 1);
+    }
+    gridlines(ctxR);
+    if (model && truth >= 0 && truth < model.N) {
+      const [r, c] = model.free[truth];
+      ctxR.strokeStyle = '#e74c3c'; ctxR.lineWidth = 2;
+      ctxR.strokeRect(c * CELL + 2, r * CELL + 2, CELL - 3, CELL - 3);
+    }
+    // status
+    if (!model || model.N === 0) { statusEl.textContent = 'Every cell is a wall -- click some cells to open the environment up.'; return; }
+    let support = 0;
+    if (belief) for (let i = 0; i < model.N; i++) if (belief[i] > 1e-12) support++;
+    const [tr, tc] = model.free[truth];
+    statusEl.innerHTML = 'k = <b>' + k + '</b> &nbsp;|&nbsp; measurement y = <b>' + lastY +
+      '</b> &nbsp;|&nbsp; cells still possible: <b>' + support + '</b> of ' + model.N +
+      ' &nbsp;|&nbsp; belief at the true cell (' + tr + ',' + tc + '): <b>' +
+      (belief ? (100 * belief[truth]).toFixed(1) : '0') + '%</b>';
+  }
+
+  function onClick(ev, cv) {
+    if (playing) return;
+    const rect = cv.getBoundingClientRect();
+    const sx = cv.width / rect.width, sy = cv.height / rect.height;
+    const c = Math.floor((ev.clientX - rect.left) * sx / CELL);
+    const r = Math.floor((ev.clientY - rect.top) * sy / CELL);
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+    const kk = key(r, c);
+    if (obstacles.has(kk)) obstacles.delete(kk); else obstacles.add(kk);
+    newRun();
+    draw();
+  }
+  cvL.addEventListener('click', e => onClick(e, cvL));
+  cvR.addEventListener('click', e => onClick(e, cvR));
+
+  const stepBtn = document.getElementById('gw-step');
+  const playBtn = document.getElementById('gw-play');
+  const runBtn = document.getElementById('gw-newrun');
+  const resetBtn = document.getElementById('gw-reset');
+  const rangeSel = document.getElementById('gw-range');
+
+  function stopPlaying() { playing = false; if (timer) { clearInterval(timer); timer = null; } playBtn.textContent = 'Play'; }
+  stepBtn.addEventListener('click', function () { if (playing) return; step(); draw(); });
+  playBtn.addEventListener('click', function () {
+    if (playing) { stopPlaying(); return; }
+    playing = true; playBtn.textContent = 'Pause';
+    timer = setInterval(function () { step(); draw(); }, 450);
+  });
+  runBtn.addEventListener('click', function () { stopPlaying(); newRun(); draw(); });
+  resetBtn.addEventListener('click', function () { stopPlaying(); obstacles = defaultObstacles(); newRun(); draw(); });
+  rangeSel.addEventListener('change', function () { stopPlaying(); M = parseInt(rangeSel.value, 10); newRun(); draw(); });
+
+  newRun();
+  draw();
+})();
+</script>
+```
+
+:::
+
+### GPS-denied navigation in a tunnel
+
+A second application is estimating the position of a car travelling
+through a GPS-denied tunnel (@fig-gpstunnel): GPS gives an accurate
+absolute position outside the tunnel, but is unavailable inside it,
+where dead-reckoning from the wheel odometry alone would accumulate
+drift over time -- exactly the kind of situation where a Bayes filter,
+fusing whatever measurements remain available with a motion model, is
+valuable.
+
+::: {style="text-align: center;"}
+![Outside the tunnel, accurate GPS positioning is available; inside, GPS is denied and dead-reckoning odometry alone accumulates error over time.](../lectures/figures/lecture4/pg26-gpstunnel.png){#fig-gpstunnel width="95%" fig-align="center"}
+:::
+
+In this model, position is discretized into cells along the lane,
+$q_k\in\{1,\dots,n\}$ (@fig-cells), and velocity into cell-jump units,
+$v_k\in\{0,1,\dots,m\}$. An internal velocimeter provides a noisy
+velocity measurement $\tilde v_k=v_k-w_k$, with disturbance
+$w_k\in\{-n_w,\dots,-1,0,1,\dots,n_w\}$, so that the dynamics are
+$q_{k+1}=q_k+\tilde v_k+w_k$ (the true velocity $v_k$ being the
+quantity actually driving the motion). Where available, GPS
+measurements are $y_k=q_k+n_k$, with noise $n_k\in\{-n_v,\dots,-1,0,1,\dots,n_v\}$.
+The Bayes filter for this model is set up exactly as in the previous
+examples, so the details are omitted here.
+
+::: {style="text-align: center;"}
+![Position discretized into cells $q_k\in\{1,\dots,n\}$ along the lane.](../lectures/figures/lecture4/pg27-cells.png){#fig-cells width="55%" fig-align="center"}
+:::
+
+::: {.callout-important collapse="true" title="Interactive example: watching the belief spread inside the tunnel"}
+
+The demo below runs exactly this filter. The car drives left to right
+along the lane; the shaded span in the middle is the tunnel, where GPS
+is unavailable. The top strip shows the true cell $q_k$ (red) and, when
+GPS is available, the reading $y_k$ (orange tick above the lane). The
+bar chart underneath is the belief $P_{q_k\mid I_k}$ over the cells,
+with the true position marked by the red line.
+
+Both noise sources are discretized Gaussians, $\text{Prob}[d]\propto
+e^{-d^2/2\sigma^2}$ truncated at $\pm3\sigma$ and renormalized, and the
+two standard deviations are yours to set: $\sigma_w$ for the velocimeter
+disturbance $w_k$, and $\sigma_n$ for the GPS noise $n_k$ (the
+measurement noise, written $v_k$ in some texts). Changing either starts
+a fresh run.
+
+The two have quite different jobs, and the demo is worth running a few
+times to see it. Inside the tunnel there is no correction step at all,
+so the belief is only ever propagated through the motion model and its
+spread grows steadily -- this is dead-reckoning drift, and $\sigma_w$
+sets how fast it accumulates. The moment the car leaves the tunnel a
+single GPS reading collapses the belief again, and $\sigma_n$ sets how
+sharply. With $\sigma_w$ large and $\sigma_n$ small you get the most
+dramatic version: a belief that fans out across a dozen cells in the
+tunnel and snaps back to near-certainty in one step on the way out.
+
+```{=html}
+<div id="gps-wrap" style="margin:1em 0; text-align:center;">
+  <div id="gps-canvas"></div>
+  <div id="gps-status" style="font-size:0.88em; margin:0.6em 0; min-height:1.4em;"></div>
+  <div style="margin-bottom:0.5em; font-size:0.9em;">
+    <label>&sigma;<sub>w</sub> (velocimeter)
+      <input id="gps-sw" type="number" value="1" min="0.25" max="4" step="0.25" style="width:4.5em;">
+    </label>
+    <label style="margin-left:0.8em;">&sigma;<sub>n</sub> (GPS)
+      <input id="gps-sv" type="number" value="1" min="0.25" max="4" step="0.25" style="width:4.5em;">
+    </label>
+    <button id="gps-step" style="padding:4px 12px; margin-left:0.8em;">Step</button>
+    <button id="gps-play" style="padding:4px 12px; margin-left:0.4em;">Play</button>
+    <button id="gps-newrun" style="padding:4px 12px; margin-left:0.4em;">New run</button>
+  </div>
+  <div style="font-size:0.8em; color:#555; line-height:1.6;">
+    <span style="display:inline-block; width:12px; height:12px; background:#c0392b; border-radius:2px; vertical-align:middle;"></span> true position
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:12px; height:12px; background:#e67e22; border-radius:2px; vertical-align:middle;"></span> GPS reading
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:12px; height:12px; background:#9aa7b0; border-radius:2px; vertical-align:middle;"></span> tunnel (GPS denied)
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:12px; height:12px; background:#1565c0; border-radius:2px; vertical-align:middle;"></span> belief
+  </div>
+</div>
+<script>
+(function () {
+  const N = 70, TUN_A = 26, TUN_B = 48, VTILDE = 2;
+  const CELLW = 9, PADL = 16, PADR = 16;
+  const LANE_Y = 8, LANE_H = 30, BAR_Y = 54, BAR_H = 132;
+  const W = PADL + N * CELLW + PADR, H = BAR_Y + BAR_H + 26;
+
+  let sigmaW = 1.0, sigmaV = 1.0;
+  let Pw = null, Pv = null;
+  let q = 1, p = null, k = 0, lastY = null, lastVt = VTILDE, finished = false;
+  let playing = false, timer = null;
+
+  const halfFor = s => Math.max(1, Math.min(8, Math.ceil(3 * s)));
+  const inTunnel = x => x >= TUN_A && x <= TUN_B;
+
+  function discGauss(sigma) {
+    const half = halfFor(sigma), vals = [], probs = [];
+    for (let d = -half; d <= half; d++) { vals.push(d); probs.push(Math.exp(-(d * d) / (2 * sigma * sigma))); }
+    const Z = probs.reduce((a, b) => a + b, 0);
+    return { vals, probs: probs.map(x => x / Z) };
+  }
+  function drawFrom(d) {
+    let r = Math.random(), c = 0;
+    for (let t = 0; t < d.vals.length; t++) { c += d.probs[t]; if (r <= c) return d.vals[t]; }
+    return d.vals[d.vals.length - 1];
+  }
+
+  // q_{k+1} = q_k + vtilde + w, with the velocimeter reading vtilde known to the filter
+  function predict(pp) {
+    const out = new Float64Array(N + 1);
+    for (let i = 1; i <= N; i++) {
+      if (pp[i] === 0) continue;
+      for (let t = 0; t < Pw.vals.length; t++) {
+        let j = i + VTILDE + Pw.vals[t];
+        if (j < 1) j = 1; if (j > N) j = N;
+        out[j] += pp[i] * Pw.probs[t];
+      }
+    }
+    return out;
+  }
+  // GPS: y = q + n, available only outside the tunnel
+  function correct(pp, y) {
+    const out = new Float64Array(N + 1); let Z = 0;
+    const lut = new Map(); Pv.vals.forEach((d, t) => lut.set(d, Pv.probs[t]));
+    for (let i = 1; i <= N; i++) {
+      const wgt = lut.get(y - i);
+      if (wgt) { out[i] = pp[i] * wgt; Z += out[i]; }
+    }
+    if (Z === 0) return null;
+    for (let i = 1; i <= N; i++) out[i] /= Z;
+    return out;
+  }
+
+  function newRun() {
+    Pw = discGauss(sigmaW); Pv = discGauss(sigmaV);
+    q = 3; k = 0; finished = false; lastVt = VTILDE;
+    p = new Float64Array(N + 1); for (let i = 1; i <= N; i++) p[i] = 1 / N;
+    lastY = inTunnel(q) ? null : q + drawFrom(Pv);
+    if (lastY !== null) { const np = correct(p, lastY); if (np) p = np; }
+  }
+
+  function step() {
+    if (finished) return;
+    const w = drawFrom(Pw);
+    q = Math.min(N, Math.max(1, q + VTILDE + w));
+    k++;
+    p = predict(p);
+    if (inTunnel(q)) { lastY = null; }
+    else { lastY = q + drawFrom(Pv); const np = correct(p, lastY); if (np) p = np; }
+    if (q >= N) finished = true;
+  }
+
+  function stats() {
+    let mean = 0; for (let i = 1; i <= N; i++) mean += i * p[i];
+    let v = 0; for (let i = 1; i <= N; i++) v += (i - mean) * (i - mean) * p[i];
+    return { mean, sd: Math.sqrt(v) };
+  }
+
+  const wrap = document.getElementById('gps-canvas');
+  const statusEl = document.getElementById('gps-status');
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  canvas.style.border = '1px solid #999'; canvas.style.maxWidth = '100%';
+  wrap.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  const X = i => PADL + (i - 1) * CELLW;
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // --- lane strip ---
+    ctx.fillStyle = '#eceff1'; ctx.fillRect(PADL, LANE_Y, N * CELLW, LANE_H);
+    ctx.fillStyle = '#9aa7b0'; ctx.fillRect(X(TUN_A), LANE_Y, (TUN_B - TUN_A + 1) * CELLW, LANE_H);
+    ctx.strokeStyle = '#b0bec5'; ctx.lineWidth = 1;
+    for (let i = 1; i <= N + 1; i++) { ctx.beginPath(); ctx.moveTo(X(i) + 0.5, LANE_Y); ctx.lineTo(X(i) + 0.5, LANE_Y + LANE_H); ctx.stroke(); }
+    ctx.fillStyle = '#37474f'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('TUNNEL (no GPS)', X((TUN_A + TUN_B) / 2), LANE_Y + LANE_H / 2 + 3);
+    // GPS reading marker
+    if (lastY !== null && lastY >= 1 && lastY <= N) {
+      ctx.fillStyle = '#e67e22';
+      ctx.fillRect(X(lastY), LANE_Y - 5, CELLW, 4);
+    }
+    // true car
+    ctx.fillStyle = '#c0392b';
+    ctx.fillRect(X(q), LANE_Y + 4, CELLW, LANE_H - 8);
+    // --- belief bars ---
+    let mx = 0; for (let i = 1; i <= N; i++) if (p[i] > mx) mx = p[i];
+    ctx.strokeStyle = '#cfd8dc'; ctx.beginPath();
+    ctx.moveTo(PADL, BAR_Y + BAR_H + 0.5); ctx.lineTo(PADL + N * CELLW, BAR_Y + BAR_H + 0.5); ctx.stroke();
+    for (let i = 1; i <= N; i++) {
+      if (p[i] <= 0) continue;
+      const h = mx > 0 ? (p[i] / mx) * BAR_H : 0;
+      ctx.fillStyle = inTunnel(i) ? '#5c6bc0' : '#1565c0';
+      ctx.fillRect(X(i) + 1, BAR_Y + BAR_H - h, CELLW - 2, h);
+    }
+    // true position line through the bar chart
+    ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(X(q) + CELLW / 2, BAR_Y); ctx.lineTo(X(q) + CELLW / 2, BAR_Y + BAR_H); ctx.stroke();
+    // tunnel span under the bars
+    ctx.fillStyle = 'rgba(120,135,150,0.18)';
+    ctx.fillRect(X(TUN_A), BAR_Y, (TUN_B - TUN_A + 1) * CELLW, BAR_H);
+    ctx.fillStyle = '#546e7a'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('belief  P[q_k | I_k]', PADL, BAR_Y + BAR_H + 15);
+    ctx.textAlign = 'right';
+    ctx.fillText('cell 1 .. ' + N, PADL + N * CELLW, BAR_Y + BAR_H + 15);
+
+    const st = stats();
+    statusEl.innerHTML =
+      'k = <b>' + k + '</b> &nbsp;|&nbsp; true cell q<sub>k</sub> = <b>' + q + '</b>' +
+      ' &nbsp;|&nbsp; velocimeter reading &#7765; = <b>' + lastVt + '</b>' +
+      ' &nbsp;|&nbsp; GPS: <b>' + (lastY === null ? 'denied (in tunnel)' : 'y = ' + lastY) + '</b>' +
+      ' &nbsp;|&nbsp; belief std. dev. = <b>' + st.sd.toFixed(2) + '</b> cells' +
+      (finished ? ' &nbsp;&mdash; <b>end of the lane; press New run.</b>' : '');
+  }
+
+  const stepBtn = document.getElementById('gps-step');
+  const playBtn = document.getElementById('gps-play');
+  const runBtn = document.getElementById('gps-newrun');
+  const swIn = document.getElementById('gps-sw');
+  const svIn = document.getElementById('gps-sv');
+
+  function stopPlaying() { playing = false; if (timer) { clearInterval(timer); timer = null; } playBtn.textContent = 'Play'; }
+  function readParams() {
+    const a = parseFloat(swIn.value), b = parseFloat(svIn.value);
+    sigmaW = (isFinite(a) && a >= 0.25) ? Math.min(a, 4) : 1;
+    sigmaV = (isFinite(b) && b >= 0.25) ? Math.min(b, 4) : 1;
+  }
+  stepBtn.addEventListener('click', function () { if (playing) return; step(); draw(); });
+  playBtn.addEventListener('click', function () {
+    if (playing) { stopPlaying(); return; }
+    if (finished) return;
+    playing = true; playBtn.textContent = 'Pause';
+    timer = setInterval(function () { step(); draw(); if (finished) stopPlaying(); }, 420);
+  });
+  runBtn.addEventListener('click', function () { stopPlaying(); readParams(); newRun(); draw(); });
+  swIn.addEventListener('change', function () { stopPlaying(); readParams(); newRun(); draw(); });
+  svIn.addEventListener('change', function () { stopPlaying(); readParams(); newRun(); draw(); });
+
+  readParams(); newRun(); draw();
+})();
+</script>
+```
+
+:::
+
+### Estimating plant attributes in precision farming
+
+The Bayes filter is often used more broadly to keep track of an entire
+*world model*, not just a single robot's position. An example is the
+MSc thesis *Semantic SLAM for Autonomous Robots in Precision Farming
+Using Bayesian Inference* (Sander Doodman, TU/e, 2024), where it is used
+to keep track of the attributes of individual plants in an agricultural
+field, based on camera measurements gathered by a robot dog walking
+through the field (@fig-plants).
+
+::: {style="text-align: center;"}
+![A robot dog equipped with a RealSense L515 camera (left) used to gather measurements of individual plants for semantic mapping in precision farming (right); image from Sander Doodman's 2024 MSc thesis.](../lectures/figures/lecture4/pg28-plants.png){#fig-plants width="90%" fig-align="center"}
+:::
+
+## Solving POMDPs
+
+### Optimal policy structure
+
+Returning to the general POMDP formulation, a general result (proved in
+the callout below) is that the optimal cost-to-go and policy can always
+be written in terms of a finite collection of $n$-dimensional vectors
+$\alpha_k^1,\alpha_k^2,\dots,\alpha_k^{a_k}$, as
+
+$$
+J_k(p_k) = \min\{\alpha_k^{1\top}p_k,\ \alpha_k^{2\top}p_k,\ \dots,\ \alpha_k^{a_k\top}p_k\}, \qquad
+J_h(p_h) = \alpha_h^{1\top}p_h,
+$$
+
+$$
+\mu_k(p_k) = \arg\min_{u_k}\ \mathbb{E}[g_k(x_k,u_k)+J_{k+1}(p_{k+1})].
+$$
+
+That is, the optimal cost-to-go, as a function of the belief $p_k$, is
+always a *piecewise affine, concave* function -- the pointwise minimum
+of finitely many linear functions of $p_k$ -- and the optimal policy
+partitions the belief simplex into regions, one per linear piece, within
+each of which a single decision is optimal.
+
+::: {.callout-note collapse="true" title="Justification: the cost-to-go is piecewise affine in the belief"}
+For simplicity, assume the running cost $g(x_k,u_k)$ does not depend on
+time or on the disturbance, and that state, input and output live in
+fixed sets $x_k\in\{1,\dots,n\}$, $u_k\in\{1,\dots,m\}$,
+$y_k\in\{1,\dots,q\}$ over time. The claim is proved by backward
+induction on $k$.
+
+*Base case.* At the terminal stage, defining
+$\alpha_h^1=\begin{bmatrix}g_h(1)&g_h(2)&\dots&g_h(n)\end{bmatrix}^\top$,
+$$
+J_h(p_h) = \mathbb{E}[g_h(x_h)\mid I_h] = \sum_{i=1}^n g_h(i)\underbrace{\text{Prob}[x_h=i\mid I_h]}_{p_{h,i}} = \alpha_h^{1\top}p_h,
+$$
+a single affine (indeed linear) function of $p_h$, as claimed.
+
+*Inductive step.* Suppose the claim holds at stage $k+1$. Writing
+$\bar\alpha(u_k)=\begin{bmatrix}g(1,u_k)&\dots&g(n,u_k)\end{bmatrix}^\top$,
+$$
+J_k(p_k) = \min_{u_k}\ \mathbb{E}[g(x_k,u_k)+J_{k+1}(p_{k+1})\mid I_k]
+= \min_{u_k}\ \bar\alpha(u_k)^\top p_k + \sum_{\ell=1}^q \mathbb{E}[J_{k+1}(p_{k+1})\mid I_k,y_{k+1}=\ell]\,\text{Prob}[y_{k+1}=\ell\mid I_k],
+$$
+conditioning on the next measurement $y_{k+1}$. From the Bayes filter,
+$p_{k+1} = q_{k+1}/\text{Prob}[y_{k+1}=\ell\mid I_k]$ with
+$q_{k+1}=D(\ell)P_k(u_k)p_k$, and by the inductive hypothesis
+$J_{k+1}(p_{k+1})=\min\{\alpha_{k+1}^{1\top}p_{k+1},\dots,\alpha_{k+1}^{a_{k+1}\top}p_{k+1}\}$.
+Substituting and using that the normalizing factor
+$\text{Prob}[y_{k+1}=\ell\mid I_k]$ cancels against the division inside
+$p_{k+1}$,
+$$
+J_k(p_k) = \min_{u_k\in\{1,\dots,m\}}\ \bar\alpha(u_k)^\top p_k
++ \sum_{\ell=1}^q \Big\{\alpha_{k+1}^{1\top}D(\ell)P_k(u_k)p_k,\ \dots,\ \alpha_{k+1}^{a_{k+1}\top}D(\ell)P_k(u_k)p_k\Big\},
+$$
+where the inner braces denote that each of the $a_{k+1}$ choices can be
+selected independently for each $\ell$, before finally minimizing over
+$u_k$. Every term inside is linear in $p_k$, and minima and sums of
+linear functions combine into a new, larger finite collection of linear
+functions of $p_k$; hence
+$$
+J_k(p_k) = \min\{\alpha_k^{1\top}p_k,\ \alpha_k^{2\top}p_k,\ \dots,\ \alpha_k^{a_k\top}p_k\}
+$$
+for some vectors $\alpha_k^1,\dots,\alpha_k^{a_k}$, completing the
+induction.
+:::
+
+In practice, however, the number of linear pieces $a_k$ typically grows
+exponentially with the number of remaining stages, so this exact
+solution is mostly of theoretical interest, and heuristics are used to
+approximate POMDPs in applications. Solving a POMDP exactly, when
+feasible, proceeds in three steps:
+
+1. Offline, determine the vectors $\alpha_k^1,\dots,\alpha_k^{a_k}$ for
+   every stage $k$ from the recursion above. These define linear
+   functions on the $n$-dimensional probability simplex; using the
+   parameterization $p=(q,1-\mathbb{1}^\top q)$, dropping the redundant
+   last coordinate, these can be visualized directly as affine functions
+   of $q$, as in @fig-alphaviz.
+2. Online, based on the measurements gathered up to time $k$, compute
+   the current belief $p_k$ with the Bayes filter.
+3. Online, take the decision
+   $\mu_k(p_k)=\arg\min_{u_k}\mathbb{E}[g_k(x_k,u_k)+J_{k+1}(p_{k+1})]$,
+   using $J_k(p_k)=\min\{\alpha_k^{1\top}p_k,\dots,\alpha_k^{a_k\top}p_k\}$
+   precomputed in step 1.
+
+::: {style="text-align: center;"}
+![The cost-to-go as the pointwise minimum of finitely many affine functions of the belief: one state-dimension left over after the simplex parameterization ($n=1$, left) and two ($n=2$, right).](../lectures/figures/lecture4/pg31-alphaviz.png){#fig-alphaviz width="90%" fig-align="center"}
+:::
+
+Two worked examples of this procedure follow: a small, purely
+illustrative one (the Monty Hall problem) and a slightly larger one from
+Bertsekas' book (a machine-repair problem), both using the *first*
+approach discussed earlier in this unit -- reformulating the problem
+with the information set as state -- since for such small examples this
+is actually about as convenient as the belief-based approach, and
+arguably more transparent.
+
+::: {.callout-note collapse="true" title="Worked example: the Monty Hall problem"}
+> Suppose you're on a game show, and you're given the choice of three
+> doors: behind one door is a car; behind the others, goats. You pick a
+> door, say No. 1, and the host, who knows what's behind the doors,
+> opens another door, say No. 3, which has a goat. He then says to you,
+> "Do you want to pick door No. 2?" Is it to your advantage to switch
+> your choice?
+>
+> -- Whitaker, Craig F. (9 September 1990, *Parade Magazine*: 16, via
+> Wikipedia)
+
+::: {style="text-align: center;"}
+![The Monty Hall problem: three doors hide a car and two goats; after an initial pick, the host reveals a goat behind one of the other two doors.](../lectures/figures/lecture4/pg37-montyhall.png){#fig-montyhall width="78%" fig-align="center"}
+:::
+
+**Formulation.** There are two decision stages, $k\in\{0,1\}$
+(equivalently $k\in\{0,1,2\}$ counting the terminal stage), with
+decisions $u_0,u_1\in\{1,2,3\}$ (doors selected). The state has two
+"components": $\bar x_{k+1}=\bar x_k$, the door hiding the car, constant
+over time and unknown a priori (equally likely to be any of the three
+doors), and $\tilde x_{k+1}=u_k$, which simply keeps track of the
+previous decision. Formally, the overall state
+$x_k=(\bar x_k,\tilde x_k)$ takes one of $9$ values, though $\tilde x_k$
+and $\bar x_k$ can always be read off from $x_k$ and vice versa. The
+cost is $g_0(x_0,u_0)=0$,
+$g_1(x_1,u_1)=1$ if $\bar x_1=u_1$ and $0$ otherwise (we want to
+*maximize* the probability of picking the car, so this cost is later
+negated), and $g_2(x_2)=0$. There is no measurement at stage $0$
+($y_0=\emptyset$), and at stage $1$ the host reveals a door
+$y_1=h_1(x_1,n_1)\in\{1,2,3\}\setminus\{\bar x_1,\tilde x_1\}$ if
+$\bar x_1\neq\tilde x_1$ (the host must avoid both the car and the
+player's own pick), or a uniformly random door in
+$\{1,2,3\}\setminus\{\bar x_1,n_1\}$ if $\bar x_1=\tilde x_1$ (the
+player already picked the car, so the host picks freely between the two
+remaining doors, represented by the auxiliary random variable $n_1$),
+so that $I_1=(y_1,u_0)$.
+
+**Computing the belief.** To apply dynamic programming, start at stage
+$1$ and compute $P_{\bar x_1\mid I_1}$ for every possible
+$I_1=(y_1,u_0)$ (given $I_1$, $\tilde x_1=u_0$ is immediate, so only
+$\bar x_1$ needs to be estimated). Take, for concreteness,
+$(y_1,u_0)=(3,1)$: since the host never opens the door hiding the car,
+$\text{Prob}[\bar x_1=3\mid y_1=3,u_0=1]=0$ trivially. For the other two
+doors, Bayes' rule gives
+$$
+\text{Prob}[\bar x_1=2\mid y_1=3,u_0=1] = \alpha\cdot\text{Prob}[y_1=3\mid\bar x_1=2,u_0=1]\cdot\tfrac13 = \alpha\cdot1\times\tfrac13 = \tfrac23,
+$$
+$$
+\text{Prob}[\bar x_1=1\mid y_1=3,u_0=1] = \alpha\cdot\text{Prob}[y_1=3\mid\bar x_1=1,u_0=1]\cdot\tfrac13 = \alpha\cdot\tfrac12\times\tfrac13 = \tfrac13,
+$$
+with $\alpha = 1/\text{Prob}[y_1=3\mid u_0=1] = 1/(\tfrac12\times\tfrac12+1\times\tfrac13)=2$
+(@fig-montystem). The same computation, repeated for every one of the
+six combinations of $y_1$ and $u_0$, always assigns probability
+$\tfrac23$ to whichever door was *not* picked initially and was *not*
+opened by the host (@fig-montypolicyplots below).
+
+::: {style="text-align: center;"}
+![The belief $P_{\bar x_1\mid I_1}$ after observing $(y_1,u_0)=(3,1)$: probability $\tfrac13$ that the car is behind door $1$ (the player's original pick) and $\tfrac23$ that it is behind door $2$ (the only unopened, unpicked door).](../lectures/figures/lecture4/pg41-stemplot.png){#fig-montystem width="30%" fig-align="center"}
+:::
+
+::: {style="text-align: center;"}
+![The decision tree at stage $0$: whichever door is initially picked, the host's reveal leads to two possible continuations, and the belief in each is the one computed above.](../lectures/figures/lecture4/pg42-decisiontree.png){#fig-montytree width="55%" fig-align="center"}
+:::
+
+**Optimal decision and policy.** At stage $1$, the optimal decision
+minimizes $\mathbb{E}[g_1(x_1,u_1)]=-\text{Prob}[\bar x_1=u_1]$ (the
+negative sign turns the cost into a reward, since $g_1=1$ exactly when
+the guess is correct), which is minimized by picking the door with
+probability $\tfrac23$ -- i.e., by *switching* away from the original
+pick. Since this reasoning holds regardless of which door was picked
+initially and which was revealed, the optimal policy is simply: pick any
+door at stage $0$, and always switch at stage $1$
+(@fig-montypolicytree). This wins the car with probability $\tfrac23$,
+against only $\tfrac13$ for never switching (@fig-montypolicyplots).
+
+::: {style="text-align: center;"}
+![The full policy tree: from every stage-$0$ pick and every possible reveal, switching (following the arrows to the un-opened, un-picked door) achieves cost-to-go $-\tfrac23$.](../lectures/figures/lecture4/pg43-policytree.png){#fig-montypolicytree width="95%" fig-align="center"}
+:::
+
+::: {style="text-align: center;"}
+![The belief $P_{\bar x_1\mid I_1}$ for all six combinations of the initial pick $u_0$ and the host's reveal $y_1$: in every case, $\tfrac23$ probability is on the unopened, unpicked door.](../lectures/figures/lecture4/pg43-policyplots.png){#fig-montypolicyplots width="65%" fig-align="center"}
+:::
+:::
+
+::: {.callout-note collapse="true" title="Worked example: machine repair (Bertsekas, Section 5.1)"}
+A machine can be in one of two states, $P$ (proper condition) or
+$\bar P$ (improper condition) (@fig-machinerepair). In each period, a
+machine starting in $\bar P$ stays in $\bar P$; one starting in $P$
+stays in $P$ with probability $\tfrac23$ and moves to $\bar P$ with
+probability $\tfrac13$. The machine operates over $3$ periods, starting
+in state $P$. At the end of the first and second periods there is an
+inspection, with outcome "good" $G$ or "bad" $B$,
+$\text{Prob}[G\mid P]=\text{Prob}[B\mid\bar P]=\tfrac34$,
+$\text{Prob}[B\mid P]=\text{Prob}[G\mid\bar P]=\tfrac14$. After each
+inspection, the two possible actions are to continue operation, $C$
+(cost $0$, state unchanged), or to stop and repair, $S$ (cost $1$,
+returns the state to $P$ if it was $\bar P$); additionally, each period
+spent in $\bar P$ incurs a cost of $2$, regardless of the action.
+
+::: {style="text-align: center;"}
+![The machine's state trajectory over two inspections, with the two possible actions -- repair (dotted) or do not repair (solid) -- shown at each decision point.](../lectures/figures/lecture4/pg44-machinerepair.png){#fig-machinerepair width="90%" fig-align="center"}
+:::
+
+**Formulation.** With $x_{k+1}=w_k$, $k\in\{0,1\}$, $x_k\in\{P,\bar P\}$,
+$u_k\in\{C,S\}$: $\text{Prob}[x_0=P]=\tfrac23$,
+$\text{Prob}[x_0=\bar P]=\tfrac13$;
+$\text{Prob}[w_k=P\mid x_k=P,u_k=C]=\tfrac23$,
+$\text{Prob}[w_k=P\mid x_k=\bar P,u_k=C]=0$;
+$\text{Prob}[w_k=P\mid x_k=P,u_k=S]=\text{Prob}[w_k=P\mid x_k=\bar P,u_k=S]=\tfrac23$
+(repair always resets the transition probabilities as if starting from
+$P$); measurements $y_k=v_k$ with
+$\text{Prob}[v_k=G\mid x_k=P]=\tfrac34$,
+$\text{Prob}[v_k=G\mid x_k=\bar P]=\tfrac14$; cost
+$g(P,C)=0$, $g(P,S)=1$, $g(\bar P,C)=2$, $g(\bar P,S)=1$; information
+sets $I_0=(y_0)$, $I_1=(y_0,y_1,u_0)$. The goal is to choose
+$\mu_0(I_0),\mu_1(I_1)$ minimizing
+$\mathbb{E}[g(x_0,\mu_0(I_0))+g(x_1,\mu_1(I_1))]$.
+
+**Stage $1$.** Suppose the belief $p_1=\text{Prob}[x_1=\bar P\mid I_1]$
+is known (so $\text{Prob}[x_1=P\mid I_1]=1-p_1$). Action $S$ has
+cost-to-go $1$ regardless of $p_1$, since $g(P,S)=g(\bar P,S)=1$; action
+$C$ has expected cost $2p_1$ (only the $\bar P$ branch costs anything,
+weighted by its probability $p_1$). Hence
+$$
+\mu_1(p_1) = \begin{cases}S,& p_1>\tfrac12\\C,& p_1\leq\tfrac12\end{cases}
+\qquad
+J_1(p_1) = \min(2p_1,\,1),
+$$
+already visibly piecewise affine in $p_1$, as the general theory
+predicts.
+
+**Stage $0$.** Suppose $p_0=\text{Prob}[x_0=\bar P\mid I_0]$ is known.
+The decision $u_0$ influences the cost-to-go only through how it shapes
+the distribution of $p_1$, once the next measurement $y_1$ is also taken
+into account: there are four combinations of $u_0\in\{C,S\}$ and
+$y_1\in\{G,B\}$, each producing a different $p_1=\phi_1(p_0,u_0,y_1)$
+via Bayes' rule (exactly as in the earlier robot examples):
+$$
+p_1 = \phi_1(p_0,u_0,y_1) = \begin{cases}
+\tfrac17 & u_0=S,\ y_1=G\\[2pt]
+\tfrac35 & u_0=S,\ y_1=B\\[2pt]
+\dfrac{1+2p_0}{7-4p_0} & u_0=C,\ y_1=G\\[2pt]
+\dfrac{3+6p_0}{5+4p_0} & u_0=C,\ y_1=B
+\end{cases}
+$$
+together with
+$$
+\text{Prob}[y_1=G\mid p_0,u_0=C] = \frac{7-4p_0}{12}, \quad
+\text{Prob}[y_1=B\mid p_0,u_0=C] = \frac{5+4p_0}{12}, \quad
+\text{Prob}[y_1=G\mid p_0,u_0=S] = \frac{7}{12}, \quad
+\text{Prob}[y_1=B\mid p_0,u_0=S] = \frac{5}{12}.
+$$
+The cost-to-go at stage $0$ is then
+$$
+J_0(p_0) = \min\Big[\,2p_0 + \tfrac{7-4p_0}{12}J_1\big(\tfrac{1+2p_0}{7-4p_0}\big) + \tfrac{5+4p_0}{12}J_1\big(\tfrac{3+6p_0}{5+4p_0}\big),
+\ \ 1 + \tfrac{7}{12}J_1(\tfrac17) + \tfrac{5}{12}J_1(\tfrac35)\,\Big],
+$$
+the first branch for $u_0=C$ and the second for $u_0=S$, which
+simplifies (substituting $J_1(p_1)=\min(2p_1,1)$ and working through the
+case boundaries) to
+$$
+J_0(p_0) = \begin{cases}\tfrac{19}{12}, & \tfrac38\leq p_0\leq1\\[4pt] \tfrac{7}{12}+4p_0, & 0\leq p_0\leq\tfrac38\end{cases}
+\qquad
+\mu_0(p_0) = \begin{cases}C, & p_0\leq\tfrac38\\S, & p_0>\tfrac38\end{cases}
+\quad\text{(optimal policy)}.
+$$
+Again $J_0$ is piecewise affine in $p_0$, with two linear pieces --
+consistent with the general theory, and illustrating concretely how
+quickly the number of pieces can grow with the number of remaining
+stages even in a tiny, two-stage example.
+:::
+
+### Historical note
+
+![Thomas Bayes (1701-1761). (The only surviving portrait commonly said to be of Bayes, though its authenticity has been questioned; source: Wikipedia.)](../lectures/figures/lecture4/pg32-bayesportrait.png){#fig-bayes-portrait width="30%" fig-align="center"}
+
+Thomas Bayes was an English statistician, philosopher and Presbyterian
+minister, known for having formulated a specific case of the theorem
+that now bears his name. Bayes never published what would eventually
+become his most famous accomplishment; his notes on the subject were
+edited and published only after his death.
+
+## Summary
+
+This unit introduced Partially Observable Markov Decision Processes,
+where the decision-maker only has access to a noisy, partial output of
+the state rather than the state itself, through an information set that
+grows with time. We saw that the optimal policy always decomposes into a
+state estimator, computing the belief $P_{x_k\mid I_k}$, and an actuator
+mapping this belief to a decision -- and that the state estimator is
+exactly the Bayes filter, an alternating prediction/correction recursion
+built on the ordinary Bayes' rule. Most of the unit was devoted to this
+filter and its applications: tracking a robot from noisy measurements
+in a grid world, estimating position in a GPS-denied tunnel, and
+building a semantic world model in precision farming. We closed by
+showing that POMDPs can, in principle, always be solved exactly, since
+the optimal cost-to-go is a piecewise affine function of the belief --
+worked out concretely for the Monty Hall problem and a machine-repair
+example -- though in practice the number of pieces grows exponentially
+with the number of stages, so this exact solution is mostly of
+theoretical interest and heuristics are used in applications.
