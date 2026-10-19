@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>Unit 8 Exercises</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="unit8-exercises_files/libs/clipboard/clipboard.min.js"></script>
+<script src="unit8-exercises_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="unit8-exercises_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="unit8-exercises_files/libs/quarto-html/popper.min.js"></script>
+<script src="unit8-exercises_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="unit8-exercises_files/libs/quarto-html/anchor.min.js"></script>
+<link href="unit8-exercises_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="unit8-exercises_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="unit8-exercises_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="unit8-exercises_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="unit8-exercises_files/libs/bootstrap/bootstrap-5f5514ab72c605193d28bd5ace4a0252.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      argmin: ["\\operatorname*{argmin}_{#1}", 1],
+      argmax: ["\\operatorname*{argmax}_{#1}", 1],
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#core-exercises" id="toc-core-exercises" class="nav-link active" data-scroll-target="#core-exercises"><span class="header-section-number">1</span> Core exercises</a></li>
+  <li><a href="#additional-exercises" id="toc-additional-exercises" class="nav-link" data-scroll-target="#additional-exercises"><span class="header-section-number">2</span> Additional exercises</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="unit8-exercises.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Unit 8 Exercises</h1>
+<p class="subtitle lead">4SC000 Optimal Control and Reinforcement Learning</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Source: Solved Exercises/2/PS2.tex (problems) and
+Solved Exercises/2/SolutionsPS2.tex (solutions), section 5 "Approximate
+dynamic programming" -- originally Problems 5.1-5.4.
+
+Renumbered 8.1-8.4 in Core/Additional order: Core = 8.1 (a two-mode
+switched linear system: optimal switching policy by exact DP for h=2,
+then a rollout policy with horizon H=1 -- originally 5.1, the direct
+worked example behind the "Switched linear systems"/"Rollout" slides),
+8.2 (a continuous-time switched system, digitized with sampling period
+tau=0.1: a stabilizing CEC-type switching law, an MPC policy with
+horizon H=2, and a rollout policy built on a Lyapunov-based base-policy
+cost -- originally 5.3, ties together CEC, MPC, and rollout for
+switched systems, mirroring the lecture's own progression through those
+three ideas), 8.3 (switching between two fixed state-feedback
+controllers to minimize a quadratic cost, and a proof that the H=1
+rollout policy inherits asymptotic stability from the base policy's
+cost-improvement property -- originally 5.4). Additional = 8.4 (a
+continuous-time heading-control problem discretized and controlled by
+MPC with horizon H=2 -- originally 5.2, a nice extra MPC example but not
+about switched systems, the throughline of the other three problems).
+
+Solutions to 5.1, 5.2, and 5.3 are given in the source and transcribed
+below (with (5.3)(i)(a) reworked from scratch via a Lyapunov-function
+argument, since the sign convention implied by the source's one-line
+answer could not be reconciled with a direct calculation -- see the note
+in 8.2). The source solution to 5.4 is "Solution not provided"; the
+derivation given below for 8.3 is my own, built on the cost-improvement
+property stated in the problem, and is flagged as such rather than
+presented as the original solutions manual.
+
+Numeric matrices below (matrix exponentials, Lyapunov solutions) were
+computed directly rather than copied from the source, which only states
+them symbolically or via a figure that could not be recovered.
+-->
+<p>A runnable Python companion to these exercises – LQR with input constraints, MPC for reference tracking, structured (SLS) synthesis, and MPC-based rollout – is available in <code>code/unit8/</code> (see its <code>README.md</code>).</p>
+<section id="core-exercises" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="core-exercises"><span class="header-section-number">1</span> Core exercises</h2>
+<p><strong>Problem 8.1</strong> Consider the switched linear system <span class="math inline">\(x_{k+1}=A_{\sigma_k}x_k\)</span>, <span class="math inline">\(k\in\mathbb{N}_0\)</span>, where <span class="math inline">\(\sigma_k\in\{0,1\}\)</span> is the control input, and</p>
+<p><span class="math display">\[A_0=\begin{bmatrix}0.8&amp;0.1\\0.2&amp;0.8\end{bmatrix},\qquad A_1=\begin{bmatrix}1&amp;0.1\\0&amp;0.5\end{bmatrix}.\]</span></p>
+<p>Suppose that we wish to minimize <span class="math inline">\(\|x_h\|^2\)</span> for some <span class="math inline">\(h\in\mathbb{N}\)</span>.</p>
+<ol type="i">
+<li>Provide the optimal policy for <span class="math inline">\(\sigma_0\)</span> and <span class="math inline">\(\sigma_1\)</span> when <span class="math inline">\(h=2\)</span>.</li>
+<li>Consider the base policy <span class="math inline">\(\sigma_k=1\)</span>, <span class="math inline">\(\forall k\in\{0,\dots,h-1\}\)</span>. Considering this base policy, derive the rollout policy with horizon <span class="math inline">\(H=1\)</span> for <span class="math inline">\(\sigma_0\)</span>, <span class="math inline">\(\sigma_1\)</span>, <span class="math inline">\(\sigma_2\)</span> when <span class="math inline">\(h=3\)</span>.</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(i)</strong> This is a standard stage decision problem with <span class="math inline">\(g_0=g_1=0\)</span> and terminal cost <span class="math inline">\(g_2(x_2)=x_2^\intercal x_2\)</span>. Applying DP backward:</p>
+<p><span class="math display">\[J_2(x_2)=x_2^\intercal x_2,\qquad J_1(x_1)=\min_{\sigma_1\in\{0,1\}}x_1^\intercal A_{\sigma_1}^\intercal A_{\sigma_1}x_1 = \min\Big\{x_1^\intercal\begin{bmatrix}0.68&amp;0.24\\0.24&amp;0.65\end{bmatrix}x_1,\ x_1^\intercal\begin{bmatrix}1&amp;0.1\\0.1&amp;0.26\end{bmatrix}x_1\Big\}.\]</span></p>
+<p>The optimal policy at stage <span class="math inline">\(k=1\)</span> is</p>
+<p><span class="math display">\[\sigma_1=\begin{cases}0 &amp; \text{if } x_1^\intercal\begin{bmatrix}0.68&amp;0.24\\0.24&amp;0.65\end{bmatrix}x_1 &lt; x_1^\intercal\begin{bmatrix}1&amp;0.1\\0.1&amp;0.26\end{bmatrix}x_1\\1 &amp; \text{otherwise,}\end{cases}\]</span></p>
+<p>equivalently <span class="math inline">\(\sigma_1=0\)</span> if <span class="math inline">\(x_1^\intercal\begin{bmatrix}-0.32&amp;0.14\\0.14&amp;0.39\end{bmatrix}x_1&lt;0\)</span>, a conic partition of the state space (the policy is not unique on the boundary). Writing <span class="math inline">\(x_1=(y,z)\)</span>, the region where <span class="math inline">\(\sigma_1=0\)</span> is <span class="math inline">\(\{(y,z):-0.32y^2+0.28zy+0.39z^2&lt;0\}\)</span>; setting <span class="math inline">\(y=\alpha z\)</span> gives <span class="math inline">\(-0.32\alpha^2+0.28\alpha+0.39=0\)</span>, i.e.&nbsp;<span class="math inline">\(\alpha=1.625\)</span> or <span class="math inline">\(\alpha=-0.75\)</span>, so the boundary consists of the two lines <span class="math inline">\(y=1.625z\)</span> and <span class="math inline">\(y=-0.75z\)</span>.</p>
+<p>At stage <span class="math inline">\(k=0\)</span>,</p>
+<p><span class="math display">\[J_1(x_1)=\min\{\|A_0x_1\|^2,\|A_1x_1\|^2\},\qquad J_0(x_0)=\min_{\sigma_0\in\{0,1\}}\{\|A_0A_{\sigma_0}x_0\|^2,\|A_1A_{\sigma_0}x_0\|^2\}=\min\{x_0^\intercal Z_ix_0\}_{i=1}^4,\]</span></p>
+<p>where <span class="math inline">\(Z_1=(A_0A_0)^\intercal A_0A_0\)</span>, <span class="math inline">\(Z_2=(A_0A_1)^\intercal A_0A_1\)</span>, <span class="math inline">\(Z_3=(A_1A_0)^\intercal A_1A_0\)</span>, <span class="math inline">\(Z_4=(A_1A_1)^\intercal A_1A_1\)</span>, and</p>
+<p><span class="math display">\[\sigma_0=\begin{cases}0 &amp; \text{if } x_0^\intercal Z_1x_0&lt;x_0^\intercal Z_ix_0 \text{ for } i\in\{2,3,4\}, \text{ or } x_0^\intercal Z_3x_0&lt;x_0^\intercal Z_ix_0\text{ for } i\in\{1,2,4\}\\1 &amp; \text{otherwise.}\end{cases}\]</span></p>
+<p><strong>(ii)</strong> For the <span class="math inline">\(H=1\)</span> rollout with base policy <span class="math inline">\(\sigma_k=1\)</span> for all <span class="math inline">\(k\)</span>, the approximate cost-to-go replaces the exact tail cost by the base policy’s cost from <span class="math inline">\(H\)</span> steps ahead: for <span class="math inline">\(h=3\)</span> the tail after one rolled-out decision is <span class="math inline">\(x_3=A_1A_1A_{\sigma_0}x_0\)</span>, so at stage <span class="math inline">\(0\)</span> the rollout policy minimizes <span class="math inline">\(\|A_1A_1A_{\sigma_0}x_0\|^2\)</span> over <span class="math inline">\(\sigma_0\)</span>:</p>
+<p><span class="math display">\[\sigma_0=\begin{cases}0 &amp; \text{if } \|A_1A_1A_0x_0\|^2&lt;\|A_1A_1A_1x_0\|^2\\1 &amp; \text{otherwise.}\end{cases}\]</span></p>
+<p>By the same reasoning, applied one and two steps later,</p>
+<p><span class="math display">\[\sigma_1=\begin{cases}0 &amp; \text{if } \|A_1A_0x_1\|^2&lt;\|A_1A_1x_1\|^2\\1 &amp; \text{otherwise,}\end{cases}\qquad \sigma_2=\begin{cases}0 &amp; \text{if } \|A_0x_2\|^2&lt;\|A_1x_2\|^2\\1 &amp; \text{otherwise.}\end{cases}\]</span></p>
+</div>
+</div>
+</div>
+<p><strong>Problem 8.2</strong> Consider the continuous-time switched linear system <span class="math inline">\(\dot x(t)=B_{\sigma(t)}x(t)\)</span>, <span class="math inline">\(x(t)=\begin{bmatrix}y(t)&amp;z(t)\end{bmatrix}^\intercal\)</span>, with</p>
+<p><span class="math display">\[B_1=\begin{bmatrix}-(1-\beta)&amp;1\\-9&amp;-(1-\beta)\end{bmatrix},\qquad B_2=\begin{bmatrix}-(1-\beta)&amp;9\\-1&amp;-(1-\beta)\end{bmatrix}.\]</span></p>
+<p>The system is controlled digitally with sampling period <span class="math inline">\(\tau=0.1\)</span>: <span class="math inline">\(x_{k+1}=A_{\sigma_k}x_k\)</span>, <span class="math inline">\(A_1=e^{B_1\tau}\)</span>, <span class="math inline">\(A_2=e^{B_2\tau}\)</span>.</p>
+<ol type="i">
+<li>Suppose <span class="math inline">\(\beta=1\)</span>. (a) Provide a policy for <span class="math inline">\(\sigma(t)\)</span> stabilizing the continuous-time system. (b) Provide a policy for <span class="math inline">\(\sigma_k\)</span> stabilizing the discrete-time system.</li>
+<li>Consider the cost <span class="math inline">\(\sum_{k=0}^\infty x_k^\intercal x_k\)</span>. (a) Derive the policy obtained by MPC with horizon <span class="math inline">\(H=2\)</span> (minimizing <span class="math inline">\(x_k^\intercal x_k+x_{k+1}^\intercal x_{k+1}\)</span> at each <span class="math inline">\(k\)</span>), and describe the switching regions for <span class="math inline">\(\beta=1\)</span> and <span class="math inline">\(\beta=0.9\)</span>. Does this policy stabilize the discrete-time system? (b) For <span class="math inline">\(\beta=0.9\)</span>, derive the rollout policy with horizon <span class="math inline">\(H=1\)</span> using base policy <span class="math inline">\(\sigma_k=1\)</span> for every <span class="math inline">\(k\ge0\)</span>. Is this base policy usable when <span class="math inline">\(\beta=1\)</span>?</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(i)(a)</strong> With <span class="math inline">\(\beta=1\)</span>, <span class="math inline">\(B_1=\begin{bmatrix}0&amp;1\\-9&amp;0\end{bmatrix}\)</span> and <span class="math inline">\(B_2=\begin{bmatrix}0&amp;9\\-1&amp;0\end{bmatrix}\)</span>: mode 1 gives <span class="math inline">\(\dot y=z\)</span>, <span class="math inline">\(\dot z=-9y\)</span>, and mode 2 gives <span class="math inline">\(\dot y=9z\)</span>, <span class="math inline">\(\dot z=-y\)</span> – both undamped oscillators (eigenvalues <span class="math inline">\(\pm3i\)</span>), individually marginal rather than stabilizing. Using <span class="math inline">\(V(x)=y^2+z^2\)</span> as a candidate Lyapunov function, <span class="math inline">\(\dot V=2y\dot y+2z\dot z\)</span> evaluates to <span class="math inline">\(\dot V=-16yz\)</span> under mode 1 and <span class="math inline">\(\dot V=16yz\)</span> under mode 2. Switching to whichever mode makes <span class="math inline">\(\dot V\)</span> negative therefore stabilizes the system:</p>
+<p><span class="math display">\[\sigma(t)=\begin{cases}1 &amp; \text{if } y(t)z(t)\ge0\\2 &amp; \text{if } y(t)z(t)&lt;0.\end{cases}\]</span></p>
+<p>(The source figure for this problem could not be reproduced here; this policy is verified directly by the sign of <span class="math inline">\(\dot V\)</span> above rather than read off a plot.)</p>
+<p><strong>(i)(b)</strong> Since <span class="math inline">\(\tau=0.1\)</span> is small compared with the oscillation period of either mode (<span class="math inline">\(2\pi/3\approx2.1\)</span>), the same state-based rule stabilizes the sampled-data system: <span class="math inline">\(\sigma_k=1\)</span> if <span class="math inline">\(y_kz_k\ge0\)</span>, <span class="math inline">\(\sigma_k=2\)</span> if <span class="math inline">\(y_kz_k&lt;0\)</span>.</p>
+<p><strong>(ii)(a)</strong> At time <span class="math inline">\(k\)</span>, <span class="math inline">\(x_k\)</span> is fixed, so minimizing <span class="math inline">\(x_k^\intercal x_k+x_{k+1}^\intercal x_{k+1}=x_k^\intercal x_k+x_k^\intercal A_{\sigma_k}^\intercal A_{\sigma_k}x_k\)</span> over <span class="math inline">\(\sigma_k\)</span> is equivalent to minimizing <span class="math inline">\(x_k^\intercal A_{\sigma_k}^\intercal A_{\sigma_k}x_k\)</span> alone:</p>
+<p><span class="math display">\[\sigma_k=\begin{cases}1 &amp; \text{if } x_k^\intercal(A_1^\intercal A_1-A_2^\intercal A_2)x_k&lt;0\\2 &amp; \text{otherwise.}\end{cases}\]</span></p>
+<p>Computing <span class="math inline">\(A_1,A_2\)</span> numerically: for <span class="math inline">\(\beta=1\)</span>, <span class="math inline">\(A_1^\intercal A_1-A_2^\intercal A_2=\begin{bmatrix}0.776&amp;-1.506\\-1.506&amp;-0.776\end{bmatrix}\)</span>, an indefinite matrix whose eigenvalues are <span class="math inline">\(\pm1.69\)</span>; the switching region boundary is the pair of lines <span class="math inline">\(y=4.12z\)</span> and <span class="math inline">\(y=-0.243z\)</span> through the origin. For <span class="math inline">\(\beta=0.9\)</span> the same computation gives <span class="math inline">\(A_1^\intercal A_1-A_2^\intercal A_2=\begin{bmatrix}0.761&amp;-1.476\\-1.476&amp;-0.761\end{bmatrix}\)</span>, with essentially the same boundary lines. What differs between the two cases is the open-loop behaviour of each mode alone: at <span class="math inline">\(\beta=1\)</span>, <span class="math inline">\(|{\rm eig}(A_1)|=|{\rm eig}(A_2)|=1\)</span> (marginally stable/undamped, matching (i)); at <span class="math inline">\(\beta=0.9\)</span>, <span class="math inline">\(|{\rm eig}(A_1)|=|{\rm eig}(A_2)|=0.99&lt;1\)</span> (each mode is already, if barely, asymptotically stable on its own).</p>
+<p>Consequently, at <span class="math inline">\(\beta=1\)</span> the one-step-lookahead MPC policy is exactly the greedy, myopic version of the stabilizing switching rule from (i)(b) – since <span class="math inline">\(H=2\)</span> only looks one step ahead, it need not accumulate the sustained sign pattern in <span class="math inline">\(y_kz_k\)</span> that true stabilization requires, so MPC does not guarantee stability of the switched system in general (this is the standard caveat that MPC’s finite lookahead is not automatically stabilizing). At <span class="math inline">\(\beta=0.9\)</span>, stability holds regardless of which mode MPC selects at each step, since both individual modes already contract; the switching decision only affects the transient, not asymptotic stability.</p>
+<p><strong>(ii)(b)</strong> For <span class="math inline">\(\beta=0.9\)</span>, <span class="math inline">\(A_1\)</span> is stable (<span class="math inline">\(|{\rm eig}(A_1)|=0.99&lt;1\)</span>), so the infinite-horizon cost of the base policy <span class="math inline">\(\sigma_k=1\)</span> for all <span class="math inline">\(k\)</span> is <span class="math inline">\(\sum_{k=0}^\infty x_k^\intercal x_k=x_0^\intercal Px_0\)</span>, where <span class="math inline">\(P\)</span> solves the Lyapunov equation <span class="math inline">\(A_1^\intercal PA_1-P=-I\)</span> (the general result proved in Unit 5, Problem 5.4). Numerically, <span class="math inline">\(P=\begin{bmatrix}250.3&amp;-2.15\\-2.15&amp;28.3\end{bmatrix}\)</span> (the large entries reflect that <span class="math inline">\(A_1\)</span> is close to the stability boundary). The <span class="math inline">\(H=1\)</span> rollout policy is then</p>
+<p><span class="math display">\[\sigma_k=\begin{cases}1 &amp; \text{if } x_k^\intercal(A_1^\intercal PA_1-A_2^\intercal PA_2)x_k&lt;0\\2 &amp; \text{otherwise.}\end{cases}\]</span></p>
+<p>This base policy cannot be used when <span class="math inline">\(\beta=1\)</span>: there, <span class="math inline">\(A_1\)</span> is only marginally stable (<span class="math inline">\(|{\rm eig}(A_1)|=1\)</span>), so the Lyapunov equation <span class="math inline">\(A_1^\intercal PA_1-P=-I\)</span> has no positive definite solution, and the cost of applying <span class="math inline">\(\sigma_k=1\)</span> forever is unbounded – the base policy is not stabilizing and so cannot anchor a rollout.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 8.3</strong> Consider the system <span class="math inline">\(x_{k+1}=\begin{bmatrix}1&amp;1\\0&amp;1\end{bmatrix}x_k+\begin{bmatrix}0\\1\end{bmatrix}u_k\)</span>, <span class="math inline">\(u_k\in\mathbb{R}\)</span>, <span class="math inline">\(x_k\in\mathbb{R}^2\)</span>, with two available stabilizing controllers <span class="math inline">\(u_k=\begin{bmatrix}-\frac{1}{2}&amp;-1\end{bmatrix}x_k\)</span> and <span class="math inline">\(u_k=\begin{bmatrix}-\frac{1}{3}&amp;-\frac{6}{5}\end{bmatrix}x_k\)</span>. The goal is to switch between the two to minimize <span class="math inline">\(\sum_{k=0}^\infty\|x_k\|^2\)</span>.</p>
+<ol type="i">
+<li>Formulate the problem as optimal control of a switched linear system <span class="math inline">\(x_{k+1}=A_{\sigma_k}x_k\)</span>, <span class="math inline">\(\sigma_k\in\{1,2\}\)</span>, with cost <span class="math inline">\(\sum_{k=0}^\infty x_k^\intercal Qx_k\)</span> for some positive definite <span class="math inline">\(Q\)</span>. Provide <span class="math inline">\(A_1\)</span>, <span class="math inline">\(A_2\)</span>, <span class="math inline">\(Q\)</span>.</li>
+<li>Using the Lyapunov equation, show that the cost of the base policy <span class="math inline">\(\sigma_k=1\)</span>, <span class="math inline">\(\forall k\)</span>, takes the form <span class="math inline">\(x_0^\intercal\bar Px_0\)</span>. Provide <span class="math inline">\(\bar P\)</span>.</li>
+<li>Considering the same base policy, derive the rollout policy with horizon <span class="math inline">\(H=1\)</span> for <span class="math inline">\(\{\sigma_k\}_{k=0}^\infty\)</span>.</li>
+<li>Let <span class="math inline">\(\hat J(x_0)\)</span> denote the cost when the <span class="math inline">\(H=1\)</span> rollout policy is applied for a given <span class="math inline">\(x_0\)</span>. It can be shown that <span class="math inline">\(\hat J(x_0)\le x_0^\intercal\bar Px_0\)</span> for every <span class="math inline">\(x_0\)</span>. Use this to establish that the rollout policy asymptotically stabilizes the system.</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(i)</strong> Substituting each controller into the dynamics, <span class="math inline">\(A_1=A+BK_1=\begin{bmatrix}1&amp;1\\-\frac{1}{2}&amp;0\end{bmatrix}\)</span> and <span class="math inline">\(A_2=A+BK_2=\begin{bmatrix}1&amp;1\\-\frac{1}{3}&amp;-\frac{1}{5}\end{bmatrix}\)</span>, and since the cost is <span class="math inline">\(\sum\|x_k\|^2=\sum x_k^\intercal x_k\)</span>, <span class="math inline">\(Q=I\)</span>.</p>
+<p><strong>(ii)</strong> <span class="math inline">\(A_1\)</span> is asymptotically stable (<span class="math inline">\({\rm eig}(A_1)=0.5\pm0.5i\)</span>, <span class="math inline">\(|{\rm eig}(A_1)|=1/\sqrt2\)</span>), so by the Lyapunov-equation result of Unit 5, Problem 5.4, the cost of applying <span class="math inline">\(\sigma_k=1\)</span> forever is <span class="math inline">\(x_0^\intercal\bar Px_0\)</span> where <span class="math inline">\(\bar P\)</span> solves <span class="math inline">\(A_1^\intercal\bar PA_1-\bar P=-Q\)</span>. Solving exactly gives</p>
+<p><span class="math display">\[\bar P=\begin{bmatrix}3&amp;2\\2&amp;4\end{bmatrix}.\]</span></p>
+<p><strong>(iii)</strong> The <span class="math inline">\(H=1\)</span> rollout policy at state <span class="math inline">\(x_k\)</span> minimizes <span class="math inline">\(x_k^\intercal Qx_k+x_{k+1}^\intercal\bar Px_{k+1}=x_k^\intercal Qx_k+x_k^\intercal A_{\sigma_k}^\intercal\bar PA_{\sigma_k}x_k\)</span> over <span class="math inline">\(\sigma_k\in\{1,2\}\)</span>; since the <span class="math inline">\(Q\)</span>-term does not depend on <span class="math inline">\(\sigma_k\)</span>, this is equivalent to minimizing <span class="math inline">\(x_k^\intercal A_{\sigma_k}^\intercal\bar PA_{\sigma_k}x_k\)</span>. Computing exactly, <span class="math inline">\(A_1^\intercal\bar PA_1=\begin{bmatrix}2&amp;2\\2&amp;3\end{bmatrix}\)</span> and <span class="math inline">\(A_2^\intercal\bar PA_2=\begin{bmatrix}19/9&amp;11/5\\11/5&amp;59/25\end{bmatrix}\)</span>, so</p>
+<p><span class="math display">\[A_1^\intercal\bar PA_1-A_2^\intercal\bar PA_2=\begin{bmatrix}-1/9&amp;-1/5\\-1/5&amp;16/25\end{bmatrix},\]</span></p>
+<p>and, writing <span class="math inline">\(x_k=(y,z)\)</span>, the (stationary, since the base-policy cost-to-go <span class="math inline">\(\bar P\)</span> is the same at every stage) rollout policy is</p>
+<p><span class="math display">\[\sigma_k=\begin{cases}1 &amp; \text{if } -\frac{1}{9}y^2-\frac{2}{5}yz+\frac{16}{25}z^2&lt;0\\2 &amp; \text{otherwise.}\end{cases}\]</span></p>
+<p><strong>(iv)</strong> <em>(This part is not covered by the source solutions; the argument below is derived independently.)</em> Because the rollout policy is stationary and state-feedback, applying it from any state <span class="math inline">\(x\)</span> gives a well-defined cost <span class="math inline">\(\hat J(x)=\sum_{j\ge0}x_j^\intercal Qx_j\)</span> (trajectory started at <span class="math inline">\(x_0=x\)</span>), which decomposes recursively as <span class="math inline">\(\hat J(x_k)=x_k^\intercal Qx_k+\hat J(x_{k+1})\)</span> along the closed-loop trajectory generated by the policy. Combined with the given bound <span class="math inline">\(\hat J(x)\le x^\intercal\bar Px\)</span> (valid for every state, in particular for every <span class="math inline">\(x_k\)</span> visited along the trajectory), <span class="math inline">\(\hat J\)</span> is a valid candidate Lyapunov function for the closed-loop system: it is positive definite (<span class="math inline">\(\hat J(x)\ge0\)</span> since <span class="math inline">\(Q\ge0\)</span>, with equality only at <span class="math inline">\(x=0\)</span>), finite everywhere (bounded above by <span class="math inline">\(x^\intercal\bar Px&lt;\infty\)</span>), and satisfies</p>
+<p><span class="math display">\[\hat J(x_k)-\hat J(x_{k+1})=x_k^\intercal Qx_k\ge0,\]</span></p>
+<p>with strict inequality whenever <span class="math inline">\(x_k\neq0\)</span> (since <span class="math inline">\(Q=I&gt;0\)</span>). So <span class="math inline">\(\hat J(x_k)\)</span> is non-increasing along the trajectory and strictly decreasing unless <span class="math inline">\(x_k=0\)</span>; being bounded below by <span class="math inline">\(0\)</span>, it converges, which forces the increments <span class="math inline">\(x_k^\intercal Qx_k\to0\)</span>, and since <span class="math inline">\(Q&gt;0\)</span> this means <span class="math inline">\(\|x_k\|\to0\)</span>. Hence the <span class="math inline">\(H=1\)</span> rollout policy asymptotically stabilizes the system.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="additional-exercises" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="additional-exercises"><span class="header-section-number">2</span> Additional exercises</h2>
+<p><strong>Problem 8.4</strong> Consider <span class="math inline">\(\begin{bmatrix}\dot y(t)\\\dot z(t)\end{bmatrix}=\begin{bmatrix}\cos(\theta(t))\\\sin(\theta(t))\end{bmatrix}\)</span>, where <span class="math inline">\(\theta(t)\in[-\pi,\pi)\)</span> is the control input and <span class="math inline">\(x(t)=\begin{bmatrix}y(t)&amp;z(t)\end{bmatrix}^\intercal\)</span> is the state. The input is implemented digitally, <span class="math inline">\(\theta(t)=\theta_k\)</span> for <span class="math inline">\(t\in[k\tau,(k+1)\tau)\)</span>, giving the Euler discretization <span class="math inline">\(x_{k+1}=x_k+\tau\begin{bmatrix}\cos(\theta_k)\\\sin(\theta_k)\end{bmatrix}\)</span>. The goal is to minimize <span class="math inline">\(\sum_{k=0}^\infty\|x_k\|_Q^2\)</span> for positive definite <span class="math inline">\(Q\)</span>.</p>
+<ol type="i">
+<li>Show that the MPC policy with horizon <span class="math inline">\(H=2\)</span> is <span class="math inline">\(\theta_k(x_k)=\mu(x_k)\)</span>, where</li>
+</ol>
+<p><span class="math display">\[\mu(x)=\begin{cases}\arctan\big(\tfrac{v_2(x)}{v_1(x)}\big) &amp; \text{if } v_1(x)\neq0\\\frac{\pi}{2} &amp; \text{if } v_2(x)\ge0,\ v_1(x)=0\\-\frac{\pi}{2} &amp; \text{if } v_2(x)&lt;0,\ v_1(x)=0,\end{cases}\]</span></p>
+<p>and <span class="math inline">\(v(x)=(v_1(x),v_2(x))\)</span> solves <span class="math inline">\(\min_{v\in\mathbb{R}^2}\|x+\tau v\|_Q^2\)</span> s.t. <span class="math inline">\(\|v\|^2=1\)</span>. (ii) Provide the optimal control input at stage <span class="math inline">\(0\)</span> when <span class="math inline">\(\tau=0.1\)</span>, <span class="math inline">\(Q=I\)</span>, <span class="math inline">\(x_0=\begin{bmatrix}1&amp;1\end{bmatrix}^\intercal\)</span>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(i)</strong> At time <span class="math inline">\(\ell\)</span>, the <span class="math inline">\(H=2\)</span> MPC problem is <span class="math inline">\(\min_{\theta_\ell}\|x_\ell\|_Q^2+\|x_{\ell+1}\|_Q^2\)</span>; since <span class="math inline">\(x_\ell\)</span> is fixed, this is equivalent to <span class="math inline">\(\min_{\theta_\ell}\|x_\ell+\tau[\cos\theta_\ell,\sin\theta_\ell]^\intercal\|_Q^2\)</span>. Because <span class="math inline">\(\{(\cos\theta,\sin\theta):\theta\in[-\pi,\pi)\}=\{v\in\mathbb{R}^2:\|v\|^2=1\}\)</span>, this is equivalent to the constrained problem <span class="math inline">\(\min_{v}\|x_\ell+\tau v\|_Q^2\)</span> s.t. <span class="math inline">\(\|v\|^2=1\)</span>, with <span class="math inline">\(\cos\theta=v_1\)</span>, <span class="math inline">\(\sin\theta=v_2\)</span> recovering <span class="math inline">\(\theta\)</span> via the four-quadrant relation stated (using <span class="math inline">\(\arctan\)</span> on the ratio when <span class="math inline">\(v_1\neq0\)</span>, and the two vertical-axis cases otherwise).</p>
+<p><strong>(ii)</strong> With <span class="math inline">\(\tau=0.1\)</span>, <span class="math inline">\(Q=I\)</span>, <span class="math inline">\(x_0=[1\ \ 1]^\intercal\)</span>, the problem is <span class="math inline">\(\min_{v_1,v_2}(1+0.1v_1)^2+(1+0.1v_2)^2\)</span> s.t. <span class="math inline">\(v_1^2+v_2^2=1\)</span>. The Lagrangian <span class="math inline">\(L=(1+0.1v_1)^2+(1+0.1v_2)^2+\lambda(v_1^2+v_2^2-1)\)</span> gives, from <span class="math inline">\(\partial L/\partial v_1=\partial L/\partial v_2=0\)</span>, <span class="math inline">\(v_1=v_2=\frac{-1}{\lambda+0.1}\)</span>; substituting into the constraint gives <span class="math inline">\(\lambda=-0.1\pm\sqrt2\)</span>. The two stationary points are</p>
+<p><span class="math display">\[(v_1,v_2)=\Big(-\tfrac{1}{\sqrt2},-\tfrac{1}{\sqrt2}\Big)\ \Rightarrow\ \theta=\tfrac{5\pi}{4}\ (\text{minimizer}),\qquad (v_1,v_2)=\Big(\tfrac{1}{\sqrt2},\tfrac{1}{\sqrt2}\Big)\ \Rightarrow\ \theta=\tfrac{\pi}{4}\ (\text{maximizer}).\]</span></p>
+<p>The optimal control input at stage <span class="math inline">\(0\)</span> is therefore <span class="math inline">\(\theta_0=5\pi/4\)</span> (pointing away from the origin’s opposite side, i.e.&nbsp;steering back toward the origin from <span class="math inline">\(x_0=[1\ \ 1]^\intercal\)</span>).</p>
+</div>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

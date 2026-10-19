@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="lecture05-lqr_files/libs/clipboard/clipboard.min.js"></script>
+<script src="lecture05-lqr_files/libs/quarto-html/tabby.min.js"></script>
+<script src="lecture05-lqr_files/libs/quarto-html/popper.min.js"></script>
+<script src="lecture05-lqr_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="lecture05-lqr_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="lecture05-lqr_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="lecture05-lqr_files/libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
+
+  <meta name="author" content="Duarte Antunes">
+  <title>lecture05-lqr</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="lecture05-lqr_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="lecture05-lqr_files/libs/revealjs/dist/reveal.css">
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="lecture05-lqr_files/libs/revealjs/dist/theme/quarto-dbdae09e3717e6ee293fc537af762018.css">
+  <link href="lecture05-lqr_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="lecture05-lqr_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="lecture05-lqr_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="lecture05-lqr_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+  <!--
+  MathJax needs its own macro definitions -- LaTeX's \newcommand in
+  macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+  SAME macro names available when rendering to revealjs/html, so a macro like
+  \costtogo looks identical whether you're viewing slides in the browser or a
+  PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+  -->
+  <script>
+  window.MathJax = {
+    tex: {
+      macros: {
+        E: "\\mathbb{E}",
+        Prob: "\\text{Prob}",
+        R: "\\mathbb{R}",
+        N: "\\mathbb{N}",
+        argmin: ["\\operatorname*{argmin}_{#1}", 1],
+        argmax: ["\\operatorname*{argmax}_{#1}", 1],
+        policy: "\\mu",
+        costtogo: "J",
+        state: "x",
+        action: "u"
+      }
+    }
+  };
+  </script>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+
+<section id="unit-5" class="slide level2 center" style="text-align: center;">
+<h2>Unit 5</h2>
+<!--
+Converted from Slides/Lecture5.pdf (50 slides) on 2026-08-11, following the
+conventions finalized on Lectures 1-4 (see lecture04's header comment for
+the full rationale). Quick recap of the standing rules applied throughout:
+- No image captions anywhere; every figure is a bare
+  ![](path){width="X%" fig-align="center"} with no caption/credit text.
+- Every crop was produced with the row/column pixel-band-detection method,
+  targeting a vertical band that excludes the slide title (top) and the
+  Keynote page number (bottom), then visually spot-checked.
+- Slides that are pure text/bullets/equations are retyped natively as
+  Quarto/LaTeX. Slides built around a genuine diagram or a numerical plot
+  are kept as a tightly-cropped image; any table-as-image slide (the
+  "Goals of part II" table on slide 4) is instead rebuilt as a native
+  Markdown table for crisper text.
+- The stock photo of a person on a Segway (slide 42, "Inverted pendulum")
+  was dropped -- purely decorative and not needed to convey the diagram;
+  only the pendulum/cart schematic is kept as an image.
+- Figures live in figures/lecture5/, named pgNN-slug.png (matching the
+  original PDF page number NN, 1-indexed from the title slide).
+
+This lecture opens "Part II: Stage decision problems" of the course (as
+shown on slide 4's table): Units 1-4 covered discrete optimization
+problems (transition diagrams, DP algorithm, Dijkstra/A*, Bayes filter);
+Units 5-6 cover stage decision problems with dynamic-system state/input
+spaces (DP equation, static optimization, Kalman filter), specialized to
+the case of linear dynamics and quadratic costs.
+
+FIRST-PASS CAVEAT: this is a first pass prioritizing correct structure,
+faithful transcription of every equation, and careful figure crops. Expect
+a slide-by-slide refinement round, same as Lectures 1-4.
+-->
+<h3 style="text-align: center;" id="stage-decision-problems-and-the-linear-quadratic-regulator">Stage Decision Problems and the Linear Quadratic Regulator</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/shared/tue-logo.png" class="quarto-figure quarto-figure-center" style="width:15.0%"></p>
+</figure>
+</div>
+<div class="title-slide-meta">
+<p>4SC000, Q2 2026-2027</p>
+<p>Duarte Antunes</p>
+</div>
+</section>
+<section id="recap" class="slide level2">
+<h2>Recap</h2>
+<p><strong>Optimal control formulation</strong></p>
+<ul>
+<li>Dynamic model &amp; cost function (transition diagram for discrete optimization problems).</li>
+<li>Computing an optimal policy vs computing an optimal path.</li>
+</ul>
+<p><strong>Dynamic programming algorithm</strong></p>
+<ul>
+<li>Allows to compute policies (to deal with uncertainty).</li>
+<li>Equivalent way to write it: DP equation.</li>
+<li>Stochastic dynamic programming: computes a policy that minimizes an expected cost.</li>
+</ul>
+<p><strong>Alternative algorithms</strong></p>
+<ul>
+<li>To compute optimal paths, alternative algorithms (e.g.&nbsp;Dijkstra’s) may be more efficient.</li>
+</ul>
+<p><strong>Partial information</strong></p>
+<ul>
+<li>When there is only partial information about the state rely on the Bayes filter.</li>
+</ul>
+</section>
+<section id="goals-of-part-ii" class="slide level2">
+<h2>Goals of part II</h2>
+<p>Introduce optimal control concepts for <u>stage decision problems</u>.</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Discrete optimization problems</strong></th>
+<th><strong>Stage decision problems</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Formulation</strong></td>
+<td>Transition diagram</td>
+<td>Dynamic system &amp; additive cost function</td>
+</tr>
+<tr class="even">
+<td><strong>DP algorithm &amp; Stochastic DP</strong></td>
+<td>Graphical DP algorithm &amp; DP equation</td>
+<td>DP equation</td>
+</tr>
+<tr class="odd">
+<td><strong>Alternative algorithms</strong></td>
+<td>Dijkstra’s algorithm</td>
+<td>Static optimization</td>
+</tr>
+<tr class="even">
+<td><strong>Partial information</strong></td>
+<td>Bayes filter</td>
+<td>Kalman filter</td>
+</tr>
+<tr class="odd">
+<td><strong>Application focus</strong></td>
+<td>Operational research &amp; Computer science</td>
+<td>Digital control</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="outline" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Dynamic programming for stage decision problems</li>
+<li>Linear quadratic regulator</li>
+</ul>
+</section>
+<section id="stage-decision-problems" class="slide level2">
+<h2>Stage decision problems</h2>
+<p><strong>Dynamic model</strong></p>
+<p><span class="math display">\[x_{k+1} = f_k(x_k, u_k) \qquad k \in \{0,\dots,h-1\}\]</span></p>
+<p><strong>Cost function</strong></p>
+<p><span class="math display">\[\sum_{k=0}^{h-1} g_k(x_k, u_k) + g_h(x_h)\]</span></p>
+<ul>
+<li>State <span class="math inline">\(x_k \in X_k\)</span> and input <span class="math inline">\(u_k \in U_k(x_k)\)</span> live in arbitrary spaces.</li>
+<li>If these spaces are discrete this is a discrete optimization problem.</li>
+<li>Typically <span class="math inline">\(x_k \in \mathbb{R}^n\)</span> and <span class="math inline">\(u_k \in \mathbb{R}^m\)</span> for every <span class="math inline">\(k \in \{0,\dots,h-1\}\)</span>.</li>
+<li>Goals: find an optimal path and find an optimal policy.</li>
+</ul>
+</section>
+<section id="optimal-path" class="slide level2">
+<h2>Optimal path</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg07-optimal-path.png" class="quarto-figure quarto-figure-center" style="width:90.0%"></p>
+</figure>
+</div>
+<p>Stage 0, Stage 1, <span class="math inline">\(\dots\)</span>, Stage <span class="math inline">\(h-1\)</span>, Stage <span class="math inline">\(h\)</span>.</p>
+<ul>
+<li>Given an initial condition <span class="math inline">\(x_0\)</span>, a path is a set of decisions <span class="math inline">\(\{u_0, u_1, \dots, u_{h-1}\}\)</span> such that <span class="math inline">\(u_k \in U_k(x_k)\)</span> and <span class="math inline">\(\{(x_0,u_0),\dots,(x_{h-1},u_{h-1})\}\)</span> satisfy the equations of the dynamic model.</li>
+<li>A path is said to be optimal if there does not exist another path with a strictly smaller cost.</li>
+</ul>
+</section>
+<section id="optimal-policy" class="slide level2">
+<h2>Optimal policy</h2>
+<p><strong>Policy.</strong> A policy is a set of <span class="math inline">\(h\)</span> functions <span class="math inline">\(\pi = \{\mu_0,\dots,\mu_{h-1}\}\)</span>, <span class="math inline">\(\mu_k : X_k \to U_k\)</span>.</p>
+<p><strong>Optimal policy.</strong> A policy is said to be optimal if for every state <span class="math inline">\(x_\ell\)</span> at every stage <span class="math inline">\(\ell \in \{0,\dots,h-1\}\)</span>, <span class="math inline">\(\mu_\ell(x_\ell)\)</span> is the first action of an optimal path for the tail subproblem which considers only stages <span class="math inline">\(\{\ell,\ell+1,\dots,h\}\)</span> with initial condition <span class="math inline">\(x_\ell\)</span> and cost</p>
+<p><span class="math display">\[\sum_{k=\ell}^{h-1} g_k(x_k,u_k) + g_h(x_h)\]</span></p>
+</section>
+<section id="dynamic-programming-algorithm" class="slide level2">
+<h2>Dynamic programming algorithm</h2>
+<div style="border: 2px solid #333; border-radius: 8px; padding: 1em;">
+<p>Start with <span class="math inline">\(J_h(x_h) = g_h(x_h)\)</span> for every <span class="math inline">\(x_h \in X_h\)</span> and for each decision stage, starting at the last and moving backwards, <span class="math inline">\(k \in \{h-1,h-2,\dots,0\}\)</span>, compute <span class="math inline">\(\mu_k\)</span> and <span class="math inline">\(J_k\)</span> from</p>
+<p><span class="math display">\[J_k(x_k) = \min_{u_k \in U_k(x_k)} g_k(x_k,u_k) + J_{k+1}(f_k(x_k,u_k)) \quad \text{(DP equation)}\]</span></p>
+<p>and</p>
+<p><span class="math display">\[\mu_k(x_k) = u_k\]</span></p>
+<p>where <span class="math inline">\(u_k\)</span> is a minimizer in the DP equation, i.e.,</p>
+<p><span class="math display">\[J_k(x_k) = g_k(x_k,\mu_k(x_k)) + J_{k+1}(f_k(x_k,\mu_k(x_k)))\]</span></p>
+<p>Then <span class="math inline">\(\{\mu_0,\dots,\mu_{h-1}\}\)</span> is an optimal policy.</p>
+</div>
+<div style="border: 2px solid #333; border-radius: 8px; padding: 0.6em; margin-top: 0.5em;">
+<p><strong>Theorem</strong> The policy obtained with the DP algorithm is an optimal policy (proof in the appendix).</p>
+</div>
+</section>
+<section id="simple-integrator-example" class="slide level2">
+<h2>Simple integrator example</h2>
+<p>Consider the following simple example of a stage-decision problem.</p>
+<p><strong>Dynamic model</strong> <span class="math inline">\(\quad x_{k+1} = x_k + u_k \qquad k \in \{0,1\}\)</span></p>
+<p><strong>Cost</strong> <span class="math inline">\(\quad \displaystyle\sum_{k=0}^1 x_k^2 + u_k^2 + g_2(x_2)\)</span></p>
+<p><strong>Terminal cost</strong></p>
+<ul>
+<li>Quadratic: <span class="math inline">\(g_2(x_2) = x_2^2\)</span></li>
+<li>Non-quadratic: <span class="math inline">\(g_2(x_2) = e^{x_2}\)</span></li>
+</ul>
+</section>
+<section id="quadratic-terminal-cost" class="slide level2">
+<h2>Quadratic terminal cost</h2>
+<p><strong>Step 1</strong> <span class="math inline">\(\quad x_2 = x_1 + u_1\)</span></p>
+<p><span class="math display">\[J_1(x_1) = \min_{u_1} g_1(x_1,u_1) + g_2(x_2) = \min_{u_1} x_1^2+u_1^2+x_2^2 = \min_{u_1} \underbrace{2(x_1^2+u_1^2+x_1u_1)}_{Q_{x_1}(u_1),\ \text{quadratic function of } u_1}\]</span></p>
+<p>How to compute the minimum? Differentiate and equate to zero to find the minimizer!</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg11-quadratic-plot.png" class="quarto-figure quarto-figure-center" style="width:45.0%"></p>
+</figure>
+</div>
+<p><span class="math display">\[\frac{d}{du_1}Q_{x_1}(u_1)=0 \iff 2(2u_1+x_1)=0 \iff u_1=-\frac{1}{2}x_1\]</span></p>
+<p>Replacing in <span class="math inline">\(Q_{x_1}(u_1)\)</span> we obtain the cost-to-go <span class="math inline">\(J_1(x_1) = \frac{3}{2}x_1^2\)</span></p>
+</section>
+<section id="quadratic-terminal-cost-1" class="slide level2 smaller">
+<h2>Quadratic terminal cost</h2>
+<p><strong>Step 2</strong> <span class="math inline">\(\quad x_1 = x_0+u_0\)</span></p>
+<p><span class="math display">\[J_0(x_0) = \min_{u_0} g_0(x_0,u_0)+J_1(x_1) = \min_{u_0} x_0^2+u_0^2+\frac{3}{2}x_1^2 = \min_{u_0} \frac{5}{2}x_0^2+3u_0x_0+\frac{5}{2}u_0^2\]</span></p>
+<p>Differentiating and equating to zero we obtain a function belonging to the optimal policy</p>
+<p><span class="math display">\[u_0 = -\frac{3}{5}x_0\]</span></p>
+<p>which leads to the cost-to-go</p>
+<p><span class="math display">\[J_0(x_0) = \frac{8}{5}x_0^2\]</span></p>
+</section>
+<section id="optimal-policy-and-optimal-path" class="slide level2">
+<h2>Optimal policy and optimal path</h2>
+<p><strong>Optimal policy</strong></p>
+<p><span class="math display">\[u_0=-\frac{3}{5}x_0 \qquad u_1=-\frac{1}{2}x_1\]</span></p>
+<p><strong>Optimal path</strong></p>
+<p><span class="math display">\[x_0=1 \quad u_0=-\frac{3}{5} \qquad\qquad u_1=-\frac{1}{5}\]</span> <span class="math display">\[x_0=1 \quad x_1=\frac{2}{5} \qquad\qquad x_2=\frac{1}{5}\]</span></p>
+<p>Computed by using <span class="math inline">\(x_{k+1}=x_k+u_k\)</span>, <span class="math inline">\(k \in \{0,1\}\)</span>.</p>
+<p><strong>Optimal cost</strong></p>
+<p><span class="math display">\[J_0(1) = \frac{8}{5}\]</span></p>
+</section>
+<section id="non-quadratic-terminal-cost" class="slide level2">
+<h2>Non-quadratic terminal cost</h2>
+<p>Let us try to apply the dynamic programming algorithm considering a non-quadratic terminal cost <span class="math inline">\(g_2(x_2)=e^{x_2}\)</span>.</p>
+<p><strong>Step 1</strong> <span class="math inline">\(\quad x_2=x_1+u_1\)</span></p>
+<p><span class="math display">\[J_1(x_1) = \min_{u_1} g_1(x_1,u_1)+g_2(x_2) = \min_{u_1} x_1^2+u_1^2+e^{x_2}\]</span></p>
+<p>Differentiating and equating to zero, we obtain</p>
+<p><span class="math display">\[2u_1+e^{x_1+u_1}=0\]</span></p>
+<p><strong>We cannot find an analytical solution</strong></p>
+<ul>
+<li>this equation implicitly determines <span class="math inline">\(u_1\)</span> from <span class="math inline">\(x_1\)</span> but there is not an explicit form.</li>
+<li>This implies that it is not easy to determine <span class="math inline">\(u_1=\mu_1(x_1)\)</span> and move to step 2.</li>
+</ul>
+</section>
+<section id="discussion" class="slide level2">
+<h2>Discussion</h2>
+<p><strong>Linear dynamic models, quadratic cost</strong></p>
+<ul>
+<li>For these problems, we can explicitly obtain the optimal policy as shown next.</li>
+</ul>
+<p><strong>Non-linear dynamic models and/or non-quadratic cost</strong></p>
+<ul>
+<li>Very hard to apply DP and hence obtain optimal policies.</li>
+<li>This leads to approximation techniques such as discretization.</li>
+<li>Another class of approximation techniques will be addressed in the next lectures.</li>
+</ul>
+</section>
+<section id="outline-1" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Dynamic programming for stage decision problems</li>
+<li><u>Linear quadratic regulator</u></li>
+</ul>
+</section>
+<section id="linear-quadratic-regulator" class="slide level2 smaller">
+<h2>Linear quadratic regulator</h2>
+<p><strong>Given</strong></p>
+<p>Dynamic model <span class="math inline">\(\quad x_{k+1}=A_kx_k+B_ku_k \qquad k \in \{0,\dots,h-1\}\)</span></p>
+<p>Cost function <span class="math inline">\(\quad \displaystyle\sum_{k=0}^{h-1} \begin{bmatrix}x_k^\intercal &amp; u_k^\intercal\end{bmatrix}\begin{bmatrix}Q_k &amp; S_k \\ S_k^\intercal &amp; R_k\end{bmatrix}\begin{bmatrix}x_k \\ u_k\end{bmatrix} + x_h^\intercal Q_h x_h\)</span></p>
+<p><strong>Find</strong></p>
+<p>Optimal policy <span class="math inline">\(\quad u_k=\mu_k(x_k) \qquad k \in \{0,\dots,h-1\}\)</span></p>
+<ul>
+<li>This is the finite-horizon linear quadratic optimal control problem in discrete-time.</li>
+<li>The solution when <span class="math inline">\(h\)</span> approaches infinity and the matrices in the dynamic model and cost function are time-invariant is the linear quadratic regulator.</li>
+</ul>
+</section>
+<section id="remarks" class="slide level2 smaller">
+<h2>Remarks</h2>
+<ul>
+<li>The linear quadratic regulator is one of the celebrated results in control theory and one of the main achievements of optimal control.</li>
+<li>Assumptions: <span class="math inline">\(Q_k, R_k\)</span> are symmetric, <span class="math inline">\(\begin{bmatrix}Q_k &amp; S_k \\ S_k^\intercal &amp; R_k\end{bmatrix} \geq 0\)</span>, <span class="math inline">\(Q_h \geq 0\)</span>, <span class="math inline">\(R_k &gt; 0\)</span>.</li>
+<li>Model and cost are often time-invariant, i.e., <span class="math inline">\(x_{k+1}=Ax_k+Bu_k\)</span> and <span class="math inline">\(\sum_{k=0}^{h-1}\begin{bmatrix}x_k^\intercal &amp; u_k^\intercal\end{bmatrix}\begin{bmatrix}Q &amp; S \\ S^\intercal &amp; R\end{bmatrix}\begin{bmatrix}x_k \\ u_k\end{bmatrix} + x_h^\intercal Q_h x_h\)</span></li>
+<li>Cost function can result from a continuous-time problem.</li>
+<li>However, in general the cost is specified in discrete-time and used as a tuning knob to obtain desired specifications (e.g.&nbsp;overshoot, etc).</li>
+<li>We focus on the stabilization problem, i.e., driving the state to zero.</li>
+<li>For the reference tracking problem check the notes, exercises and jupyter notebooks.</li>
+</ul>
+</section>
+<section id="dynamic-programming-algorithm-1" class="slide level2 smaller">
+<h2>Dynamic programming algorithm</h2>
+<p><strong>Step 1</strong> <span class="math inline">\(\quad x_h = A_{h-1}x_{h-1}+B_{h-1}u_{h-1}\)</span></p>
+<p><span class="math display">\[J_{h-1}(x_{h-1}) = \min_{u_{h-1}} \begin{bmatrix}x_{h-1}^\intercal &amp; u_{h-1}^\intercal\end{bmatrix}\begin{bmatrix}Q_{h-1} &amp; S_{h-1} \\ S_{h-1}^\intercal &amp; R_{h-1}\end{bmatrix}\begin{bmatrix}x_{h-1} \\ u_{h-1}\end{bmatrix} + \underbrace{J_h(x_h)}_{x_h^\intercal Q_h x_h}\]</span></p>
+<p>terminal cost: <span class="math inline">\(J_h(A_{h-1}x_{h-1}+B_{h-1}u_{h-1}) = (A_{h-1}x_{h-1}+B_{h-1}u_{h-1})^\intercal Q_h (A_{h-1}x_{h-1}+B_{h-1}u_{h-1})\)</span></p>
+<p>Then</p>
+<p><span class="math display">\[J_{h-1}(x_{h-1}) = \min_{u_{h-1}} x_{h-1}^\intercal(A_{h-1}^\intercal Q_h A_{h-1}+Q_{h-1})x_{h-1}\]</span> <span class="math display">\[+\ 2u_{h-1}^\intercal(S_{h-1}^\intercal+B_{h-1}^\intercal Q_h A_{h-1})x_{h-1} + \underbrace{u_{h-1}^\intercal(B_{h-1}^\intercal Q_h B_{h-1}+R_{h-1})u_{h-1}}_{\text{quadratic function of } u_{h-1}}\]</span></p>
+</section>
+<section id="minimizing-a-quadratic-function-in-mathbbrn" class="slide level2">
+<h2>Minimizing a quadratic function in <span class="math inline">\(\mathbb{R}^n\)</span></h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg21-quadratic-3d.png" class="quarto-figure quarto-figure-center" style="width:45.0%"></p>
+</figure>
+</div>
+<p><span class="math display">\[\min_{u \in \mathbb{R}^n} J(u) \qquad J(u) = u^\intercal Xu+2u^\intercal y+z \qquad X&gt;0\]</span></p>
+<p>Unique minimizer <span class="math inline">\(\quad \nabla J(u)=0 \iff 2Xu+2y=0 \iff u=-X^{-1}y\)</span></p>
+<p>Minimum <span class="math inline">\(\quad J(-X^{-1}y) = y^\intercal X^{-1}XX^{-1}y-2y^\intercal X^{-1}y+z = z-y^\intercal X^{-1}y\)</span></p>
+</section>
+<section id="dynamic-programming" class="slide level2 smaller">
+<h2>Dynamic Programming</h2>
+<p><strong>Step 1</strong> (continued)</p>
+<p><span class="math display">\[J_{h-1}(x_{h-1}) = \min_{u_{h-1}} x_{h-1}^\intercal \underbrace{(A_{h-1}^\intercal Q_h A_{h-1}+Q_{h-1})}_{z} x_{h-1}\]</span> <span class="math display">\[+\ 2u_{h-1}^\intercal \underbrace{(S_{h-1}^\intercal+B_{h-1}^\intercal Q_h A_{h-1})}_{y} x_{h-1} + u_{h-1}^\intercal \underbrace{(B_{h-1}^\intercal Q_h B_{h-1}+R_{h-1})}_{X} u_{h-1}\]</span></p>
+<p><strong>Policy</strong></p>
+<p><span class="math display">\[u_{h-1} = -X^{-1}y = -\big(B_{h-1}^\intercal Q_h B_{h-1}+R_{h-1}\big)^{-1}\big(S_{h-1}^\intercal+B_{h-1}^\intercal Q_h A_{h-1}\big)x_{h-1}\]</span></p>
+<p><strong>Cost-to-go</strong></p>
+<p><span class="math display">\[J_{h-1}(x_{h-1}) = z-y^\intercal X^{-1}y\]</span> <span class="math display">\[= x_{h-1}^\intercal\Big[A_{h-1}^\intercal Q_h A_{h-1}+Q_{h-1} - (S_{h-1}+A_{h-1}^\intercal Q_h B_{h-1})(B_{h-1}^\intercal Q_h B_{h-1}+R_{h-1})^{-1}(S_{h-1}^\intercal+B_{h-1}^\intercal Q_h A_{h-1})\Big]x_{h-1}\]</span></p>
+</section>
+<section id="dynamic-programming-1" class="slide level2 smaller">
+<h2>Dynamic Programming</h2>
+<p><strong>Step 2</strong> <span class="math inline">\(\quad x_{h-1}=A_{h-2}x_{h-2}+B_{h-2}u_{h-2}\)</span></p>
+<p><span class="math display">\[J_{h-2}(x_{h-2}) = \min_{u_{h-2}} \begin{bmatrix}x_{h-2}^\intercal &amp; u_{h-2}^\intercal\end{bmatrix}\begin{bmatrix}Q_{h-2} &amp; S_{h-2} \\ S_{h-2}^\intercal &amp; R_{h-2}\end{bmatrix}\begin{bmatrix}x_{h-2} \\ u_{h-2}\end{bmatrix} + \underbrace{J_{h-1}(x_{h-1})}_{x_{h-1}^\intercal P_{h-1} x_{h-1}}\]</span></p>
+<p>Since the cost-to-go is quadratic (as the terminal cost) we can apply the same reasoning and obtain</p>
+<p><span class="math display">\[u_{h-2} = K_{h-2}x_{h-2}\]</span></p>
+<p><span class="math display">\[J_{h-2}(x_{h-2}) = x_{h-2}^\intercal P_{h-2}x_{h-2}\]</span></p>
+<p><span class="math display">\[K_{h-2} = -\big(B_{h-2}^\intercal P_{h-1}B_{h-2}+R_{h-2}\big)^{-1}\big(S_{h-2}^\intercal+B_{h-2}^\intercal P_{h-1}A_{h-2}\big)\]</span></p>
+<p><span class="math display">\[P_{h-2} = A_{h-2}^\intercal P_{h-1}A_{h-2}+Q_{h-2} - \big(S_{h-2}+A_{h-2}^\intercal P_{h-1}B_{h-2}\big)\big(B_{h-2}^\intercal P_{h-1}B_{h-2}+R_{h-2}\big)^{-1}\big(S_{h-2}^\intercal+B_{h-2}^\intercal P_{h-1}A_{h-2}\big)\]</span></p>
+</section>
+<section id="dynamic-programming-2" class="slide level2 smaller">
+<h2>Dynamic Programming</h2>
+<p><strong>Step <span class="math inline">\(h-k\)</span></strong> <span class="math inline">\(\quad x_{k+1}=A_kx_k+B_ku_k\)</span></p>
+<p><span class="math display">\[J_k(x_k) = \min_{u_k} \begin{bmatrix}x_k^\intercal &amp; u_k^\intercal\end{bmatrix}\begin{bmatrix}Q_k &amp; S_k \\ S_k^\intercal &amp; R_k\end{bmatrix}\begin{bmatrix}x_k \\ u_k\end{bmatrix} + \underbrace{J_{k+1}(x_{k+1})}_{x_{k+1}^\intercal P_{k+1} x_{k+1}}\]</span></p>
+<p><span class="math display">\[u_k = K_kx_k \qquad J_k(x_k) = x_k^\intercal P_k x_k\]</span></p>
+<p><span class="math display">\[K_k = -\big(B_k^\intercal P_{k+1}B_k+R_k\big)^{-1}\big(S_k^\intercal+B_k^\intercal P_{k+1}A_k\big)\]</span></p>
+<div style="border: 2px solid #2b6cb0; border-radius: 6px; padding: 0.5em;">
+<p><span class="math display">\[P_k = A_k^\intercal P_{k+1}A_k+Q_k - \big(S_k+A_k^\intercal P_{k+1}B_k\big)\big(B_k^\intercal P_{k+1}B_k+R_k\big)^{-1}\big(S_k^\intercal+B_k^\intercal P_{k+1}A_k\big)\]</span></p>
+</div>
+<p><strong>(Riccati equation)</strong></p>
+<p>Thus, simply iterate these equations for <span class="math inline">\(k \in \{h-1,\dots,1,0\}\)</span> starting with <span class="math inline">\(P_h=Q_h\)</span> to obtain the optimal policy <span class="math inline">\(u_k=K_kx_k\)</span>.</p>
+<p>The optimal cost for a given initial condition is <span class="math inline">\(J_0(x_0)=x_0^\intercal P_0 x_0\)</span>.</p>
+</section>
+<section id="example-double-integrator" class="slide level2">
+<h2>Example: double integrator</h2>
+<p>Consider a double integrator</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg25-double-integrator.png" class="quarto-figure quarto-figure-center" style="width:70.0%"></p>
+</figure>
+</div>
+<p><span class="math display">\[\ddot y(t) = \frac{F(t)}{m}\]</span></p>
+<p><strong>Continuous-time model</strong></p>
+<p><span class="math display">\[\begin{bmatrix}\dot y(t) \\ \dot v(t)\end{bmatrix} = \begin{bmatrix}0 &amp; 1 \\ 0 &amp; 0\end{bmatrix}\begin{bmatrix}y(t) \\ v(t)\end{bmatrix} + \begin{bmatrix}0 \\ 1\end{bmatrix}u(t) \qquad x(t)=[y(t)\ \ v(t)]^\intercal\]</span></p>
+<p><strong>Discretization</strong></p>
+<p><span class="math display">\[x_{k+1} = e^{\begin{bmatrix}0&amp;1\\0&amp;0\end{bmatrix}\tau}x_k + \int_0^\tau e^{\begin{bmatrix}0&amp;1\\0&amp;0\end{bmatrix}r}dr\begin{bmatrix}0\\1\end{bmatrix}u_k = \begin{bmatrix}1 &amp; \tau \\ 0 &amp; 1\end{bmatrix}x_k + \begin{bmatrix}\frac{\tau^2}{2} \\ \tau\end{bmatrix}u_k\]</span></p>
+</section>
+<section id="example-double-integrator-1" class="slide level2">
+<h2>Example: double integrator</h2>
+<p><strong>Dynamic model</strong> <span class="math inline">\(\quad x_{k+1} = \begin{bmatrix}1 &amp; \tau \\ 0 &amp; 1\end{bmatrix}x_k + \begin{bmatrix}\frac{\tau^2}{2} \\ \tau\end{bmatrix}u_k \qquad \tau=0.2\)</span></p>
+<p>Qualitative goal: drive the mass to position zero in a fast way but with reasonable actuation values.</p>
+<p>To achieve this goal let us start with this cost function</p>
+<p><span class="math display">\[\sum_{k=0}^{h-1} x_k^\intercal Qx_k+u_k^\intercal Ru_k+x_h^\intercal Q_hx_h\]</span></p>
+<p><span class="math display">\[Q=\begin{bmatrix}1&amp;0\\0&amp;1\end{bmatrix} \qquad R=1 \qquad h=5 \qquad Q_h=\begin{bmatrix}10&amp;0\\0&amp;10\end{bmatrix}\]</span></p>
+<p>and then tune these parameters to improve the results.</p>
+</section>
+<section id="dynamic-programming-3" class="slide level2 smaller">
+<h2>Dynamic programming</h2>
+<p>Iterate the following equations to obtain the optimal policy</p>
+<p><span class="math display">\[K_k = -\big(B_k^\intercal P_{k+1}B_k+R_k\big)^{-1}\big(S_k^\intercal+B_k^\intercal P_{k+1}A_k\big)\]</span></p>
+<p><span class="math display">\[P_k = A_k^\intercal P_{k+1}A_k+Q_k - \big(S_k+A_k^\intercal P_{k+1}B_k\big)\big(B_k^\intercal P_{k+1}B_k+R_k\big)^{-1}\big(S_k^\intercal+B_k^\intercal P_{k+1}A_k\big)\]</span></p>
+<p><span class="math display">\[P_5=Q_5=\begin{bmatrix}10&amp;0\\0&amp;10\end{bmatrix} \qquad k \in \{4,3,2,1,0\}\]</span></p>
+<p><strong>First iteration</strong></p>
+<p><span class="math display">\[K_4 = -\Big(\begin{bmatrix}0.02 &amp; 0.2\end{bmatrix}\begin{bmatrix}10&amp;0\\0&amp;10\end{bmatrix}\begin{bmatrix}0.02\\0.2\end{bmatrix}+1\Big)^{-1}\begin{bmatrix}0.02&amp;0.2\end{bmatrix}\begin{bmatrix}10&amp;0\\0&amp;10\end{bmatrix}\begin{bmatrix}1&amp;0.2\\0&amp;1\end{bmatrix} = \begin{bmatrix}-0.1425 &amp; -1.4530\end{bmatrix}\]</span></p>
+<p><span class="math display">\[P_4 = \begin{bmatrix}1&amp;0.2\\0&amp;1\end{bmatrix}^\intercal\begin{bmatrix}10&amp;0\\0&amp;10\end{bmatrix}\begin{bmatrix}1&amp;0.2\\0&amp;1\end{bmatrix} + \begin{bmatrix}1&amp;0\\0&amp;1\end{bmatrix} - \begin{bmatrix}1&amp;0.2\\0&amp;1\end{bmatrix}^\intercal\begin{bmatrix}10&amp;0\\0&amp;10\end{bmatrix}\begin{bmatrix}0.02\\0.2\end{bmatrix}(-K_4) = \begin{bmatrix}10.9715 &amp; 1.7094\\1.7094 &amp; 8.4359\end{bmatrix}\]</span></p>
+</section>
+<section id="dynamic-programming-4" class="slide level2 smaller">
+<h2>Dynamic programming</h2>
+<p><strong>Next iterations</strong></p>
+<p><span class="math display">\[P_0=\begin{bmatrix}12.121&amp;5.702\\5.702&amp;9.085\end{bmatrix} \quad P_1=\begin{bmatrix}12.295&amp;5.165\\5.165&amp;8.675\end{bmatrix} \quad P_2=\begin{bmatrix}12.188&amp;4.311\\4.311&amp;8.2725\end{bmatrix} \quad P_3=\begin{bmatrix}11.739&amp;3.144\\3.144&amp;8.0782\end{bmatrix}\]</span></p>
+<p><span class="math display">\[K_0=[-0.918\ \ -1.503] \quad K_1=[-0.807\ \ -1.432] \quad K_2=[-0.638\ \ -1.368] \quad K_3=[-0.414\ \ -1.353]\]</span></p>
+<p><strong>Optimal policy</strong> <span class="math inline">\(\quad u_k=K_kx_k, \ k \in \{0,1,\dots,4\}\)</span></p>
+<p><strong>Optimal path</strong> for initial condition <span class="math inline">\(x_0=[1\ \ 0]^\intercal\)</span> (iterate <span class="math inline">\(x_{k+1}=Ax_k+Bu_k\)</span>, <span class="math inline">\(u_k=K_kx_k\)</span>)</p>
+<p><span class="math display">\[(x_0,u_0) = ([1\ \ 0]^\intercal, -0.918) \qquad (x_3,u_3) = ([0.8724\ \ {-0.330}]^\intercal, 0.085)\]</span> <span class="math display">\[(x_1,u_1) = ([0.982\ \ {-0.184}]^\intercal, -0.529) \qquad (x_4,u_4) = ([0.8082\ \ {-0.313}]^\intercal, 0.339)\]</span> <span class="math display">\[(x_2,u_2) = ([0.934\ \ {-0.289}]^\intercal, -0.200) \qquad x_5 = [0.7525\ \ {-0.2448}]^\intercal\]</span></p>
+</section>
+<section id="plots-and-tuning" class="slide level2">
+<h2>Plots and tuning</h2>
+<p>Transitory responses are still far from qualitative specifications</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg29-tuning-plots.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+<p><strong>Guidelines to tune the cost</strong></p>
+<ul>
+<li>By increasing the terminal cost one expects that the response gets closer to the desired final position.</li>
+<li>Same is expected by penalizing more the position error relatively to the velocity error.</li>
+<li>Decreasing the penalty on the control action will allow more control authority to reach the origin.</li>
+</ul>
+</section>
+<section id="increasing-terminal-cost" class="slide level2">
+<h2>Increasing terminal cost</h2>
+<p>Final position error improved by increasing terminal cost</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg31-terminal-cost-plots.png" class="quarto-figure quarto-figure-center" style="width:78.0%"></p>
+</figure>
+</div>
+</section>
+<section id="changing-state-cost" class="slide level2">
+<h2>Changing state cost</h2>
+<p>Increasing position cost leads to smaller position error and larger velocity</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg32-state-cost-plots.png" class="quarto-figure quarto-figure-center" style="width:82.0%"></p>
+</figure>
+</div>
+</section>
+<section id="changing-control-cost" class="slide level2">
+<h2>Changing control cost</h2>
+<p>Decreasing control penalty leads to fast responses, but large actuation!</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg33-control-cost-plots.png" class="quarto-figure quarto-figure-center" style="width:82.0%"></p>
+</figure>
+</div>
+</section>
+<section id="cheap-control" class="slide level2">
+<h2>Cheap control</h2>
+<p>As <span class="math inline">\(R \to 0\)</span> we obtain deadbeat control: zero state is achieved in 2 steps</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg35-cheap-control-plots.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+<p>Can we then always drive a mass to zero in two sampling periods?</p>
+<ul>
+<li>No, because this typically requires very large unfeasible actuations.</li>
+<li>Actuators have limitations which were not incorporated in our linear model.</li>
+<li>In this LQR framework the solution is to increasingly penalize the control input until actuation constraints are met. More on this point later.</li>
+</ul>
+</section>
+<section id="increasing-the-horizon" class="slide level2">
+<h2>Increasing the horizon</h2>
+<p>Let us increase the horizon considering <span class="math inline">\(Q=Q_h=I\)</span>, <span class="math inline">\(R=1\)</span>, <span class="math inline">\(x_0=[1\ \ 0]^\intercal\)</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg36-horizon-plots-a.png" class="quarto-figure quarto-figure-center" style="width:80.0%"></p>
+</figure>
+</div>
+<p><span class="math inline">\(h=10\)</span>: cost <span class="math inline">\(J_0(x_0)=x_0^\intercal P_0 x_0 = 8.347\)</span> <span class="math inline">\(\qquad\)</span> <span class="math inline">\(h=30\)</span>: cost <span class="math inline">\(J_0(x_0)=x_0^\intercal P_0 x_0 = 9.1881\)</span></p>
+</section>
+<section id="increasing-the-horizon-1" class="slide level2">
+<h2>Increasing the horizon</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg37-horizon-plots-b.png" class="quarto-figure quarto-figure-center" style="width:80.0%"></p>
+</figure>
+</div>
+<p><span class="math inline">\(h=50\)</span>: cost <span class="math inline">\(J_0(x_0)=x_0^\intercal P_0 x_0 = 9.1890\)</span> <span class="math inline">\(\qquad\)</span> <span class="math inline">\(h=100\)</span>: cost <span class="math inline">\(J_0(x_0)=x_0^\intercal P_0 x_0 = 9.1890\)</span></p>
+<p>The cost converges to a constant as the time horizon increases.</p>
+</section>
+<section id="discussion-1" class="slide level2 smaller">
+<h2>Discussion</h2>
+<ul>
+<li>Since the cost is positive-definite, if the horizon is large the optimal input should drive the state to zero to stop paying cost.</li>
+<li>This explains why the cost converges as the horizon increases.</li>
+</ul>
+<p><span class="math display">\[\sum_{k=0}^{h_0} g_k(x_k,K_ku_k) + \underbrace{\sum_{k=h_0+1}^{h-1} g_k(x_k,K_ku_k)+g_T(x_T,u_T)}_{\approx\ 0 \text{ since } x_k\approx 0 \text{ and } u_k=K_kx_k}\]</span></p>
+<ul>
+<li>This reasoning is valid for every initial condition. Thus if <span class="math inline">\(x_0^\intercal P_0 x_0\)</span> converges as <span class="math inline">\(h\to\infty\)</span> then <span class="math inline">\(P_0\)</span> converges, where <span class="math inline">\(P_0\)</span> results from the recursion</li>
+</ul>
+<p><span class="math display">\[P_k = A^\intercal P_{k+1}A+Q - (S+A^\intercal P_{k+1}B)(B^\intercal P_{k+1}B+R)^{-1}(S^\intercal+B^\intercal P_{k+1}A) \qquad k \in \{h-1,h-2,\dots,0\}\]</span></p>
+<ul>
+<li>Note that we are now considering time-invariant <span class="math inline">\(A_k, B_k, Q_k, R_k, S_k\)</span>.</li>
+</ul>
+</section>
+<section id="discussion-2" class="slide level2">
+<h2>Discussion</h2>
+<p>For the double integrator example with <span class="math inline">\(Q=Q_h=I\)</span>, <span class="math inline">\(R=1\)</span>:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg39-pk-kk-plots.png" class="quarto-figure quarto-figure-center" style="width:80.0%"></p>
+</figure>
+</div>
+<p><span class="math inline">\(P_k=\begin{bmatrix}p_{1,k}&amp;p_{2,k}\\p_{2,k}&amp;p_{3,k}\end{bmatrix} \qquad K_k=\begin{bmatrix}K_{1,k}&amp;K_{2,k}\end{bmatrix}\)</span></p>
+<p>Let <span class="math inline">\(\bar P\)</span> denote the limit <span class="math inline">\(P_0\)</span> of the recursion; <span class="math inline">\(P_k = A^\intercal P_{k+1}A+Q-(S+A^\intercal P_{k+1}B)(B^\intercal P_{k+1}B+R)^{-1}(S^\intercal+B^\intercal P_{k+1}A)\)</span>, then <span class="math inline">\(\bar P = A^\intercal \bar P A+Q-(S+A^\intercal \bar P B)(B^\intercal \bar P B+R)^{-1}(S^\intercal+B^\intercal \bar P A)\)</span></p>
+<p>Moreover, <span class="math inline">\(K_k \to \bar K\)</span>, <span class="math inline">\(\quad \bar K = -\big(B^\intercal \bar P B+R\big)^{-1}\big(S^\intercal+B^\intercal \bar P A\big)\)</span></p>
+</section>
+<section id="infinite-horizon-lqr" class="slide level2 smaller">
+<h2>Infinite horizon LQR</h2>
+<div style="border: 2px solid #333; border-radius: 8px; padding: 0.8em;">
+<p><strong>Proposition</strong> (special case of [Bertsekas, Sec. 4., Proposition 4.4.1]) The optimal policy for the stage decision problem with infinite number of stages with dynamic model</p>
+<p><span class="math display">\[x_{k+1}=Ax_k+Bu_k \qquad (A,B) \text{ controllable}\]</span></p>
+<p>and cost function</p>
+<p><span class="math display">\[\sum_{k=0}^\infty x_k^\intercal Qx_k+2x_k^\intercal Su_k+u_k^\intercal Ru_k \qquad \begin{bmatrix}Q&amp;S\\S^\intercal&amp;R\end{bmatrix}&gt;0\]</span></p>
+<p>is given by</p>
+<p><span class="math display">\[u_k=\bar K x_k \qquad \bar K = -\big(B^\intercal \bar P B+R\big)^{-1}\big(S^\intercal+B^\intercal \bar P A\big)\]</span></p>
+<p>where <span class="math inline">\(\bar P\)</span> is the unique positive definite solution to the algebraic Riccati equation</p>
+<div style="border: 2px solid #2b6cb0; border-radius: 6px; padding: 0.4em;">
+<p><span class="math display">\[\bar P = A^\intercal \bar P A+Q - \big(S+A^\intercal \bar P B\big)\big(B^\intercal \bar P B+R\big)^{-1}\big(S^\intercal+B^\intercal \bar P A\big)\]</span></p>
+</div>
+<p>Furthermore the closed-loop <span class="math inline">\(x_{k+1}=(A+BK)x_k\)</span> is exponentially stable.</p>
+</div>
+</section>
+<section id="discussion-3" class="slide level2 smaller">
+<h2>Discussion</h2>
+<ul>
+<li>For simplicity, throughout the discussion, we assume <span class="math inline">\(S=0\)</span>.</li>
+<li>As mentioned in [Bertsekas, Sec. 4.1], we can relax the assumptions <span class="math inline">\((A,B)\)</span> is controllable and <span class="math inline">\(Q\)</span> is positive definite.</li>
+<li>In fact, if <span class="math inline">\((A,B)\)</span> is controllable, <span class="math inline">\(R\)</span> is positive definite, <span class="math inline">\(Q=NN^\intercal\)</span> for a full rank <span class="math inline">\(N \in \mathbb{R}^{n\times r}\)</span> (not necessarily positive definite if <span class="math inline">\(r&lt;n\)</span>) and <span class="math inline">\((A,N)\)</span> is observable, then the previous theorem still holds.</li>
+<li>Moreover, if we further relax the assumptions to <span class="math inline">\(R\)</span> is positive definite, <span class="math inline">\((A,B)\)</span> is stabilizable, <span class="math inline">\(N\)</span> full rank and <span class="math inline">\((A,N)\)</span> is detectable then the theorem still holds except that <span class="math inline">\(P\)</span> is not necessarily positive definite.</li>
+<li>Actually according to “Linear optimal control”, B. O. Andersson, J. B. Moore, Sec 14.1, we just need to assure that <span class="math inline">\(B^\intercal QB+R\)</span> is positive definite and <span class="math inline">\((A,N)\)</span> is observable to guarantee stability of the closed-loop.</li>
+<li>Therefore, we can for instance pick <span class="math inline">\(R=0\)</span> and <span class="math inline">\(Q\)</span> positive definite and the closed-loop is stable (this will not be the case for continuous-time optimal control problems).</li>
+</ul>
+</section>
+<section id="inverted-pendulum" class="slide level2 smaller">
+<h2>Inverted pendulum</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg42-inverted-pendulum.png" class="quarto-figure quarto-figure-center" style="width:42.0%"></p>
+</figure>
+</div>
+<p><strong>Linearized model</strong> (see [1, p.&nbsp;32])</p>
+<p><span class="math display">\[(I+m\ell^2)\ddot\theta - mg\ell\theta = m\ell\ddot x \qquad (M+m)\ddot x+b\dot x-m\ell\ddot\theta = u\]</span></p>
+<p><strong>State space</strong></p>
+<p><span class="math display">\[\frac{d}{dt}\begin{bmatrix}x\\\dot x\\\theta\\\dot\theta\end{bmatrix} = \begin{bmatrix}0&amp;1&amp;0&amp;0\\0&amp;-\frac{(I+m\ell^2)b}{q}&amp;\frac{m^2g\ell^2}{q}&amp;0\\0&amp;0&amp;0&amp;1\\0&amp;-\frac{m\ell b}{q}&amp;\frac{mg\ell(M+m)}{q}&amp;0\end{bmatrix}\begin{bmatrix}x\\\dot x\\\theta\\\dot\theta\end{bmatrix} + \begin{bmatrix}0\\\frac{I+m\ell^2}{q}\\0\\\frac{m\ell}{q}\end{bmatrix}u(t) \qquad q=(I+m\ell^2)(M+m)-m^2\ell^2\]</span></p>
+<p>[1] Feedback control of dynamic systems, Franklin, Powell, Emani-Naeini</p>
+</section>
+<section id="time-responses" class="slide level2">
+<h2>Time responses</h2>
+<p><span class="math inline">\(Q=I, S=0, R=1, \tau=0.1\)</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg43-time-responses.png" class="quarto-figure quarto-figure-center" style="width:90.0%"></p>
+</figure>
+</div>
+</section>
+<section id="tuning-the-parameters" class="slide level2">
+<h2>Tuning the parameters</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture5/pg44-tuning-plots.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+</section>
+<section id="concluding-remarks" class="slide level2">
+<h2>Concluding remarks</h2>
+<p><strong>To summarize:</strong></p>
+<ul>
+<li>Stage decision problems are extensions of discrete optimization problems for which state and input spaces can be arbitrary.</li>
+<li>In practice, it may be hard to obtain expressions for the costs-to-go.</li>
+<li>When the cost is quadratic and the system is linear we obtain a framework for state feedback control design for any linear plant.</li>
+</ul>
+</section>
+<section id="appendix-a" class="slide level2 center" style="text-align: center;">
+<h2>Appendix A</h2>
+<h3 style="text-align: center;" id="proof-of-optimality-of-dynamic-programming">Proof of optimality of dynamic programming</h3>
+</section>
+<section id="proof-of-optimality" class="slide level2">
+<h2>Proof of optimality</h2>
+<div style="border: 2px solid #333; border-radius: 8px; padding: 0.8em;">
+<p><strong>Theorem</strong></p>
+<p>The policy obtained with the DP algorithm is an optimal policy.</p>
+</div>
+<div style="border: 2px solid #333; border-radius: 8px; padding: 0.8em; margin-top: 0.5em;">
+<p><strong>Proof</strong></p>
+<p>We shall prove using induction that <span class="math inline">\(\pi^k := \{\mu_k,\dots,\mu_{h-1}\}\)</span> obtained by the DP algorithm is an optimal policy for the subproblem from stage <span class="math inline">\(k\)</span> to stage <span class="math inline">\(h-1\)</span> and that <span class="math inline">\(J_k(x_k)\)</span> is the cost of the optimal path starting at <span class="math inline">\(x_k\)</span>.</p>
+<ul>
+<li>Step I: Prove this for <span class="math inline">\(k=h-1\)</span>.</li>
+<li>Step II: Assume that the induction hypothesis holds for a given <span class="math inline">\(k-1\)</span> and prove it for <span class="math inline">\(k\)</span>.</li>
+</ul>
+</div>
+</section>
+<section id="step-i" class="slide level2">
+<h2>Step I</h2>
+<ul>
+<li>By construction <span class="math inline">\(\pi^{h-1}=\{\mu_{h-1}\}\)</span> is an optimal policy as it is the first decision of the optimal path from stage <span class="math inline">\(h-1\)</span> to stage <span class="math inline">\(h\)</span> since</li>
+</ul>
+<p><span class="math display">\[\min_{u_{h-1}\in U_{h-1}(x_{h-1})} g_{h-1}(x_{h-1},u_{h-1})+J_h(f_{h-1}(x_{h-1},u_{h-1})) = g_{h-1}(x_{h-1},\mu_{h-1}(x_{h-1}))+J_h(f_{h-1}(x_{h-1},\mu_{h-1}(x_{h-1})))\]</span></p>
+<ul>
+<li>It is also clear that</li>
+</ul>
+<p><span class="math display">\[J_{h-1}(x_{h-1}) = \min_{u_{h-1}\in U_{h-1}(x_{h-1})} g_{h-1}(x_{h-1},u_{h-1})+J_h(f_{h-1}(x_{h-1},u_{h-1}))\]</span></p>
+<p>is the optimal cost for the subproblem with initial condition <span class="math inline">\(x_{h-1}\)</span> at stage <span class="math inline">\(h-1\)</span>.</p>
+</section>
+<section id="step-ii" class="slide level2">
+<h2>Step II</h2>
+<ul>
+<li><p>Assume now that <span class="math inline">\(\pi^{k+1} := \{\mu_{k+1},\dots,\mu_{h-1}\}\)</span> is an optimal policy and <span class="math inline">\(J_{k+1}(x_{k+1})\)</span> is the cost of the optimal path which starts at initial state <span class="math inline">\(x_{k+1}\)</span>. We shall prove using contradiction that <span class="math inline">\(\pi^k := \{\mu_k,\dots,\mu_{h-1}\}\)</span> is an optimal policy and <span class="math inline">\(J_k(x_k)\)</span> is the cost of an optimal path which starts at initial state <span class="math inline">\(x_k\)</span>.</p></li>
+<li><p>Argument using contradiction: if <span class="math inline">\(\pi^k\)</span> is not optimal then there must exist a state such that <span class="math inline">\(\mu_k(x_k)\)</span> is not the first action <span class="math inline">\(\tilde u_k (\neq \mu_k(x_k))\)</span> of the optimal path from stage <span class="math inline">\(k\)</span> to stage <span class="math inline">\(h\)</span> denoted by</p></li>
+</ul>
+<p><span class="math display">\[\tilde\gamma = \{(\tilde x_k,\tilde u_k), (\tilde x_{k+1},\tilde u_{k+1}), \dots, \tilde x_h)\} \qquad \tilde x_k = x_k\]</span></p>
+<ul>
+<li>Since we are assuming that <span class="math inline">\(\pi^{k+1} := \{\mu_{k+1},\dots,\mu_{h-1}\}\)</span> is an optimal policy we must have</li>
+</ul>
+<p><span class="math display">\[\tilde u_{\ell+1} = \mu_{\ell+1}(\tilde x_{\ell+1}) \quad \text{for every } \ell \in \{k+1,\dots,h-2\}\]</span></p>
+</section>
+<section id="step-ii-1" class="slide level2">
+<h2>Step II</h2>
+<ul>
+<li>The cost of such a path is</li>
+</ul>
+<p><span class="math display">\[\bar J = \sum_{\ell=k}^{h-1} g_\ell(\tilde x_\ell,\tilde u_\ell)+g_h(\tilde x_h) = g_k(\tilde x_k,\tilde u_k) + \sum_{\ell=k+1}^{h-1} g_\ell(\tilde x_\ell,\mu_\ell(\tilde x_\ell))+g_h(\tilde x_h) = g_k(\tilde x_k,\tilde u_k)+J_{k+1}(f(\tilde x_k,\tilde u_k))\]</span></p>
+<ul>
+<li>However, the cost of the path which has <span class="math inline">\(\mu_k(x_k)\)</span> as the first decision is less than or equal to the cost above (contradiction)</li>
+</ul>
+<p><span class="math display">\[J_k(x_k) = \min_{u_k} g_k(\tilde x_k,\tilde u_k)+J_{k+1}(f(\tilde x_k,\tilde u_k)) = g_k(\tilde x_k,\mu_k(x_k))+J_{k+1}(f(\tilde x_k,\mu_k(x_k)))\]</span> <span class="math display">\[\leq g_k(\tilde x_k,\tilde u_k)+J_{k+1}(f(\tilde x_k,\tilde u_k)) = \bar J\]</span></p>
+
+</section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+<p>4SC000 – Optimal Control and Reinforcement Learning</p>
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="lecture05-lqr_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="lecture05-lqr_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="lecture05-lqr_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="lecture05-lqr_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="lecture05-lqr_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="lecture05-lqr_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="lecture05-lqr_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="lecture05-lqr_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="lecture05-lqr_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="lecture05-lqr_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>

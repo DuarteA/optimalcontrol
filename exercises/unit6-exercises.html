@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>Unit 6 Exercises</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="unit6-exercises_files/libs/clipboard/clipboard.min.js"></script>
+<script src="unit6-exercises_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="unit6-exercises_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="unit6-exercises_files/libs/quarto-html/popper.min.js"></script>
+<script src="unit6-exercises_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="unit6-exercises_files/libs/quarto-html/anchor.min.js"></script>
+<link href="unit6-exercises_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="unit6-exercises_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="unit6-exercises_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="unit6-exercises_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="unit6-exercises_files/libs/bootstrap/bootstrap-5f5514ab72c605193d28bd5ace4a0252.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      argmin: ["\\operatorname*{argmin}_{#1}", 1],
+      argmax: ["\\operatorname*{argmax}_{#1}", 1],
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#core-exercises" id="toc-core-exercises" class="nav-link active" data-scroll-target="#core-exercises"><span class="header-section-number">1</span> Core exercises</a></li>
+  <li><a href="#additional-exercises" id="toc-additional-exercises" class="nav-link" data-scroll-target="#additional-exercises"><span class="header-section-number">2</span> Additional exercises</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="unit6-exercises.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Unit 6 Exercises</h1>
+<p class="subtitle lead">4SC000 Optimal Control and Reinforcement Learning</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Source: Solved Exercises/2/PS2.tex (problems) and
+Solved Exercises/2/SolutionsPS2.tex (solutions), section 2 "Optimal
+estimation and output feedback" -- originally Problems 2.1-2.6 --
+renumbered 6.1-6.6, plus one problem moved in from section 1 "Linear
+quadratic control" (originally Problem 1.8, an averaged-cost stochastic
+LQ problem with disturbances -- its content matches Lecture 6's opening
+section, "Stochastic dynamic programming and linear quadratic control",
+much more closely than anything in Lecture 5, so it's placed here as 6.7
+rather than in the Unit 5 exercises; see that file's header note too).
+
+Core = 6.1 (repeats Unit 5's Problem 5.1 with disturbances and a noisy
+sensor -- the direct worked introduction to certainty equivalence, the
+Kalman filter, and the separation principle together -- originally 2.1),
+6.2 (stationary Kalman filter in closed form -- originally 2.5).
+Additional = 6.3 (mass-spring-damper Kalman filter -- originally 2.3),
+6.4 (multi-rate LQG design, long -- originally 2.4), 6.5 (estimating an
+unknown constant from noisy measurements -- the simplest possible Kalman
+filter derivation -- originally 2.2), 6.6 (Kalman filter /
+optimal-control duality proof, long -- originally 2.6), 6.7
+(averaged-cost stochastic LQ control -- originally 1.8).
+
+At Duarte's request the stationary-Kalman-filter problem was moved from
+Additional 6.5 into Core as 6.2, and the former Core 6.2 (estimating a
+constant) moved into Additional as 6.5. Numbers follow position, so the
+"originally" tags above are the ones to go by when comparing with PS2.tex.
+
+Notes on missing solutions (all three cases below are exactly as in the
+source -- not an omission on my part):
+- Problem 6.3: SolutionsPS2.tex says "A similar problem is solved in the
+  appendix of Slides II-2 and therefore the solution is omitted." The
+  worked analogue is the mass-spring-damper Kalman filter example in
+  Lecture 6, Appendix C (see lectures/lecture06-kalman-lqg.qmd) -- same
+  setup, same numbers style; presented here as a statement-only problem
+  pointing to that worked example.
+- Problem 6.2: SolutionsPS2.tex says "This exercise was taken from the
+  sample exam 1 of 2015/2016, the solution of this sample exam is
+  already provided" (i.e. provided elsewhere, in the exam archive, not
+  reproduced in this file). Kept as a statement-only problem.
+- Problem 6.7 (originally 1.8): SolutionsPS2.tex says "This exercise was
+  taken from the sample exam 2 of 2015/2016, question 3, and the
+  solution is already provided" -- same situation, statement-only here.
+
+Problems 6.4 and 6.6 have full solutions in the source but they run
+several pages of dense algebra; the write-up below keeps the full
+modeling setup, the key intermediate results, and the final
+answers/formulas, but summarizes rather than reproduces every algebraic
+step verbatim (same approach used for Problem 2.7 in the Unit 2
+exercises) -- the full derivation is in SolutionsPS2.tex if ever needed.
+-->
+<p>A runnable Python companion to these exercises – a general discrete-time Kalman filter (prediction + correction), reused from <code>code/unit4/</code>, plus the mass-spring-damper example of Problem 6.3 – is available in <code>code/unit6/</code> (see its <code>README.md</code>).</p>
+<section id="core-exercises" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="core-exercises"><span class="header-section-number">1</span> Core exercises</h2>
+<p><strong>Problem 6.1</strong> The goal of this exercise is to repeat Problem 5.1 but considering state disturbances and noisy measurements. To this effect consider a first order discrete-time linear system</p>
+<p><span class="math display">\[x_{k+1} = \alpha x_k+u_k+w_k, \ \ k\in \mathbb{N}_0,\]</span></p>
+<p>where <span class="math inline">\(\{w_k\}\)</span> are Gaussian, independent and identically distributed, with variance <span class="math inline">\(\mathbb{E}[w_k^2]=\sigma_w^2\)</span>, and consider the cost</p>
+<p><span class="math display">\[\mathbb{E}\Big[\sum_{k=0}^q x_k^2+\gamma u_k^2\Big].\]</span></p>
+<ol type="a">
+<li>Considering <span class="math inline">\(\alpha=1\)</span>, <span class="math inline">\(\gamma=1\)</span>, <span class="math inline">\(q=2\)</span>, <span class="math inline">\(\sigma_w=1\)</span>, determine the policy for <span class="math inline">\(u_0,u_1,u_2\)</span> that minimizes the cost when: &nbsp;&nbsp;&nbsp;(i) the value of <span class="math inline">\(x_k\)</span> is known at every stage <span class="math inline">\(k\)</span>. &nbsp;&nbsp;&nbsp;(ii) <span class="math inline">\(x_k\)</span> is measured at every stage by a noisy sensor <span class="math inline">\(y_k=x_k+n_k\)</span>, where <span class="math inline">\(\{n_k\}\)</span> are Gaussian iid with variance <span class="math inline">\(\mathbb{E}[n_k^2]=\sigma_n^2\)</span>, <span class="math inline">\(\sigma_n=\frac{1}{3}\)</span>, and <span class="math inline">\(x_0\sim\mathcal{N}(0,10)\)</span>.</li>
+<li>Considering <span class="math inline">\(\alpha=1\)</span>, <span class="math inline">\(\gamma=1\)</span>, and the averaged cost <span class="math inline">\(\lim_{q\to\infty}\frac{1}{q+1}\mathbb{E}\big[\sum_{k=0}^q x_k^2+\gamma u_k^2\big]\)</span>, determine the policy for <span class="math inline">\(\{u_k\}\)</span> that minimizes the cost when: &nbsp;&nbsp;&nbsp;(i) <span class="math inline">\(x_k\)</span> is known at every stage. &nbsp;&nbsp;&nbsp;(ii) <span class="math inline">\(x_k\)</span> is measured as in (a)(ii), with the same distribution for <span class="math inline">\(x_0\)</span>.</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(a)(i)</strong> By certainty equivalence, the policy is the same as in Problem 5.1(a): <span class="math inline">\(u_2=\mu_2(x_2)=0\)</span>, <span class="math inline">\(u_1=\mu_1(x_1)=-\frac{1}{2}x_1\)</span>, <span class="math inline">\(u_0=\mu_0(x_0)=-\frac{3}{5}x_0\)</span>.</p>
+<p><strong>(a)(ii)</strong> Let <span class="math inline">\(I_0=\{y_0\}\)</span>, <span class="math inline">\(I_1=\{u_0,y_0,y_1\}\)</span>, <span class="math inline">\(I_2=\{u_0,y_0,y_1,u_1,y_2\}\)</span>. By the separation principle, the optimal policy replaces the state with its Kalman-filter estimate:</p>
+<p><span class="math display">\[u_2=\mu_2(I_2)=0 \qquad u_1=\mu_1(I_1)=-\tfrac{1}{2}\hat x_{1|1} \qquad u_0=\mu_0(I_0)=-\tfrac{3}{5}\hat x_{0|0}\]</span></p>
+<p>Since <span class="math inline">\(u_2=0\)</span>, we only need <span class="math inline">\(L_0\)</span> and <span class="math inline">\(L_1\)</span>. With <span class="math inline">\(\hat x_{0|-1}=\bar x_0=0\)</span>, <span class="math inline">\(\Phi_{0|-1}=10\)</span>, <span class="math inline">\(A=B=C=1\)</span>, <span class="math inline">\(W=1\)</span>, <span class="math inline">\(V=\frac{1}{9}\)</span>, iterating <span class="math inline">\(\Phi_{k+1|k}=A\Phi_{k|k}A^\intercal+W\)</span>, <span class="math inline">\(\Phi_{k|k}=\Phi_{k|k-1}-\Phi_{k|k-1}C^\intercal(C\Phi_{k|k-1}C^\intercal+V)^{-1}C\Phi_{k|k-1}\)</span>, <span class="math inline">\(L_k=\Phi_{k|k-1}C^\intercal(C\Phi_{k|k-1}C^\intercal+V)^{-1}\)</span>:</p>
+<p><span class="math display">\[\Phi_{0|0}=10-\frac{10^2}{10+\frac19}=\frac{10}{91}, \ \ L_0=\frac{10}{10+\frac19}=\frac{90}{91} \qquad \Phi_{1|0}=\frac{10}{91}+1=\frac{101}{91}, \ \ L_1=\frac{101/91}{101/91+1/9}=0.909\]</span></p>
+<p>so <span class="math inline">\(\hat x_{0|0}=\frac{90}{91}y_0\)</span>, <span class="math inline">\(\hat x_{1|0}=\frac{90}{91}y_0+u_0\)</span>, <span class="math inline">\(\hat x_{1|1}=\hat x_{1|0}+0.909(y_1-\hat x_{1|0})\)</span>.</p>
+<p><strong>(b)(i)</strong> For the average-cost problem the policy coincides with the deterministic infinite-horizon policy from Problem 5.1(b): <span class="math inline">\(u_k=-0.618x_k\)</span>.</p>
+<p><strong>(b)(ii)</strong> By the separation principle, <span class="math inline">\(u_k=-0.618\hat x_{k|k}\)</span>, where <span class="math inline">\(\hat x_{k|k}\)</span> is now the <em>stationary</em> Kalman filter estimate (appropriate for an average-cost criterion, where the initial transient is irrelevant): <span class="math inline">\(\hat x_{k+1|k}=\hat x_{k|k}+u_k\)</span>, <span class="math inline">\(\hat x_{k|k}=\hat x_{k|k-1}+L(y_k-\hat x_{k|k-1})\)</span>, <span class="math inline">\(L=\frac{\Phi}{\Phi+1/9}\)</span>, where <span class="math inline">\(\Phi\)</span> is the positive solution of <span class="math inline">\(\Phi^2=\Phi+\frac19\)</span>, i.e.&nbsp;<span class="math inline">\(\Phi=1.1009\)</span> (discarding the negative root <span class="math inline">\(-0.1009\)</span>), giving the stationary gain <span class="math inline">\(L=0.9083\)</span>.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 6.2</strong> Consider the system</p>
+<p><span class="math display">\[x_{k+1} = \frac56x_k+u_k+w_k\]</span></p>
+<p>with open-loop policy <span class="math inline">\(u_k=1\)</span> for every <span class="math inline">\(k\in\mathbb{N}_0\)</span>, and <span class="math inline">\(w_k\)</span> zero-mean iid Gaussian with <span class="math inline">\(\mathbb{E}[w_k^2]=1\)</span>. We wish to estimate <span class="math inline">\(x_k\)</span> based on the measurements</p>
+<p><span class="math display">\[y_\ell = 2x_\ell+\tfrac12v_\ell, \ \ \ell\in\{0,1,\dots,k\}\]</span></p>
+<p>where <span class="math inline">\(v_\ell\)</span> are zero-mean iid Gaussian with <span class="math inline">\(\mathbb{E}[v_\ell^2]=2\)</span>, and <span class="math inline">\(x_0\sim\mathcal{N}(\frac12,1)\)</span>.</p>
+<ol type="i">
+<li>Show that the Kalman filter estimate <span class="math inline">\(\hat x_{2|2}=\mathbb{E}[x_2|y_0,y_1,y_2,u_0{=}1,u_1{=}1]\)</span> can be written as <span class="math inline">\(\hat x_{2|2}=a_0y_0+a_1y_1+a_2y_2+c\)</span>, and give <span class="math inline">\(a_0,a_1,a_2,c\)</span>.</li>
+<li>Show that the stationary estimate <span class="math inline">\(\hat x_{k|k}=\mathbb{E}[x_k|y_0,\dots,y_k,u_0{=}1,\dots,u_{k-1}{=}1]\)</span> can be written as <span class="math inline">\(\hat x_{k|k}=\sum_{\ell=0}^k h_{k-\ell}y_\ell+d_k\)</span>, and give an expression for <span class="math inline">\(h_k\)</span> and <span class="math inline">\(d_k\)</span>.</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Not reproduced here – taken from the TU/e 2015/2016 sample exam 1, whose full worked solution is available in the exam archive rather than in SolutionsPS2.tex. The approach follows the standard Kalman filter recursion (prediction with <span class="math inline">\(A=\frac56\)</span>, <span class="math inline">\(B=1\)</span>, <span class="math inline">\(W=1\)</span>; correction with <span class="math inline">\(C=2\)</span>, <span class="math inline">\(V=\frac12\)</span>) applied twice by hand for (i), then generalized to the stationary (converged) gain for (ii), expressing each <span class="math inline">\(\hat x_{k|k}\)</span> as a linear combination of past outputs – structurally the same computation as Problem 6.5, with a nontrivial <span class="math inline">\(A\)</span> and <span class="math inline">\(C\)</span>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="additional-exercises" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="additional-exercises"><span class="header-section-number">2</span> Additional exercises</h2>
+<p><strong>Problem 6.3</strong> Consider a mass-spring-damper system for which the mass displacement <span class="math inline">\(z(t)\)</span> is described by</p>
+<p><span class="math display">\[m\ddot z(t) = -c_f\dot z(t)-k_sz(t)+f_d(t), \ \ t\in\mathbb{R}_{\geq 0}\]</span></p>
+<p>where <span class="math inline">\(m=1\)</span>, <span class="math inline">\(k_s=5\)</span>, <span class="math inline">\(c_f=1\)</span>, and <span class="math inline">\(f_d(t)\)</span> models force disturbances.</p>
+<ol type="a">
+<li>Find a state-space representation considering <span class="math inline">\(x(t)=[z(t)\ \ \dot z(t)]^\intercal\)</span>.</li>
+<li>Find a discrete-time system describing <span class="math inline">\(x(k\tau)\)</span> for <span class="math inline">\(\tau=0.1\)</span>, approximating <span class="math inline">\(f_d(t)\approx f_d(k\tau)\)</span> where <span class="math inline">\(f_d(k\tau)\)</span> are zero-mean iid Gaussian with <span class="math inline">\(\mathbb{E}[f_d(k\tau)^2]=0.1\)</span>.</li>
+<li>Suppose the output <span class="math inline">\(y(k\tau)=Cx(k\tau)+n_k\)</span> is available, <span class="math inline">\(n_k\)</span> zero-mean iid Gaussian with <span class="math inline">\(\mathbb{E}[n_k^2]=\sigma_n^2\)</span>. &nbsp;&nbsp;&nbsp;(i) Provide the Kalman filter estimate of <span class="math inline">\(x(k\tau)\)</span> for <span class="math inline">\(k\in\{0,1,2\}\)</span>, assuming the initial state covariance is <span class="math inline">\(2I\)</span>. &nbsp;&nbsp;&nbsp;(ii) Provide the stationary Kalman filter and the asymptotic error covariance matrix.</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>A structurally identical problem (same physical setup, mass-spring system with position measurements) is worked out in full in the course slides – see Lecture 6, Appendix C (“Example: Kalman filter”, lectures/lecture06-kalman-lqg.qmd), which discretizes an analogous mass-spring system, sets up <span class="math inline">\(W\)</span> and <span class="math inline">\(V\)</span>, and iterates the Kalman filter equations by hand for <span class="math inline">\(k=0,1,2\)</span>; follow the same steps here with <span class="math inline">\(m=1\)</span>, <span class="math inline">\(k_s=5\)</span>, <span class="math inline">\(c_f=1\)</span> in place of the lecture’s parameters.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 6.4</strong> Consider the discrete-time linear system</p>
+<p><span class="math display">\[x_{k+1} = Ax_k+Bu_k+\omega_k, \ \ k\in\mathbb{N}_0 \qquad A=\begin{bmatrix}1&amp;\frac15\\0&amp;1\end{bmatrix} \quad B=\begin{bmatrix}0\\1\end{bmatrix} \quad x_0=\begin{bmatrix}1\\1\end{bmatrix}\]</span></p>
+<ol type="a">
+<li>Suppose <span class="math inline">\(\omega_k=0\)</span> for every <span class="math inline">\(k\)</span>. Compute the optimal <span class="math inline">\(u_0,u_1,u_2\)</span> minimizing <span class="math inline">\(J=\sum_{k=0}^{h-1}x_k^\intercal Qx_k+u_k^\intercal Ru_k\)</span> for <span class="math inline">\(h=3\)</span>, <span class="math inline">\(Q=I\)</span>, <span class="math inline">\(R=0.1\)</span>.</li>
+<li>Suppose <span class="math inline">\(\omega_k\)</span> are zero-mean iid Gaussian with <span class="math inline">\(\mathbb{E}[\omega_k\omega_k^\intercal]=\frac12I\)</span> and the full state is available. Compute the optimal policy <span class="math inline">\(u_k=\mu_k(x_k)\)</span>, <span class="math inline">\(k\in\{0,1,2\}\)</span>, minimizing <span class="math inline">\(\mathbb{E}[J]\)</span>.</li>
+<li>Suppose <span class="math inline">\(\omega_k\)</span> are as in (b) but only <span class="math inline">\(y_k=Cx_k+n_k\)</span> is available, <span class="math inline">\(C=[1\ \ 0]\)</span>, <span class="math inline">\(n_k\)</span> zero-mean iid Gaussian with <span class="math inline">\(\mathbb{E}[n_k^2]=\frac14\)</span>. &nbsp;&nbsp;&nbsp;(i) Compute the optimal policy <span class="math inline">\(u_k=\mu_k(I_k)\)</span>, <span class="math inline">\(k\in\{0,1,2\}\)</span>, minimizing <span class="math inline">\(\mathbb{E}[J]\)</span>. &nbsp;&nbsp;&nbsp;(ii) Compute the optimal policy minimizing the average cost <span class="math inline">\(\lim_{h\to\infty}\frac1h\mathbb{E}[J]\)</span>.</li>
+<li>Suppose now the actuators can only be updated at even times <span class="math inline">\(k=2\ell\)</span> (multi-rate control), <span class="math inline">\(u_k=0\)</span> at odd <span class="math inline">\(k\)</span>. &nbsp;&nbsp;&nbsp;(i) Compute the optimal policy <span class="math inline">\(u_k=\mu_k(I_k)\)</span>, <span class="math inline">\(k\in\{0,2\}\)</span>, minimizing the cost of (c)(i). &nbsp;&nbsp;&nbsp;(ii) Compute the optimal policy for <span class="math inline">\(k=2\ell\)</span> minimizing the average cost of (c)(ii).</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(a)</strong> This is a standard (deterministic) finite-horizon LQR problem; solving the Riccati recursion with <span class="math inline">\(P_3=0\)</span> gives <span class="math inline">\(P_2=I\)</span>, <span class="math inline">\(P_1=\begin{bmatrix}2&amp;0.2\\0.2&amp;1.1309\end{bmatrix}\)</span>, <span class="math inline">\(K_2=0\)</span>, <span class="math inline">\(K_1=[0\ \ {-\frac1{1.1}}]\)</span>, <span class="math inline">\(K_0=[-0.1625\ \ {-0.9513}]\)</span>. Propagating <span class="math inline">\(x_0=[1\ \ 1]^\intercal\)</span> through the dynamics with <span class="math inline">\(u_k=K_kx_k\)</span> gives <span class="math inline">\(u_0=-1.1137\)</span>, <span class="math inline">\(x_1=[1.2\ \ {-0.1137}]^\intercal\)</span>, <span class="math inline">\(u_1=0.1034\)</span>, <span class="math inline">\(u_2=0\)</span>.</p>
+<p><strong>(b)</strong> By certainty equivalence, the optimal policy is identical to (a): the disturbances change the <em>cost</em> but not the optimal gains <span class="math inline">\(K_0,K_1,K_2\)</span> (since <span class="math inline">\(x_0\)</span> is deterministic, <span class="math inline">\(u_0\)</span> is known a priori, but <span class="math inline">\(u_1\)</span> depends on the realization of <span class="math inline">\(w_0\)</span> through <span class="math inline">\(x_1\)</span>).</p>
+<p><strong>(c)(i)</strong> By the separation principle, <span class="math inline">\(u_k=K_k\hat x_{k|k}\)</span> with the same gains as (a)-(b), and <span class="math inline">\(\hat x_{k|k}\)</span> the Kalman filter estimate (<span class="math inline">\(\hat x_{0|-1}=\bar x_0=[1\ \ 1]^\intercal\)</span>, <span class="math inline">\(\Phi_{0|-1}=0\)</span> since <span class="math inline">\(x_0\)</span> is known exactly, <span class="math inline">\(W=\frac12I\)</span>, <span class="math inline">\(V=\frac14\)</span>). Iterating gives <span class="math inline">\(\Phi_{0|0}=0\)</span>, <span class="math inline">\(L_0=0\)</span> (so <span class="math inline">\(\hat x_{0|0}=x_0\)</span> regardless of <span class="math inline">\(y_0\)</span>), <span class="math inline">\(\Phi_{1|0}=\frac12I\)</span>, <span class="math inline">\(L_1=\frac23[1\ \ 0]^\intercal\)</span>. Since <span class="math inline">\(K_2=0\)</span> and <span class="math inline">\(K_1L_1=0\)</span> (the second component of <span class="math inline">\(K_1\)</span> multiplies a zero entry of <span class="math inline">\(L_1\)</span>), it turns out <span class="math inline">\(u_0,u_1,u_2\)</span> all end up <em>deterministic</em> – numerically identical to the noise-free path in (a): <span class="math inline">\(u_0=-1.1137\)</span>, <span class="math inline">\(u_1=0.1034\)</span>, <span class="math inline">\(u_2=0\)</span>. This is a special feature of this particular <span class="math inline">\(A,B,C\)</span>, not a general fact about output feedback.</p>
+<p><strong>(c)(ii)</strong> By the separation principle for the average-cost problem, <span class="math inline">\(u_k=K\hat x_{k|k}\)</span> with <span class="math inline">\(K\)</span> the infinite-horizon LQR gain and <span class="math inline">\(\hat x_{k|k}\)</span> from the <em>stationary</em> Kalman filter. Solving the two algebraic Riccati equations (control and estimation) numerically gives <span class="math inline">\(P=\begin{bmatrix}6.6069&amp;1.2044\\1.2044&amp;1.3506\end{bmatrix}\)</span>, <span class="math inline">\(\Phi=\begin{bmatrix}0.8781&amp;0.7510\\0.7510&amp;3.4230\end{bmatrix}\)</span>, <span class="math inline">\(L=\begin{bmatrix}0.7784\\0.6658\end{bmatrix}\)</span>, <span class="math inline">\(K=[-0.8303\ \ {-1.0971}]\)</span>.</p>
+<p><strong>(d)(i)-(ii)</strong> Grouping two time-steps into one (<span class="math inline">\(\bar x_\ell:=x_{2\ell}\)</span>, <span class="math inline">\(\bar u_\ell:=u_{2\ell}\)</span>) turns the multi-rate problem into a standard single-rate problem with <span class="math inline">\(\bar A=A^2\)</span>, <span class="math inline">\(\bar B=AB\)</span>, <span class="math inline">\(\bar Q=Q+A^\intercal QA\)</span>, <span class="math inline">\(\bar R=R+B^\intercal QB\)</span>, <span class="math inline">\(\bar S=A^\intercal QB\)</span>, and lumped disturbance <span class="math inline">\(\bar w_\ell=Aw_{2\ell}+w_{2\ell+1}\)</span> (still Gaussian iid, since sums of Gaussians are Gaussian). For (d)(i) (finite horizon, <span class="math inline">\(h=3\)</span>) this gives the single-decision gain <span class="math inline">\(\underline K_0=[-0.0935\ \ {-0.9720}]\)</span> and, since <span class="math inline">\(\hat x_{0|0}=x_0\)</span> exactly, <span class="math inline">\(u_0=-1.0654\)</span> independent of <span class="math inline">\(y_0\)</span>. For (d)(ii) (average cost) the same reasoning with the algebraic Riccati/Kalman equations for <span class="math inline">\((\bar A,\bar B,\bar Q,\bar R,\bar S)\)</span> gives <span class="math inline">\(\bar P=\begin{bmatrix}6.6274&amp;1.2045\\1.2045&amp;1.3536\end{bmatrix}\)</span>, the same <span class="math inline">\(\Phi\)</span>, <span class="math inline">\(L\)</span> as (c)(ii), and gain <span class="math inline">\(\bar K=[-0.7905\ \ {-1.1269}]\)</span>.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 6.5</strong> Consider the problem of estimating the value of a constant <span class="math inline">\(x_0\)</span> from noisy measurements</p>
+<p><span class="math display">\[y_k = x_0+n_k, \ \ k\in\mathbb{N}_0,\]</span></p>
+<p>where <span class="math inline">\(n_k\)</span> are zero-mean iid Gaussian with variance <span class="math inline">\(\mathbb{E}[n_k^2]=\sigma_n^2\)</span>. The initial state <span class="math inline">\(x_0\)</span> is also Gaussian with mean <span class="math inline">\(\bar x_0\)</span> and variance <span class="math inline">\(\phi_0=\mathbb{E}[(x_0-\bar x_0)^2]\)</span>.</p>
+<ol type="i">
+<li>Compute the Kalman filter estimate <span class="math inline">\(\hat x_k\)</span> of <span class="math inline">\(x_0\)</span> (the one minimizing the error variance <span class="math inline">\(\mathbb{E}[(x_k-\hat x_k)^2]\)</span>) at times <span class="math inline">\(k\in\{0,1,2\}\)</span>, based on <span class="math inline">\(I_0=\{y_0\}\)</span>, <span class="math inline">\(I_1=\{y_0,y_1\}\)</span>, <span class="math inline">\(I_2=\{y_0,y_1,y_2\}\)</span>, and the associated error variances. [Suggestion: note <span class="math inline">\(y_k=x_k+n_k\)</span> for <span class="math inline">\(x_{k+1}=x_k\)</span>.]</li>
+<li>Compute the asymptotic error variance <span class="math inline">\(\lim_{k\to\infty}\mathbb{E}[(x_k-\hat x_k)^2|I_k]\)</span> and explain the value obtained.</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(i)</strong> Since <span class="math inline">\(x_{k+1}=x_k\)</span>, <span class="math inline">\(y_k=x_k+n_k\)</span>, the disturbance covariance is <span class="math inline">\(W=0\)</span>. The standard Kalman filter equations reduce to <span class="math inline">\(\hat x_{k+1|k}=\hat x_{k|k}\)</span>, <span class="math inline">\(\hat x_{k|k}=\hat x_{k|k-1}+L_k(y_k-\hat x_{k|k-1})\)</span>, where <span class="math inline">\(L_k=\frac{\phi_{k|k-1}}{\phi_{k|k-1}+\sigma_n^2}\)</span> and <span class="math inline">\(\phi_{k+1|k}=\phi_{k|k}=\frac{\sigma_n^2\phi_{k|k-1}}{\phi_{k|k-1}+\sigma_n^2}\)</span>. Writing <span class="math inline">\(\hat x_k:=\hat x_{k|k}\)</span>, <span class="math inline">\(\phi_k:=\phi_{k|k-1}\)</span> (note <span class="math inline">\(\phi_k=\phi_{k|k-1}=\phi_{k|k}=\mathbb{E}[(x_k-\hat x_k)^2|I_k]\)</span>):</p>
+<p><span class="math display">\[\hat x_0 = \bar x_0+\frac{\phi_0}{\phi_0+\sigma_n^2}(y_0-\bar x_0) = \bar x_0\frac{\sigma_n^2}{\phi_0+\sigma_n^2}+y_0\frac{1}{\phi_0+\sigma_n^2}\]</span></p>
+<p>a weighted average of the prior mean and the first measurement (weights set by the ratio of <span class="math inline">\(\phi_0\)</span> to <span class="math inline">\(\sigma_n^2\)</span>). Then <span class="math inline">\(\hat x_1=\hat x_0+\frac{\phi_1}{\phi_1+\sigma_n^2}(y_1-\hat x_0)\)</span> and <span class="math inline">\(\hat x_2=\hat x_1+\frac{\phi_2}{\phi_2+\sigma_n^2}(y_2-\hat x_1)\)</span>, where <span class="math inline">\(\phi_1=\frac{\sigma_n^2\phi_0}{\phi_0+\sigma_n^2}\)</span>, <span class="math inline">\(\phi_2=\frac{\sigma_n^2\phi_1}{\phi_1+\sigma_n^2}\)</span>; <span class="math inline">\(\hat x_1\)</span> is a linear combination of <span class="math inline">\(y_0,y_1\)</span> (and <span class="math inline">\(\hat x_2\)</span> of <span class="math inline">\(y_0,y_1,y_2\)</span>).</p>
+<p><strong>(ii)</strong> <span class="math inline">\(\lim_{k\to\infty}\mathbb{E}[(x_k-\hat x_k)^2|I_k]=\lim_{k\to\infty}\phi_k\)</span>. Since <span class="math inline">\(\phi_k&gt;0\)</span> and <span class="math inline">\(\phi_{k+1}&lt;\phi_k\)</span> for every <span class="math inline">\(k\)</span>, the limit is zero: as <span class="math inline">\(k\)</span> grows we accumulate more and more independent measurements of the <em>same</em> constant, so our estimate’s uncertainty is averaged away to nothing.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 6.6</strong> Suppose we wish to estimate the state, at a given time <span class="math inline">\(k=h\)</span>, of a linear system <span class="math inline">\(x_{k+1}=Ax_k+w_k\)</span>, <span class="math inline">\(k\in\{0,\dots,h-1\}\)</span>, with <span class="math inline">\(A\)</span> invertible so that <span class="math inline">\(x_k=A^{-1}x_{k+1}-A^{-1}\bar w_{k+1}\)</span>, <span class="math inline">\(\bar w_{k+1}:=w_k\)</span>. Output measurements <span class="math inline">\(y_k=Cx_k+v_k\)</span> are available for <span class="math inline">\(k\in\{0,\dots,h\}\)</span>, and an initial estimate <span class="math inline">\(\bar x_0\)</span> of <span class="math inline">\(x_0\)</span> is available (but not the true <span class="math inline">\(x_0\)</span>).</p>
+<p>One way to estimate <span class="math inline">\(x_h\)</span> (denoted <span class="math inline">\(\bar x_h\)</span>) is to (i) solve the optimal control problem</p>
+<p><span class="math display">\[J_h(x_h) = \min_{\bar w_1,\dots,\bar w_h} (x_0-\bar x_0)^\intercal\bar\Theta_0^{-1}(x_0-\bar x_0)+(y_0-Cx_0)^\intercal V^{-1}(y_0-Cx_0) + \sum_{k=1}^h \bar w_k^\intercal W^{-1}\bar w_k+(y_k-Cx_k)^\intercal V^{-1}(y_k-Cx_k)\]</span></p>
+<p>subject to <span class="math inline">\(x_k=A^{-1}x_{k+1}-A^{-1}\bar w_{k+1}\)</span>, for given positive definite <span class="math inline">\(W,V,\bar\Theta_0\)</span>; then (ii) set <span class="math inline">\(\bar x_h=\text{argmin } J_h(x_h)\)</span>. (Interpretation: estimate <span class="math inline">\(x_0,\dots,x_h\)</span> by the values best “explained” by small disturbances, output noise, and deviation from the initial guess, then keep the last estimate.)</p>
+<p>Show that <span class="math inline">\(\bar x_h\)</span> coincides with the Kalman filter estimate <span class="math inline">\(\hat x_{h|h}\)</span> obtained from the usual recursion (with <span class="math inline">\(\Theta_{0|-1}=\bar\Theta_0\)</span>). [Suggestion: run the DP algorithm <em>forward</em> in time (a “cost-to-come” instead of a cost-to-go), and use the matrix inversion lemma <span class="math inline">\((A+UCV)^{-1}=A^{-1}-A^{-1}U(C^{-1}+VA^{-1}U)^{-1}VA^{-1}\)</span> repeatedly.]</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>This is a duality result: the batch/DP estimation problem above is the “dual” of the standard LQR problem, running forward in time instead of backward. The proof shows, by induction on <span class="math inline">\(k\)</span>, that if <span class="math inline">\(J_k(x_k)=(x_k-\hat x_{k|k})^\intercal\Theta_{k|k}^{-1}(x_k-\hat x_{k|k})+c_k\)</span> for a constant <span class="math inline">\(c_k\)</span> (true at <span class="math inline">\(k=0\)</span> by construction, using the matrix inversion lemma to show <span class="math inline">\(\Theta_{0|0}^{-1}=\bar\Theta_0^{-1}+C^\intercal V^{-1}C\)</span>), then minimizing over <span class="math inline">\(\bar w_{k+1}\)</span> in the recursive definition of <span class="math inline">\(J_{k+1}\)</span> – itself a small quadratic minimization solved by completing the square – produces exactly the same form at <span class="math inline">\(k+1\)</span>, with <span class="math inline">\(\Theta_{k+1|k+1}\)</span> and <span class="math inline">\(\hat x_{k+1|k+1}\)</span> obeying the <em>standard</em> Kalman filter update (prediction <span class="math inline">\(\Theta_{k+1|k}=A\Theta_{k|k}A^\intercal+W\)</span> followed by correction with gain <span class="math inline">\(L_{k+1}=\Theta_{k+1|k}C^\intercal(C\Theta_{k+1|k}C^\intercal+V)^{-1}\)</span>). Carrying the induction to <span class="math inline">\(k=h\)</span> gives <span class="math inline">\(J_h(x_h)=(x_h-\hat x_{h|h})^\intercal\Theta_{h|h}^{-1}(x_h-\hat x_{h|h})+c_h\)</span>, whose minimizer is trivially <span class="math inline">\(\bar x_h=\text{argmin }J_h(x_h)=\hat x_{h|h}\)</span>, as desired. The full algebraic bookkeeping (several applications of the matrix inversion lemma to massage <span class="math inline">\(A^{-\intercal}\Theta_{k|k}^{-1}A^{-1}\)</span> terms into the standard <span class="math inline">\(\Theta_{k+1|k}^{-1}\)</span> form) is in SolutionsPS2.tex if you want to work through every line.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 6.7</strong> Consider the optimal control problem</p>
+<p><span class="math display">\[\min \frac{1}{T+1}\mathbb{E}\Big[\sum_{k=0}^T x_k^\intercal\begin{bmatrix}1&amp;0\\0&amp;3\end{bmatrix}x_k + u_k^\intercal\begin{bmatrix}2&amp;0\\0&amp;2\end{bmatrix}u_k\Big]\]</span></p>
+<p>for</p>
+<p><span class="math display">\[x_{k+1} = \begin{bmatrix}\frac32&amp;0\\0&amp;1\end{bmatrix}x_k+\begin{bmatrix}1&amp;0\\0&amp;1\end{bmatrix}u_k+w_k, \ \ k\in\mathbb{N}_{\geq 0}\]</span></p>
+<p>where <span class="math inline">\(x_k,u_k\in\mathbb{R}^2\)</span> and <span class="math inline">\(w_k\in\mathbb{R}^2\)</span> are iid random vectors.</p>
+<ol type="i">
+<li>Find an optimal policy for <span class="math inline">\(u_0\)</span> and <span class="math inline">\(u_1\)</span> when <span class="math inline">\(T=2\)</span>.</li>
+<li>Compute the expected optimal cost if <span class="math inline">\(x_0=[1\ \ 2]^\intercal\)</span> and <span class="math inline">\(\mathbb{E}[w_kw_k^\intercal]=3I\)</span> for every <span class="math inline">\(k\)</span>.</li>
+<li>Find the optimal control policy for <span class="math inline">\(u_k\)</span>, <span class="math inline">\(k\in\mathbb{N}_{\geq 0}\)</span>, when <span class="math inline">\(T\to\infty\)</span>.</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Not reproduced here – taken from the TU/e 2015/2016 sample exam 2, question 3, whose full worked solution is available in the exam archive rather than in SolutionsPS2.tex. This is a direct application of the finite-horizon stochastic LQ result of Lecture 6 (slide “Optimal policy” – gains <span class="math inline">\(K_k\)</span> from the same Riccati recursion as the deterministic case, with the expected cost picking up the extra <span class="math inline">\(\text{trace}(P_{k+1}\mathbb{E}[w_kw_k^\intercal])\)</span> terms) for (i)-(ii), and of the averaged-cost infinite-horizon extension (Lecture 6, “Discussion” – cost converging to <span class="math inline">\(\text{trace}(\bar PW)\)</span>) for (iii); note <span class="math inline">\(A=\text{diag}(3/2,1)\)</span> is not itself stable, so (iii) is a genuine test of whether <span class="math inline">\((A,B)\)</span> is controllable enough for the algebraic Riccati equation to still apply.</p>
+</div>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

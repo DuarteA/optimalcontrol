@@ -1,0 +1,2571 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>Unit 3 – Search Methods in Graphs</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="unit3-notes_files/libs/clipboard/clipboard.min.js"></script>
+<script src="unit3-notes_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="unit3-notes_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="unit3-notes_files/libs/quarto-html/popper.min.js"></script>
+<script src="unit3-notes_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="unit3-notes_files/libs/quarto-html/anchor.min.js"></script>
+<link href="unit3-notes_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="unit3-notes_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="unit3-notes_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="unit3-notes_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="unit3-notes_files/libs/bootstrap/bootstrap-5f5514ab72c605193d28bd5ace4a0252.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      argmin: ["\\operatorname*{argmin}_{#1}", 1],
+      argmax: ["\\operatorname*{argmax}_{#1}", 1],
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#shortest-paths-in-graphs" id="toc-shortest-paths-in-graphs" class="nav-link active" data-scroll-target="#shortest-paths-in-graphs"><span class="header-section-number">1</span> Shortest paths in graphs</a>
+  <ul class="collapse">
+  <li><a href="#dynamic-programming-for-shortest-paths-in-graphs" id="toc-dynamic-programming-for-shortest-paths-in-graphs" class="nav-link" data-scroll-target="#dynamic-programming-for-shortest-paths-in-graphs"><span class="header-section-number">1.1</span> Dynamic programming for shortest paths in graphs</a></li>
+  <li><a href="#worked-examples" id="toc-worked-examples" class="nav-link" data-scroll-target="#worked-examples"><span class="header-section-number">1.2</span> Worked examples</a></li>
+  <li><a href="#dijkstras-algorithm" id="toc-dijkstras-algorithm" class="nav-link" data-scroll-target="#dijkstras-algorithm"><span class="header-section-number">1.3</span> Dijkstra’s algorithm</a></li>
+  <li><a href="#a" id="toc-a" class="nav-link" data-scroll-target="#a"><span class="header-section-number">1.4</span> A*</a></li>
+  <li><a href="#discussion" id="toc-discussion" class="nav-link" data-scroll-target="#discussion"><span class="header-section-number">1.5</span> Discussion</a></li>
+  <li><a href="#historical-note" id="toc-historical-note" class="nav-link" data-scroll-target="#historical-note"><span class="header-section-number">1.6</span> Historical note</a></li>
+  </ul></li>
+  <li><a href="#online-replanning-policy" id="toc-online-replanning-policy" class="nav-link" data-scroll-target="#online-replanning-policy"><span class="header-section-number">2</span> Online replanning policy</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">3</span> Summary</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="unit3-notes.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Unit 3 – Search Methods in Graphs</h1>
+<p class="subtitle lead">4SC000 Optimal Control and Reinforcement Learning</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Textbook-prose companion to lectures/lecture03-graph-search.qmd, intended
+as a booklet chapter for readers who did not attend the lecture. Same
+content and figures as the slides, but written as connected prose rather
+than bullet points, so it can stand on its own. Figures are the same ones
+already cropped/verified for the slide deck, referenced from
+../lectures/figures/lecture3/ rather than duplicated. First pass: same
+scope as the original units 1 and 2 notes (straightforward prose
+conversion with figures and math); interactive examples/exercises, if
+wanted, would be added in a later pass. Appendices A, B and C are folded
+into collapsible callouts placed near the main-text section they extend,
+rather than kept as trailing appendix sections.
+-->
+<p><a href="../lectures/lecture03-graph-search.html">Slides</a> · <a href="../exercises/unit3-exercises.html">Exercises</a> · <a href="../code/unit3/notebooks.html">Jupyter notebooks</a></p>
+<section id="shortest-paths-in-graphs" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="shortest-paths-in-graphs"><span class="header-section-number">1</span> Shortest paths in graphs</h2>
+<p>Many systems of interest are naturally described by a <em>weighted graph</em>: a set of nodes <span class="math inline">\(\mathcal{V}:=\{1,\dots,n\}\)</span>, a set of edges <span class="math inline">\(\mathcal{E}:=\{(i_1,j_1),\dots,(i_r,j_r)\}\)</span> connecting pairs of nodes, and a weight <span class="math inline">\(w_{ij}\geq0\)</span> attached to each edge <span class="math inline">\((i,j)\in\mathcal{E}\)</span>, for instance <span class="math inline">\(w_{36}=7\)</span> or <span class="math inline">\(w_{23}=5\)</span> in <a href="#fig-graph-def" class="quarto-xref">Fig.&nbsp;1</a>. The graph is undirected whenever <span class="math inline">\(w_{ij}=w_{ji}\)</span> for every edge.</p>
+<div style="text-align: center;">
+<div id="fig-graph-def" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-graph-def-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg03.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:70.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-graph-def-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;1: A weighted graph: nodes, edges, and edge weights.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Graphs of this kind model an enormous range of systems – road networks, social networks, transportation and logistics networks, teams of communicating robots, communication and data networks, electrical circuits – and consequently graph algorithms are among the most widely used tools in engineering and computer science (<a href="#fig-applications" class="quarto-xref">Fig.&nbsp;2</a>).</p>
+<div style="text-align: center;">
+<div id="fig-applications" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-applications-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg04.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-applications-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;2: Graphs appear across many application domains: social networks, transit maps, multi-robot systems, flight/data networks, and electrical circuits.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>A basic and recurring question about such a graph is the <em>shortest path problem</em>: given an initial node and a destination node, find a path between them – a sequence of edges – whose total length, i.e., the sum of the weights of the edges it uses, is as small as possible (<a href="#fig-shortest-path-problem" class="quarto-xref">Fig.&nbsp;3</a>). Since Unit 1 and Unit 2 were entirely devoted to an algorithm, dynamic programming, for computing optimal decisions stage by stage, it is natural to ask: can dynamic programming also solve the shortest path problem?</p>
+<div style="text-align: center;">
+<div id="fig-shortest-path-problem" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-shortest-path-problem-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg05.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:60.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-shortest-path-problem-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;3: The shortest path problem: find a minimum-length path from an initial node to a destination node.
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled" title="Teaser: Solving shortest path problems with dynamic programming">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Teaser: Solving shortest path problems with dynamic programming
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The techniques we will use to solve the shortest path problem with dynamic programming involve converting a weighted graph to an acyclic graph, and then applying DP as we have in Unit 1 to the acyclic graph. Can you guess which acyclic graph would make sense, bearing in mind we want to work from the destination backwards?</p>
+</div>
+</div>
+</div>
+<section id="dynamic-programming-for-shortest-paths-in-graphs" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="dynamic-programming-for-shortest-paths-in-graphs"><span class="header-section-number">1.1</span> Dynamic programming for shortest paths in graphs</h3>
+<p>The connection to dynamic programming is direct once we notice what a transition diagram actually <em>is</em>. Recall from Unit 1 that computing an optimal path in a transition diagram – the diagram built from the per-stage cost matrices <span class="math inline">\(c^k_{ij}\)</span> and, at the last stage, from the terminal costs <span class="math inline">\(c^h_i\)</span> – amounts to finding a shortest path from the nodes at stage <span class="math inline">\(0\)</span> to an artificial terminal node at stage <span class="math inline">\(h+1\)</span> that collects the terminal costs, in the weighted graph obtained by chaining these per-stage cost matrices together. For graphs with this <em>layered</em> structure – one column of nodes per stage, edges only between consecutive columns – dynamic programming already computes shortest paths, since that is exactly what the backward recursion of Unit 1 does. What remains is to see how a <em>general</em> graph, which need not have this layered structure and may contain cycles, can still be handled with dynamic programming.</p>
+<p>The trick is to build a transition diagram <em>from</em> the graph. Given a weighted graph with <span class="math inline">\(n\)</span> nodes, construct a transition diagram with <span class="math inline">\(h=n-1\)</span> stages, <span class="math inline">\(n\)</span> states at every decision stage, and only the destination node present at the terminal stage; set <span class="math inline">\(c^k_{ij}=w_{ij}\)</span> for every stage <span class="math inline">\(k\)</span>, with <span class="math inline">\(w_{ij}=\infty\)</span> if there is no edge from <span class="math inline">\(i\)</span> to <span class="math inline">\(j\)</span> and <span class="math inline">\(w_{ii}=0\)</span>. <a href="#fig-dp-formulation-example" class="quarto-xref">Fig.&nbsp;4</a> illustrates this construction for a small four-node graph: the graph on the left is expanded into a layered diagram of <span class="math inline">\(n-1\)</span> columns on the right, each column a copy of the <span class="math inline">\(n\)</span> nodes, with the same edge weights (or <span class="math inline">\(\infty\)</span>, or <span class="math inline">\(0\)</span> for staying put) repeated at every stage.</p>
+<div style="text-align: center;">
+<div id="fig-dp-formulation-example" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dp-formulation-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg07.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dp-formulation-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;4: Building a transition diagram from a graph: a small example graph (left) expanded into the corresponding layered transition diagram (right).
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Applying the ordinary dynamic programming algorithm to this transition diagram then solves the shortest path problem. The cost-to-go of a state at stage <span class="math inline">\(k\)</span> is the cost of the shortest path using at most <span class="math inline">\(n-1-k\)</span> edges (hops); in particular, the costs-to-go at stage <span class="math inline">\(0\)</span> are the optimal path costs from every possible initial node, and the cost-to-go of a node from which the destination cannot be reached is infinite. Following the resulting policy from a given initial state traces out the shortest path from that node. <a href="#fig-dp-solution-example" class="quarto-xref">Fig.&nbsp;5</a> shows the same four-node example worked through: on the left, the layered diagram annotated with the costs-to-go computed at every stage together with the optimal path (bold arrows); on the right, the same costs-to-go plotted as a function of the stage, which highlights that the cost-to-go can only decrease (or stay the same) as the destination is approached. In practice, one does not need to construct the transition diagram explicitly, and the recursion can be stopped early once the costs-to-go stop changing from one stage to the next.</p>
+<div style="text-align: center;">
+<div id="fig-dp-solution-example" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dp-solution-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg08.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dp-solution-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;5: Dynamic programming solution for the four-node example: costs-to-go and optimal path (left), and the corresponding cost-to-go trajectory as a function of the stage (right).
+</figcaption>
+</figure>
+</div>
+</div>
+<p><a href="#fig-six-node-example" class="quarto-xref">Fig.&nbsp;6</a> works through a second, undirected example on six nodes, to help build intuition for how the costs-to-go propagate through a graph with several possible paths between each pair of nodes.</p>
+<div style="text-align: center;">
+<div id="fig-six-node-example" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-six-node-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg09.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:95.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-six-node-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;6: A second worked example: an undirected six-node graph, with costs-to-go computed by dynamic programming at every stage.
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="DP with terminal constraints">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>DP with terminal constraints
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The construction above finds the shortest path to <em>any</em> node present at the terminal stage. Sometimes, however, we want the shortest path from a given initial node to one <em>specific</em> terminal node, rather than to whichever terminal-stage node happens to be cheapest to reach. This is easy to accommodate: simply set the cost of every other terminal-stage node to infinity, and apply dynamic programming as usual. Because a path ending at any node with infinite terminal cost is never optimal, this forces every optimal path to end at the desired terminal state.</p>
+<p><a href="#fig-appendixB-initial" class="quarto-xref">Fig.&nbsp;7</a> shows a small three-stage diagram with a specified initial state (bold, left) and two candidate terminal states (right, costs <span class="math inline">\(1\)</span> and <span class="math inline">\(0\)</span>). Suppose we insist on ending at the terminal state with cost <span class="math inline">\(0\)</span>; <a href="#fig-appendixB-constrained" class="quarto-xref">Fig.&nbsp;8</a> shows the same diagram with the <em>other</em> terminal state’s cost changed to <span class="math inline">\(\infty\)</span>, which forces every path to end at the desired one. <a href="#fig-appendixB-result" class="quarto-xref">Fig.&nbsp;9</a> shows the outcome on a slightly larger, six-node instance: two initial states (cost <span class="math inline">\(3\)</span> each) on the left, a single admissible terminal state (cost <span class="math inline">\(0\)</span>) on the right, and the resulting shortest constrained path highlighted.</p>
+<div style="text-align: center;">
+<div id="fig-appendixB-initial" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-appendixB-initial-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg45a.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:55.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-appendixB-initial-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;7: A transition diagram with a specified initial state and two candidate terminal states.
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-appendixB-constrained" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-appendixB-constrained-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg45b.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:55.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-appendixB-constrained-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;8: Setting the cost of the undesired terminal-stage node to infinity forces the optimal paths to end at the desired terminal state.
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-appendixB-result" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-appendixB-result-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg46.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:45.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-appendixB-result-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;9: Result of applying DP with the terminal-state constraint on a six-node instance: only paths ending at the desired terminal state are considered.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Time-varying graphs">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Time-varying graphs
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The dynamic programming construction above assumed a fixed, unchanging graph, but it is also possible to plan directly for <em>known, predictable</em> changes to the graph over time. A natural instance of this is a robot navigating around <em>moving</em> obstacles: how should the shortest path from A to B be computed when the obstacles’ positions change from one time step to the next (<a href="#fig-appendixC-grid" class="quarto-xref">Fig.&nbsp;10</a>)?</p>
+<div style="text-align: center;">
+<div id="fig-appendixC-grid" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-appendixC-grid-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg48.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-appendixC-grid-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;10: A grid with obstacles that move over time, <span class="math inline">\(t=0,1,2,\dots,T\)</span>, together with a fixed initial position (yellow) and final position (green).
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The construction proceeds in two steps. First, consider a separate static graph for each time step, reflecting the obstacle positions at that particular time (<a href="#fig-appendixC-static-graphs" class="quarto-xref">Fig.&nbsp;11</a>).</p>
+<div style="text-align: center;">
+<div id="fig-appendixC-static-graphs" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-appendixC-static-graphs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg49.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-appendixC-static-graphs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;11: A separate static graph for each time step <span class="math inline">\(t=0,1,2,\dots,T\)</span>, reflecting the obstacle positions at that time.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Second, stack these per-time-step graphs into a single, time-<em>invariant</em> three-dimensional graph, allowing edges only from a node at time <span class="math inline">\(t\)</span> to a node at time <span class="math inline">\(t+1\)</span> (<a href="#fig-appendixC-3d-graph" class="quarto-xref">Fig.&nbsp;12</a>). The resulting graph is exactly the kind of layered structure discussed above, so the shortest path in it can again be computed with dynamic programming (or, as we will see shortly, with Dijkstra’s algorithm/A*): the initial node is the robot’s initial position at <span class="math inline">\(t=0\)</span>, and the final node is its desired position at <span class="math inline">\(t=T\)</span>.</p>
+<div style="text-align: center;">
+<div id="fig-appendixC-3d-graph" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-appendixC-3d-graph-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg50.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-appendixC-3d-graph-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;12: Stacking the per-time-step graphs into a single 3D time-invariant graph; the inset shows the local edge structure and weights around a sample node, including the <span class="math inline">\(\infty\)</span>-weight edges toward obstacle nodes.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="worked-examples" class="level3" data-number="1.2">
+<h3 data-number="1.2" class="anchored" data-anchor-id="worked-examples"><span class="header-section-number">1.2</span> Worked examples</h3>
+<p>A classic illustration is the Romania road network in <a href="#fig-romania-map" class="quarto-xref">Fig.&nbsp;13</a>: given the distances between neighboring cities, what is the shortest distance from Bucharest to Lugoj? Applying dynamic programming as described above – computing, for every city, the costs-to-go at every stage – yields the answer <strong>504 km</strong>, via the route Bucharest, Pitesti, Craiova, Dobreta, Mehadia, Lugoj (<a href="#fig-romania-dp-costtogo" class="quarto-xref">Fig.&nbsp;14</a>).</p>
+<div style="text-align: center;">
+<div id="fig-romania-map" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-romania-map-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg10.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-romania-map-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;13: The Romania road network: distances between neighboring cities.
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-romania-dp-costtogo" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-romania-dp-costtogo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg11.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-romania-dp-costtogo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;14: DP costs-to-go for every city (rows) at every stage (columns) of the Romania road-network example; the shortest Bucharest-Lugoj distance is 504 km.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>A second classic instance is robot path planning on a grid: given a grid representation of the world with obstacles, what is the shortest path for a robot moving from a point A to a point B (<a href="#fig-robot-grid-ab" class="quarto-xref">Fig.&nbsp;15</a>)? Here the nodes of the graph are grid cells, and a natural choice of weights is: <span class="math inline">\(1\)</span> distance unit to move horizontally or vertically between adjacent cells, and <span class="math inline">\(\sqrt2\)</span> units to move diagonally; the distance to (or through) an obstacle cell is infinite, and so is the distance between two diagonally adjacent cells that are both adjacent to the same obstacle cell, since the robot cannot cut across the obstacle’s corner (<a href="#fig-robot-grid-assumptions" class="quarto-xref">Fig.&nbsp;16</a>).</p>
+<div style="text-align: center;">
+<div id="fig-robot-grid-ab" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-robot-grid-ab-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg12.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-robot-grid-ab-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;15: Robot path planning on a grid: find the shortest path from A to B around the obstacles (black).
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-robot-grid-assumptions" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-robot-grid-assumptions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg13.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-robot-grid-assumptions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;16: Weights for the grid graph (right): <span class="math inline">\(1\)</span> for horizontal/vertical moves, <span class="math inline">\(\sqrt2\)</span> for diagonal moves, and <span class="math inline">\(\infty\)</span> for moves into or across an obstacle cell (left, a <span class="math inline">\(3\times3\)</span> neighborhood with one obstacle cell shaded).
+</figcaption>
+</figure>
+</div>
+</div>
+<p><a href="#fig-robot-grid-example" class="quarto-xref">Fig.&nbsp;17</a> shows the dynamic programming solution for a particular A-to-B instance – an optimal path (highlighted) threading between the obstacles – while <a href="#fig-robot-grid-costtogo" class="quarto-xref">Fig.&nbsp;18</a> shows a smaller instance with the costs-to-go and the resulting optimal decisions (arrows) displayed at every cell. It is worth noting, as a side remark, that the cost-to-go can be viewed as a Lyapunov function for the resulting closed-loop system, in the sense that it decreases along optimal trajectories; the optimal policy at each cell can then be understood as following the direction of steepest decrease of this function, adjusted for the stage cost of getting there.</p>
+<div style="text-align: center;">
+<div id="fig-robot-grid-example" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-robot-grid-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg14.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:85.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-robot-grid-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;17: A robot path planning instance solved with dynamic programming: the shortest A-to-B path around the obstacles.
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-robot-grid-costtogo" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-robot-grid-costtogo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg15.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-robot-grid-costtogo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;18: A smaller instance showing the costs-to-go (left) and the resulting optimal-decision arrows at every cell (right); the circled cell marks the destination.
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: converting a four-node graph to a DP problem">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: converting a four-node graph to a DP problem
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Consider a graph with the same four nodes as in <a href="#fig-dp-formulation-example" class="quarto-xref">Fig.&nbsp;4</a>, <span class="math inline">\(1\)</span> (initial) and <span class="math inline">\(4\)</span> (destination), but with different links: edges <span class="math inline">\(\mathcal{E}=\{(1,2),(1,3),(2,3),(2,4),(3,4)\}\)</span> (undirected, so <span class="math inline">\(w_{ij}=w_{ji}\)</span>), with weights <span class="math display">\[
+w_{12}=2,\quad w_{13}=5,\quad w_{23}=1,\quad w_{24}=6,\quad w_{34}=2,
+\]</span> and no edge between <span class="math inline">\(1\)</span> and <span class="math inline">\(4\)</span> directly (<span class="math inline">\(w_{14}=\infty\)</span>).</p>
+<ol type="a">
+<li><p>Following the construction in the previous section, convert this shortest-path problem into a dynamic programming problem: state the number of stages <span class="math inline">\(h\)</span>, the states present at each stage, and the stage costs <span class="math inline">\(c^k_{ij}\)</span>.</p></li>
+<li><p>Solve the resulting DP problem by computing the costs-to-go <span class="math inline">\(J_k(i)\)</span> at every stage, and use them to find the shortest path from node <span class="math inline">\(1\)</span> to node <span class="math inline">\(4\)</span> and its cost.</p></li>
+</ol>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(a) DP formulation.</strong> With <span class="math inline">\(n=4\)</span> nodes, take <span class="math inline">\(h=n-1=3\)</span> stages: states <span class="math inline">\(\{1,2,3,4\}\)</span> at stages <span class="math inline">\(0\)</span>, <span class="math inline">\(1\)</span>, and <span class="math inline">\(2\)</span>, and only the destination, state <span class="math inline">\(4\)</span>, at the terminal stage <span class="math inline">\(3\)</span>. The stage costs are the same at every stage, <span class="math inline">\(c^k_{ij}=w_{ij}\)</span> for <span class="math inline">\(k=0,1,2\)</span>, with <span class="math inline">\(w_{ii}=0\)</span> and <span class="math inline">\(w_{14}=w_{41}=\infty\)</span> (no edge): <span class="math display">\[
+w = \begin{pmatrix} 0 &amp; 2 &amp; 5 &amp; \infty \\ 2 &amp; 0 &amp; 1 &amp; 6 \\ 5 &amp; 1 &amp; 0 &amp; 2 \\ \infty &amp; 6 &amp; 2 &amp; 0 \end{pmatrix},
+\qquad \text{rows/columns ordered } 1,2,3,4.
+\]</span></p>
+<p><strong>(b) Costs-to-go.</strong> Starting from <span class="math inline">\(J_3(4)=0\)</span> (the only state at the terminal stage) and applying the backward recursion <span class="math inline">\(J_k(i)=\min_j\big[c^k_{ij}+J_{k+1}(j)\big]\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Stage <span class="math inline">\(k\)</span></th>
+<th><span class="math inline">\(J_k(1)\)</span></th>
+<th><span class="math inline">\(J_k(2)\)</span></th>
+<th><span class="math inline">\(J_k(3)\)</span></th>
+<th><span class="math inline">\(J_k(4)\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(3\)</span> (terminal)</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td><span class="math inline">\(0\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(2\)</span></td>
+<td><span class="math inline">\(\infty\)</span></td>
+<td><span class="math inline">\(6\)</span></td>
+<td><span class="math inline">\(2\)</span></td>
+<td><span class="math inline">\(0\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(1\)</span></td>
+<td><span class="math inline">\(7\)</span></td>
+<td><span class="math inline">\(3\)</span></td>
+<td><span class="math inline">\(2\)</span></td>
+<td><span class="math inline">\(0\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(0\)</span></td>
+<td><span class="math inline">\(5\)</span></td>
+<td><span class="math inline">\(3\)</span></td>
+<td><span class="math inline">\(2\)</span></td>
+<td><span class="math inline">\(0\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>At stage <span class="math inline">\(2\)</span>, only a direct move to the terminal node <span class="math inline">\(4\)</span> is available, so <span class="math inline">\(J_2(i)=w_{i4}\)</span>. At stage <span class="math inline">\(1\)</span>, e.g.&nbsp;<span class="math inline">\(J_1(3)=\min(w_{31}+J_2(1),\,w_{32}+J_2(2),\,w_{33}+J_2(3),\,w_{34}+J_2(4))=\min(\infty,\,7,\,2,\,2)=2\)</span>, achieved (with a tie) either by moving straight to <span class="math inline">\(4\)</span> or by staying at <span class="math inline">\(3\)</span> for one stage and moving to <span class="math inline">\(4\)</span> next – both cost <span class="math inline">\(2\)</span>, since the extra stage is “absorbed” by a zero-cost self-loop; this kind of tie is harmless and simply reflects that the true shortest path already takes fewer than <span class="math inline">\(h\)</span> hops. Reading off <span class="math inline">\(J_0(1)=5\)</span>, achieved via <span class="math inline">\(j=2\)</span>, and then continuing to follow the minimizing <span class="math inline">\(j\)</span> at each subsequent stage (<span class="math inline">\(2\to3\to4\)</span>), the shortest path from <span class="math inline">\(1\)</span> to <span class="math inline">\(4\)</span> is <span class="math display">\[
+1 \to 2 \to 3 \to 4, \qquad \text{cost } 2+1+2 = 5,
+\]</span> matching <span class="math inline">\(J_0(1)=5\)</span>. (Note this is shorter than either two-hop route, <span class="math inline">\(1\to2\to4\)</span> at cost <span class="math inline">\(8\)</span> or <span class="math inline">\(1\to3\to4\)</span> at cost <span class="math inline">\(7\)</span>.)</p>
+</div>
+</div>
+</div>
+</section>
+<section id="dijkstras-algorithm" class="level3" data-number="1.3">
+<h3 data-number="1.3" class="anchored" data-anchor-id="dijkstras-algorithm"><span class="header-section-number">1.3</span> Dijkstra’s algorithm</h3>
+<p>Dynamic programming solves the shortest path problem, but it can be quite inefficient at it: it explores the <em>entire</em> graph, even when a much smaller portion of it is relevant to the specific path we are after. The example in <a href="#fig-dp-inefficiency" class="quarto-xref">Fig.&nbsp;19</a> makes this concrete: a direct route <span class="math inline">\(1\to2\to3\)</span> already achieves a total cost of <span class="math inline">\(2\)</span>, yet unmodified dynamic programming still explores every node from <span class="math inline">\(4\)</span> to <span class="math inline">\(n\)</span>, since each of those nodes is connected to <span class="math inline">\(1\)</span>, <span class="math inline">\(2\)</span>, and <span class="math inline">\(3\)</span> with cost greater than <span class="math inline">\(2\)</span> and dynamic programming has no way, a priori, of knowing that exploring them is unnecessary. This motivates two alternative algorithms for the shortest path problem, Dijkstra’s algorithm and A*, which we discuss next.</p>
+<div style="text-align: center;">
+<div id="fig-dp-inefficiency" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dp-inefficiency-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg17.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:70.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dp-inefficiency-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;19: Dynamic programming explores the whole graph even when it is unnecessary: nodes <span class="math inline">\(4,\dots,n\)</span> are all explored even though the direct path <span class="math inline">\(1\to2\to3\)</span>, of cost <span class="math inline">\(2\)</span>, is already known to be no worse.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Dijkstra’s algorithm iteratively generates shorter and shorter paths from the origin to every node it has reached so far. It maintains a list of nodes still to be explored, often called the <em>wavefront</em> or the OPEN list; at each step, new nodes are added to this list based on cost – specifically, the neighbors of whichever node in the list currently has the smallest distance estimate to the origin.</p>
+<p>Try it yourself below, on a grid graph like the one used earlier for robot path planning (<a href="#fig-robot-grid-assumptions" class="quarto-xref">Fig.&nbsp;16</a>): horizontal/vertical moves cost <span class="math inline">\(1\)</span>, diagonal moves cost <span class="math inline">\(\sqrt2\)</span>, and a diagonal move is disallowed whenever it would cut across the corner of an obstacle. Click on any cell to add or remove an obstacle (the red and green cells, the origin and destination, are fixed), then press <strong>Run</strong>. As the algorithm proceeds, every node removed from OPEN – i.e., <em>settled</em>, its shortest distance finalized – turns red, and every node newly added to OPEN – the <em>fringe</em>, discovered but not yet finalized – turns blue; once the destination is settled, the optimal path found is traced in gold.</p>
+<div id="dijk-wrap" style="margin: 1em 0; text-align:center;">
+  <div id="dijk-canvas-wrap" style="margin-bottom:0.5em;"></div>
+  <div id="dijk-status" style="font-size:0.95em; margin-bottom:0.6em; min-height:1.4em;">Click cells to edit obstacles, then press Run.</div>
+  <div style="margin-bottom:0.6em;">
+    <button id="dijk-run" style="padding:4px 14px; font-size:0.9em;">Run</button>
+    <button id="dijk-reset" style="padding:4px 14px; font-size:0.9em; margin-left:0.5em;">Reset grid</button>
+  </div>
+  <div style="font-size:0.8em; color:#555; line-height:1.6;">
+    <span style="display:inline-block; width:12px; height:12px; background:#e74c3c; border-radius:2px; vertical-align:middle;"></span> origin / settled (removed from OPEN)
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:12px; height:12px; background:#3498db; border-radius:2px; vertical-align:middle;"></span> fringe (in OPEN)
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:12px; height:12px; background:#2ecc71; border-radius:2px; vertical-align:middle;"></span> destination
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:12px; height:12px; background:#2c3e50; border-radius:2px; vertical-align:middle;"></span> obstacle
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:16px; height:3px; background:#f1c40f; vertical-align:middle;"></span> optimal path
+  </div>
+</div>
+<script>
+(function () {
+  const COLS = 20, ROWS = 13, CELL = 24;
+  const START = { r: 6, c: 1 };
+  const GOAL = { r: 6, c: 18 };
+
+  function key(r, c) { return r + ',' + c; }
+
+  function defaultObstacles() {
+    const s = new Set();
+    for (let r = 0; r <= 8; r++) s.add(key(r, 9));    // vertical stem of the L
+    for (let c = 9; c <= 13; c++) s.add(key(8, c));   // horizontal foot of the L
+    return s;
+  }
+
+  let obstacles = defaultObstacles();
+  let state, running;
+
+  function resetState() {
+    state = { settled: new Set(), frontier: new Set(), path: null };
+    running = false;
+  }
+  resetState();
+
+  function neighbors(r, c, obstacleSet) {
+    const out = [];
+    const deltas = [
+      [-1, 0, 1], [1, 0, 1], [0, -1, 1], [0, 1, 1],
+      [-1, -1, Math.SQRT2], [-1, 1, Math.SQRT2], [1, -1, Math.SQRT2], [1, 1, Math.SQRT2]
+    ];
+    for (const [dr, dc, w] of deltas) {
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+      if (obstacleSet.has(key(nr, nc))) continue;
+      if (dr !== 0 && dc !== 0) {
+        // disallow cutting across the corner of an obstacle
+        if (obstacleSet.has(key(r + dr, c)) && obstacleSet.has(key(r, c + dc))) continue;
+      }
+      out.push([nr, nc, w]);
+    }
+    return out;
+  }
+
+  // Runs Dijkstra's algorithm to completion, logging every OPEN removal
+  // ("settle") and every OPEN insertion/update ("frontier") in order, so
+  // the animation below can replay them one at a time.
+  function runDijkstra(start, goal, obstacleSet) {
+    const N = ROWS * COLS;
+    const idx = (r, c) => r * COLS + c;
+    const dist = new Float64Array(N).fill(Infinity);
+    const prev = new Int32Array(N).fill(-1);
+    const settled = new Uint8Array(N);
+    dist[idx(start.r, start.c)] = 0;
+    const events = [];
+    while (true) {
+      let u = -1, best = Infinity;
+      for (let i = 0; i < N; i++) if (!settled[i] && dist[i] < best) { best = dist[i]; u = i; }
+      if (u === -1) break;
+      settled[u] = 1;
+      const ur = Math.floor(u / COLS), uc = u % COLS;
+      events.push({ type: 'settle', r: ur, c: uc });
+      if (u === idx(goal.r, goal.c)) break;
+      for (const [nr, nc, w] of neighbors(ur, uc, obstacleSet)) {
+        const v = idx(nr, nc);
+        if (settled[v]) continue;
+        const nd = dist[u] + w;
+        if (nd < dist[v] - 1e-9) {
+          dist[v] = nd; prev[v] = u;
+          events.push({ type: 'frontier', r: nr, c: nc });
+        }
+      }
+    }
+    const gi = idx(goal.r, goal.c);
+    let path = null;
+    if (settled[gi] && dist[gi] < Infinity) {
+      path = [];
+      let cur = gi;
+      while (cur !== -1) { path.push([Math.floor(cur / COLS), cur % COLS]); cur = prev[cur]; }
+      path.reverse();
+    }
+    return { events: events, path: path, cost: (settled[gi] && dist[gi] < Infinity) ? dist[gi] : Infinity };
+  }
+
+  const canvasWrap = document.getElementById('dijk-canvas-wrap');
+  const statusEl = document.getElementById('dijk-status');
+  const runBtn = document.getElementById('dijk-run');
+  const resetBtn = document.getElementById('dijk-reset');
+
+  const canvas = document.createElement('canvas');
+  canvas.width = COLS * CELL + 1;
+  canvas.height = ROWS * CELL + 1;
+  canvas.style.border = '1px solid #999';
+  canvas.style.cursor = 'pointer';
+  canvasWrap.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const k = key(r, c);
+        let fill = '#ffffff';
+        if (obstacles.has(k)) fill = '#2c3e50';
+        else if (state.settled.has(k)) fill = '#e74c3c';
+        else if (state.frontier.has(k)) fill = '#3498db';
+        if (r === START.r && c === START.c) fill = '#e74c3c';
+        if (r === GOAL.r && c === GOAL.c) fill = state.settled.has(k) ? '#e74c3c' : (state.frontier.has(k) ? '#3498db' : '#2ecc71');
+        ctx.fillStyle = fill;
+        ctx.fillRect(c * CELL + 1, r * CELL + 1, CELL - 1, CELL - 1);
+      }
+    }
+    // grid lines
+    ctx.strokeStyle = '#ccc';
+    ctx.lineWidth = 1;
+    for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r * CELL + 0.5); ctx.lineTo(COLS * CELL, r * CELL + 0.5); ctx.stroke(); }
+    for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c * CELL + 0.5, 0); ctx.lineTo(c * CELL + 0.5, ROWS * CELL); ctx.stroke(); }
+    // start/goal rings + labels, so they stay identifiable regardless of fill color
+    function ring(r, c, color, label) {
+      const cx = c * CELL + CELL / 2, cy = r * CELL + CELL / 2;
+      ctx.strokeStyle = color; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(cx, cy, CELL / 2 - 3, 0, 2 * Math.PI); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(label, cx, cy);
+    }
+    ring(START.r, START.c, '#c0392b', 'S');
+    ring(GOAL.r, GOAL.c, '#1e8449', 'G');
+    // optimal path, on top of everything
+    if (state.path) {
+      ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath();
+      state.path.forEach(([r, c], i) => {
+        const x = c * CELL + CELL / 2, y = r * CELL + CELL / 2;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+  }
+
+  canvas.addEventListener('click', function (ev) {
+    if (running) return;
+    const rect = canvas.getBoundingClientRect();
+    const c = Math.floor((ev.clientX - rect.left) / CELL);
+    const r = Math.floor((ev.clientY - rect.top) / CELL);
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+    if ((r === START.r && c === START.c) || (r === GOAL.r && c === GOAL.c)) return;
+    const k = key(r, c);
+    if (obstacles.has(k)) obstacles.delete(k); else obstacles.add(k);
+    resetState();
+    statusEl.textContent = 'Click cells to edit obstacles, then press Run.';
+    draw();
+  });
+
+  function setControlsEnabled(enabled) {
+    runBtn.disabled = !enabled;
+    resetBtn.disabled = !enabled;
+  }
+
+  runBtn.addEventListener('click', function () {
+    if (running) return;
+    resetState();
+    running = true;
+    setControlsEnabled(false);
+    statusEl.textContent = "Running Dijkstra's algorithm...";
+    const result = runDijkstra(START, GOAL, obstacles);
+    let i = 0;
+    const timer = setInterval(function () {
+      if (i >= result.events.length) {
+        clearInterval(timer);
+        if (result.path) {
+          state.path = result.path;
+          statusEl.textContent = 'Optimal path found -- cost ≈ ' + result.cost.toFixed(2) + ' (' + (result.path.length - 1) + ' steps).';
+        } else {
+          statusEl.textContent = 'No path exists between the red and green nodes with the current obstacles.';
+        }
+        draw();
+        running = false;
+        setControlsEnabled(true);
+        return;
+      }
+      const ev = result.events[i++];
+      const k = key(ev.r, ev.c);
+      if (ev.type === 'settle') { state.settled.add(k); state.frontier.delete(k); }
+      else { if (!state.settled.has(k)) state.frontier.add(k); }
+      draw();
+    }, 18);
+  });
+
+  resetBtn.addEventListener('click', function () {
+    if (running) return;
+    obstacles = defaultObstacles();
+    resetState();
+    statusEl.textContent = 'Click cells to edit obstacles, then press Run.';
+    draw();
+  });
+
+  draw();
+})();
+</script>
+<p>More precisely, let <span class="math inline">\(p\)</span> be the initial node and <span class="math inline">\(t\)</span> the destination. Initialize <span class="math inline">\(d_i=\infty\)</span> for every node <span class="math inline">\(i\neq p\)</span>, <span class="math inline">\(d_p=0\)</span>, and <span class="math inline">\(\text{OPEN}=\{p\}\)</span>. The algorithm then repeats the following steps:</p>
+<ol type="1">
+<li>Remove from OPEN a node <span class="math inline">\(i\)</span> with the smallest estimate <span class="math inline">\(d_i\)</span>. If <span class="math inline">\(i=t\)</span>, stop; otherwise, execute step 2 for every node <span class="math inline">\(j\)</span> reachable from <span class="math inline">\(i\)</span> by an edge.</li>
+<li>If <span class="math inline">\(d_i+w_{ij}&lt;d_j\)</span>, update <span class="math inline">\(d_j=d_i+w_{ij}\)</span> and <span class="math inline">\(\beta(j)=i\)</span>, and add <span class="math inline">\(j\)</span> to OPEN if it is not already there. Otherwise, leave <span class="math inline">\(d_j\)</span> and <span class="math inline">\(\beta(j)\)</span> unchanged.</li>
+<li>Once step 2 has been applied for every out-neighbor of <span class="math inline">\(i\)</span>, return to step 1.</li>
+</ol>
+<p>The pointers <span class="math inline">\(\beta(\cdot)\)</span> recorded along the way encode the shortest paths discovered so far: for every node <span class="math inline">\(i\)</span>, <span class="math inline">\(\beta(i)\)</span> is the node that precedes <span class="math inline">\(i\)</span> on the shortest path from <span class="math inline">\(p\)</span> found up to that point. Consequently, once the algorithm stops at <span class="math inline">\(i=t\)</span>, the optimal path is obtained by walking these pointers backward from the destination, <span class="math inline">\((i_0,i_1,\dots,i_L)\)</span> with <span class="math inline">\(i_L=t\)</span> and <span class="math inline">\(i_{\ell-1}=\beta(i_\ell)\)</span> for <span class="math inline">\(\ell\in\{1,\dots,L\}\)</span>, until <span class="math inline">\(i_0=p\)</span>. If OPEN ever becomes empty before <span class="math inline">\(t\)</span> is reached, no path from <span class="math inline">\(p\)</span> to <span class="math inline">\(t\)</span> exists.</p>
+<p><a href="#fig-dijkstra-example-i" class="quarto-xref">Fig.&nbsp;20</a> shows the general shape of graph used in a small worked example that requires only three iterations of Dijkstra’s algorithm: starting from the initial node with <span class="math inline">\((1,0)\)</span>, the first iteration reaches a neighbor with pair <span class="math inline">\((2,1)\)</span> (and updates <span class="math inline">\(\beta(2)=1\)</span>, along with other pairs from other neighbors of node <span class="math inline">\(1\)</span>), the second iteration reaches <span class="math inline">\((3,2)\)</span> (updating <span class="math inline">\(\beta(3)=2\)</span>), and at the third iteration the destination is removed from OPEN and the algorithm terminates.</p>
+<div style="text-align: center;">
+<div id="fig-dijkstra-example-i" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dijkstra-example-i-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg20-graph.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:60.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dijkstra-example-i-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;20: The graph structure used in the three-iteration worked example (Example I) of Dijkstra’s algorithm.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>A second, larger worked example, on the six-node graph shown in <a href="#fig-dijkstra-example-ii" class="quarto-xref">Fig.&nbsp;21</a>, illustrates the bookkeeping more fully. The iterations proceed as follows, starting from initial node <span class="math inline">\(1\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Iteration</th>
+<th>Pairs <span class="math inline">\((i,d_i)\)</span>, <span class="math inline">\(i\in\text{OPEN}\)</span></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(0\)</span></td>
+<td><span class="math inline">\((1,0)\)</span></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(1\)</span></td>
+<td><span class="math inline">\((2,1),(3,8),(4,6)\)</span></td>
+<td><span class="math inline">\(\beta(2)=1,\ \beta(3)=1,\ \beta(4)=1\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(2\)</span></td>
+<td><span class="math inline">\((3,6),(4,4)\)</span></td>
+<td><span class="math inline">\(\beta(3)=2,\ \beta(4)=2\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(3\)</span></td>
+<td><span class="math inline">\((3,6),(5,7)\)</span></td>
+<td><span class="math inline">\(\beta(5)=4\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(4\)</span></td>
+<td><span class="math inline">\((5,7),(6,13)\)</span></td>
+<td><span class="math inline">\(\beta(6)=3\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(5\)</span></td>
+<td><span class="math inline">\((6,11)\)</span></td>
+<td><span class="math inline">\(\beta(6)=5\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Reading the <span class="math inline">\(\beta\)</span> pointers backward from the destination gives the optimal path <span class="math inline">\((6,\beta(6),\beta(\beta(6)),\dots,1)=(6,5,4,2,1)\)</span>.</p>
+<div style="text-align: center;">
+<div id="fig-dijkstra-example-ii" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dijkstra-example-ii-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg21-graph.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:45.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dijkstra-example-ii-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;21: The six-node graph used in the second worked example (Example II) of Dijkstra’s algorithm.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Returning to the Romania road network of <a href="#fig-romania-map" class="quarto-xref">Fig.&nbsp;13</a>, we can now run Dijkstra’s algorithm directly on the graph, rather than building and searching the full dynamic programming transition diagram. Starting from Lugoj, the iterations proceed as follows:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Iteration</th>
+<th>Pairs <span class="math inline">\(\{i,d_i\}\)</span>, <span class="math inline">\(i\in\text{OPEN}\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(0\)</span></td>
+<td><span class="math inline">\(\{\text{Lugoj},0\}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(1\)</span></td>
+<td><span class="math inline">\(\{\text{Mehadia},70\}, \{\text{Timisoara},111\}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(2\)</span></td>
+<td><span class="math inline">\(\{\text{Timisoara},111\}, \{\text{Dobreta},145\}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(3\)</span></td>
+<td><span class="math inline">\(\{\text{Dobreta},145\}, \{\text{Arad},229\}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(4\)</span></td>
+<td><span class="math inline">\(\{\text{Arad},229\}, \{\text{Craiova},265\}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(5\)</span></td>
+<td><span class="math inline">\(\{\text{Craiova},265\}, \{\text{Sibiu},369\}, \{\text{Zerind},304\}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(6\)</span></td>
+<td><span class="math inline">\(\{\text{Sibiu},369\}, \{\text{Zerind},304\}, \{\text{Pitesti},403\}, \{\text{Rimnicu Vilcea},411\}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(7\)</span></td>
+<td><span class="math inline">\(\{\text{Sibiu},369\}, \{\text{Pitesti},403\}, \{\text{Rimnicu Vilcea},411\}, \{\text{Oradea},375\}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(8\)</span></td>
+<td><span class="math inline">\(\{\text{Pitesti},403\}, \{\text{Rimnicu Vilcea},411\}, \{\text{Oradea},375\}, \{\text{Fagaras},468\}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(9\)</span></td>
+<td><span class="math inline">\(\{\text{Pitesti},403\}, \{\text{Rimnicu Vilcea},411\}, \{\text{Fagaras},468\}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(10\)</span></td>
+<td><span class="math inline">\(\{\text{Rimnicu Vilcea},411\}, \{\text{Fagaras},468\}, \{\text{Bucharest},504\}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(11\)</span></td>
+<td><span class="math inline">\(\{\text{Fagaras},468\}, \{\text{Bucharest},504\}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(12\)</span></td>
+<td><span class="math inline">\(\{\text{Bucharest},504\}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The <span class="math inline">\(\beta\)</span> pointers recorded along the way recover the same <span class="math inline">\(504\)</span> km optimal route found earlier with dynamic programming – but reached in only twelve iterations, without ever building the full transition diagram or examining most of the map.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: a five-node shortest-path problem">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: a five-node shortest-path problem
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Consider the weighted, undirected graph with nodes <span class="math inline">\(\mathcal{V}=\{1,2,3,4,5\}\)</span> and edges <span class="math display">\[
+\mathcal{E}=\{(1,2),(1,3),(2,3),(2,4),(2,5),(3,4),(4,5)\},
+\]</span> with weights <span class="math display">\[
+w_{12}=4,\quad w_{13}=4,\quad w_{23}=3,\quad w_{24}=4,\quad w_{25}=6,\quad w_{34}=4,\quad w_{45}=5.
+\]</span> Using Dijkstra’s algorithm, find the shortest path and its cost from the initial node <span class="math inline">\(p=1\)</span> to the destination <span class="math inline">\(t=5\)</span>. As in the examples above, show your work as a table of the pairs <span class="math inline">\((i,d_i)\)</span>, <span class="math inline">\(i\in\text{OPEN}\)</span>, at every iteration, together with the resulting <span class="math inline">\(\beta\)</span> pointers. (We will revisit this exact graph with A* at the end of this section, so hold on to your work.)</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Iteration</th>
+<th>Pairs <span class="math inline">\((i,d_i)\)</span>, <span class="math inline">\(i\in\text{OPEN}\)</span></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(0\)</span></td>
+<td><span class="math inline">\((1,0)\)</span></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(1\)</span></td>
+<td><span class="math inline">\((2,4),(3,4)\)</span></td>
+<td><span class="math inline">\(\beta(2)=1,\ \beta(3)=1\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(2\)</span></td>
+<td><span class="math inline">\((3,4),(4,8),(5,10)\)</span></td>
+<td><span class="math inline">\(\beta(4)=2,\ \beta(5)=2\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(3\)</span></td>
+<td><span class="math inline">\((4,8),(5,10)\)</span></td>
+<td>(<span class="math inline">\(4\)</span> reached again via <span class="math inline">\(3\)</span> at cost <span class="math inline">\(4+4=8\)</span>, not smaller, so <span class="math inline">\(\beta(4)\)</span> unchanged)</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(4\)</span></td>
+<td><span class="math inline">\((5,10)\)</span></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(5\)</span></td>
+<td>Destination removed from OPEN – terminate</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>At iteration <span class="math inline">\(1\)</span>, nodes <span class="math inline">\(2\)</span> and <span class="math inline">\(3\)</span> tie at <span class="math inline">\(d=4\)</span>; removing node <span class="math inline">\(2\)</span> first (the choice is arbitrary among ties) leads to relaxing <span class="math inline">\(4\)</span> and <span class="math inline">\(5\)</span> from <span class="math inline">\(2\)</span>. At iteration <span class="math inline">\(2\)</span>, node <span class="math inline">\(3\)</span> is removed next; relaxing edge <span class="math inline">\((3,4)\)</span> gives <span class="math inline">\(d_3+w_{34}=4+4=8\)</span>, which is not strictly smaller than the current <span class="math inline">\(d_4=8\)</span>, so <span class="math inline">\(\beta(4)\)</span> stays equal to <span class="math inline">\(2\)</span> rather than switching to <span class="math inline">\(3\)</span>. The optimal path is recovered from <span class="math inline">\(\beta\)</span>: <span class="math inline">\(5\leftarrow\beta(5)=2\leftarrow\beta(2)=1\)</span>, i.e.&nbsp;the path <span class="math inline">\((1,2,5)\)</span>, with optimal cost <span class="math inline">\(10\)</span>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Exercise: why Dijkstra's algorithm is correct">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Exercise: why Dijkstra’s algorithm is correct
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-8" class="callout-8-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>In Dijkstra’s algorithm, every node <span class="math inline">\(i\)</span> that is removed from OPEN in step 1 has, by construction, the smallest estimate <span class="math inline">\(d_i\)</span> among all nodes currently in OPEN.</p>
+<ol type="a">
+<li><p>Prove that such a node <span class="math inline">\(i\)</span> is never placed back into OPEN at any later iteration.</p></li>
+<li><p>Prove that, at the moment <span class="math inline">\(i\)</span> is removed from OPEN, <span class="math inline">\(d_i\)</span> already equals the true optimal cost (shortest-path distance) from the initial node <span class="math inline">\(p\)</span> to <span class="math inline">\(i\)</span> – i.e., the algorithm never has to revisit <span class="math inline">\(i\)</span> later to correct its cost-to-come.</p></li>
+</ol>
+<p>(Assume, as always, that every weight <span class="math inline">\(w_{ij}\geq0\)</span>.)</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-9-contents" aria-controls="callout-9" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-9" class="callout-9-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Write <span class="math inline">\(D(i)\)</span> for the true shortest-path distance from <span class="math inline">\(p\)</span> to <span class="math inline">\(i\)</span>, and suppose nodes are removed from OPEN, i.e.&nbsp;<em>settled</em>, in the order <span class="math inline">\(i_1=p,i_2,i_3,\dots\)</span> (so <span class="math inline">\(d_{i_1}\leq d_{i_2}\leq d_{i_3}\leq\cdots\)</span> at the moments of removal, by the rule used in step 1).</p>
+<p><strong>(a) A settled node is never re-added to OPEN.</strong> A node <span class="math inline">\(j\)</span> is only ever placed into OPEN by step 2, and only as a result of relaxing an edge <span class="math inline">\((i',j)\)</span> from a node <span class="math inline">\(i'\)</span> currently being processed in step 1, and only when <span class="math inline">\(d_{i'}+w_{i'j} &lt; d_j\)</span>. Suppose, for contradiction, that some already-settled node <span class="math inline">\(i\)</span> is relaxed again from a later-processed node <span class="math inline">\(i'\)</span> (settled after <span class="math inline">\(i\)</span>, so <span class="math inline">\(d_{i'}\geq d_i\)</span> by the non-decreasing order of removal). Since <span class="math inline">\(w_{i'i}\geq0\)</span>, <span class="math display">\[
+d_{i'}+w_{i'i} \;\geq\; d_{i'} \;\geq\; d_i,
+\]</span> so the relaxation condition <span class="math inline">\(d_{i'}+w_{i'i}&lt;d_i\)</span> can never hold. Hence <span class="math inline">\(d_i\)</span> is never decreased, and in particular <span class="math inline">\(i\)</span> is never placed back into OPEN, after it is removed.</p>
+<p><strong>(b) The cost-to-come at removal is optimal.</strong> We show <span class="math inline">\(d_i=D(i)\)</span> for every settled node <span class="math inline">\(i\)</span>, by induction on the settling order <span class="math inline">\(i_1,i_2,\dots\)</span>.</p>
+<p><em>Base case:</em> <span class="math inline">\(i_1=p\)</span> is removed first with <span class="math inline">\(d_p=0=D(p)\)</span>, which is trivially optimal (no path can be shorter than the empty path from <span class="math inline">\(p\)</span> to itself, since all weights are non-negative).</p>
+<p><em>Inductive step:</em> suppose <span class="math inline">\(d_{i_k}=D(i_k)\)</span> for every node <span class="math inline">\(i_k\)</span> settled before the current step, and let <span class="math inline">\(i\)</span> be the next node removed from OPEN. Since <span class="math inline">\(d_i\)</span> is the length of the path traced by the <span class="math inline">\(\beta\)</span> pointers from <span class="math inline">\(p\)</span> to <span class="math inline">\(i\)</span> (a valid path using only edges relaxed from already correctly-settled nodes, by the inductive hypothesis), we have <span class="math inline">\(d_i\geq D(i)\)</span>: <span class="math inline">\(d_i\)</span> is the length of <em>some</em> path, and <span class="math inline">\(D(i)\)</span> is the length of the <em>shortest</em> one.</p>
+<p>Suppose, for contradiction, that <span class="math inline">\(d_i &gt; D(i)\)</span>, and consider a true shortest path <span class="math inline">\(P\)</span> from <span class="math inline">\(p\)</span> to <span class="math inline">\(i\)</span>, of length <span class="math inline">\(D(i)\)</span>. Since <span class="math inline">\(p\)</span> is already settled and <span class="math inline">\(i\)</span> is not, <span class="math inline">\(P\)</span> must contain a first node <span class="math inline">\(y\)</span> along the path that is not yet settled at this step (possibly <span class="math inline">\(y=i\)</span> itself); let <span class="math inline">\(x\)</span> be the node immediately before <span class="math inline">\(y\)</span> on <span class="math inline">\(P\)</span> (with <span class="math inline">\(x=p\)</span> if <span class="math inline">\(y\)</span> is the first node of <span class="math inline">\(P\)</span>). By the choice of <span class="math inline">\(y\)</span>, <span class="math inline">\(x\)</span> is already settled, so by the inductive hypothesis <span class="math inline">\(d_x=D(x)\)</span>, and edge <span class="math inline">\((x,y)\)</span> was relaxed when <span class="math inline">\(x\)</span> was processed. Hence, at the current step, <span class="math display">\[
+d_y \;\leq\; D(x)+w_{xy} \;=\; (\text{length of }P\text{ up to }y) \;\leq\; D(i),
+\]</span> where the last inequality holds because the remaining portion of <span class="math inline">\(P\)</span> from <span class="math inline">\(y\)</span> to <span class="math inline">\(i\)</span> has non-negative length. Combined with the contradiction hypothesis <span class="math inline">\(D(i) &lt; d_i\)</span>, this gives <span class="math inline">\(d_y \leq D(i) &lt; d_i\)</span>, with <span class="math inline">\(y\)</span> still in OPEN. But <span class="math inline">\(i\)</span> was chosen in step 1 as the node in OPEN with the <em>smallest</em> <span class="math inline">\(d\)</span>-value – contradicting <span class="math inline">\(d_y&lt;d_i\)</span>.</p>
+<p>Hence no such shorter path <span class="math inline">\(P\)</span> exists, so <span class="math inline">\(d_i\leq D(i)\)</span>, and together with <span class="math inline">\(d_i\geq D(i)\)</span> from above, <span class="math inline">\(d_i=D(i)\)</span>. This completes the induction, and with it the proof that every node’s cost-to-come is already optimal the moment it leaves OPEN.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="a" class="level3" data-number="1.4">
+<h3 data-number="1.4" class="anchored" data-anchor-id="a"><span class="header-section-number">1.4</span> A*</h3>
+<p>A* refines Dijkstra’s algorithm by taking into account, for every node <span class="math inline">\(i\)</span>, an <em>estimate</em> (heuristic) <span class="math inline">\(h(i)\)</span> of the remaining distance from <span class="math inline">\(i\)</span> to the destination. Instead of ranking OPEN purely by the distance-so-far <span class="math inline">\(d_i\)</span>, A* ranks it by <span class="math inline">\(d_i+h(i)\)</span>, so that nodes which are both cheap to reach and estimated to be close to the destination are explored first.</p>
+<p>The heuristic guarantees an optimal path if it satisfies two conditions: (i) <em>admissibility</em>, meaning <span class="math inline">\(h(i)\)</span> never overestimates the true optimal cost from <span class="math inline">\(i\)</span> to the destination, and (ii) <em>consistency</em>, meaning <span class="math inline">\(h(i)\leq w_{ij}+h(j)\)</span> for every edge <span class="math inline">\((i,j)\)</span>. When both conditions hold, A* can in fact be reduced to a plain run of Dijkstra’s algorithm: (1) reweight every edge as <span class="math inline">\(\bar w_{ij}=w_{ij}+h(j)-h(i)\)</span> (consistency ensures these reweighted costs are still non-negative); (2) run Dijkstra’s algorithm on the reweighted graph to obtain the optimal path; (3) recover the optimal cost in the original graph from the path found. The general A* algorithm given below, however, works whether or not these two conditions hold, simply without the accompanying optimality guarantee.</p>
+<p>Concretely, A* proceeds exactly like Dijkstra’s algorithm, with the ranking key changed from <span class="math inline">\(d_i\)</span> to <span class="math inline">\(d_i+h(i)\)</span>: initialize <span class="math inline">\(d_i=\infty\)</span> for <span class="math inline">\(i\neq p\)</span>, <span class="math inline">\(d_p=0\)</span>, <span class="math inline">\(\text{OPEN}=\{p\}\)</span>, and repeat:</p>
+<ol type="1">
+<li>Remove from OPEN a node <span class="math inline">\(i\)</span> with the smallest <span class="math inline">\(d_i+h(i)\)</span>. If <span class="math inline">\(i=t\)</span>, stop; otherwise execute step 2 for every out-neighbor <span class="math inline">\(j\)</span> of <span class="math inline">\(i\)</span>.</li>
+<li>If <span class="math inline">\(d_i+w_{ij}&lt;d_j\)</span>, update <span class="math inline">\(d_j=d_i+w_{ij}\)</span>, <span class="math inline">\(\beta(j)=i\)</span>, and add <span class="math inline">\(j\)</span> to OPEN if it is not already there; otherwise leave <span class="math inline">\(d_j,\beta(j)\)</span> unchanged.</li>
+<li>Once step 2 has been applied to every out-neighbor of <span class="math inline">\(i\)</span>, return to step 1.</li>
+</ol>
+<p>As before, the optimal path is recovered by following the <span class="math inline">\(\beta\)</span> pointers backward from the destination. With a good heuristic, A* is typically much faster than plain Dijkstra’s algorithm, since the heuristic focuses the search toward the destination rather than expanding outward uniformly in every direction – though finding a heuristic that is both informative and provably admissible/consistent is not always easy.</p>
+<p>Compare the two side by side below, on the same grid as before, now with both panels sharing the same obstacles: click on either grid to add or remove an obstacle (it is mirrored on both), then press <strong>Run</strong> to watch Dijkstra’s algorithm (left) and A* (right) search at the same time for the shortest path from the red origin to the green destination. A<em> here uses the straight-line (Euclidean) distance to the destination as its heuristic <span class="math inline">\(h(i)\)</span> – a valid, admissible choice on this grid, since the straight-line distance between two cells is never larger than the cost of any grid path between them. Watch how much smaller the red/blue region typically grows on the right before A</em> finds the same optimal path that Dijkstra’s algorithm finds on the left.</p>
+<div id="cmp-wrap" style="margin: 1em 0; text-align:center;">
+  <div style="display:flex; justify-content:center; gap:1.2em; flex-wrap:wrap;">
+    <div>
+      <div style="font-size:0.9em; font-weight:bold; margin-bottom:0.3em;">Dijkstra's algorithm</div>
+      <div id="cmp-canvas-wrap-d" style="margin-bottom:0.3em;"></div>
+      <div id="cmp-stats-d" style="font-size:0.8em; color:#555;">settled: 0</div>
+    </div>
+    <div>
+      <div style="font-size:0.9em; font-weight:bold; margin-bottom:0.3em;">A* (straight-line heuristic)</div>
+      <div id="cmp-canvas-wrap-a" style="margin-bottom:0.3em;"></div>
+      <div id="cmp-stats-a" style="font-size:0.8em; color:#555;">settled: 0</div>
+    </div>
+  </div>
+  <div id="cmp-status" style="font-size:0.95em; margin:0.6em 0; min-height:1.4em;">Click cells to edit obstacles, then press Run.</div>
+  <div style="margin-bottom:0.6em;">
+    <button id="cmp-run" style="padding:4px 14px; font-size:0.9em;">Run</button>
+    <button id="cmp-reset" style="padding:4px 14px; font-size:0.9em; margin-left:0.5em;">Reset grid</button>
+  </div>
+  <div style="font-size:0.8em; color:#555; line-height:1.6;">
+    <span style="display:inline-block; width:12px; height:12px; background:#e74c3c; border-radius:2px; vertical-align:middle;"></span> origin / settled (removed from OPEN)
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:12px; height:12px; background:#3498db; border-radius:2px; vertical-align:middle;"></span> fringe (in OPEN)
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:12px; height:12px; background:#2ecc71; border-radius:2px; vertical-align:middle;"></span> destination
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:12px; height:12px; background:#2c3e50; border-radius:2px; vertical-align:middle;"></span> obstacle
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:16px; height:3px; background:#f1c40f; vertical-align:middle;"></span> optimal path
+  </div>
+</div>
+<script>
+(function () {
+  const COLS = 18, ROWS = 12, CELL = 20;
+  const START = { r: 5, c: 1 };
+  const GOAL = { r: 5, c: 16 };
+
+  function key(r, c) { return r + ',' + c; }
+
+  function defaultObstacles() {
+    const s = new Set();
+    for (let r = 0; r <= 7; r++) s.add(key(r, 8));    // vertical stem of the L
+    for (let c = 8; c <= 11; c++) s.add(key(7, c));   // horizontal foot of the L
+    return s;
+  }
+
+  let obstacles = defaultObstacles();
+  let running = false;
+
+  function neighbors(r, c, obstacleSet) {
+    const out = [];
+    const deltas = [
+      [-1, 0, 1], [1, 0, 1], [0, -1, 1], [0, 1, 1],
+      [-1, -1, Math.SQRT2], [-1, 1, Math.SQRT2], [1, -1, Math.SQRT2], [1, 1, Math.SQRT2]
+    ];
+    for (const [dr, dc, w] of deltas) {
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+      if (obstacleSet.has(key(nr, nc))) continue;
+      if (dr !== 0 && dc !== 0) {
+        if (obstacleSet.has(key(r + dr, c)) && obstacleSet.has(key(r, c + dc))) continue;
+      }
+      out.push([nr, nc, w]);
+    }
+    return out;
+  }
+
+  // Runs Dijkstra's algorithm (useHeuristic=false) or A* with a
+  // straight-line-distance heuristic (useHeuristic=true), logging every
+  // OPEN removal ("settle") and OPEN insertion/update ("frontier") so the
+  // animation can replay them one at a time.
+  function runSearch(start, goal, obstacleSet, useHeuristic) {
+    const N = ROWS * COLS;
+    const idx = (r, c) => r * COLS + c;
+    const dist = new Float64Array(N).fill(Infinity);
+    const prev = new Int32Array(N).fill(-1);
+    const settled = new Uint8Array(N);
+    const h = (r, c) => useHeuristic ? Math.hypot(r - goal.r, c - goal.c) : 0;
+    dist[idx(start.r, start.c)] = 0;
+    const events = [];
+    while (true) {
+      let u = -1, best = Infinity;
+      for (let i = 0; i < N; i++) {
+        if (settled[i] || dist[i] === Infinity) continue;
+        const r = Math.floor(i / COLS), c = i % COLS;
+        const rank = dist[i] + h(r, c);
+        if (rank < best) { best = rank; u = i; }
+      }
+      if (u === -1) break;
+      settled[u] = 1;
+      const ur = Math.floor(u / COLS), uc = u % COLS;
+      events.push({ type: 'settle', r: ur, c: uc });
+      if (u === idx(goal.r, goal.c)) break;
+      for (const [nr, nc, w] of neighbors(ur, uc, obstacleSet)) {
+        const v = idx(nr, nc);
+        if (settled[v]) continue;
+        const nd = dist[u] + w;
+        if (nd < dist[v] - 1e-9) {
+          dist[v] = nd; prev[v] = u;
+          events.push({ type: 'frontier', r: nr, c: nc });
+        }
+      }
+    }
+    const gi = idx(goal.r, goal.c);
+    let path = null;
+    if (settled[gi] && dist[gi] < Infinity) {
+      path = [];
+      let cur = gi;
+      while (cur !== -1) { path.push([Math.floor(cur / COLS), cur % COLS]); cur = prev[cur]; }
+      path.reverse();
+    }
+    return { events: events, path: path, cost: (settled[gi] && dist[gi] < Infinity) ? dist[gi] : Infinity };
+  }
+
+  function makePanel(wrapId, statsId) {
+    const wrap = document.getElementById(wrapId);
+    const canvas = document.createElement('canvas');
+    canvas.width = COLS * CELL + 1;
+    canvas.height = ROWS * CELL + 1;
+    canvas.style.border = '1px solid #999';
+    canvas.style.cursor = 'pointer';
+    wrap.appendChild(canvas);
+    return { canvas: canvas, ctx: canvas.getContext('2d'), statsEl: document.getElementById(statsId), state: { settled: new Set(), frontier: new Set(), path: null } };
+  }
+
+  const panelD = makePanel('cmp-canvas-wrap-d', 'cmp-stats-d');
+  const panelA = makePanel('cmp-canvas-wrap-a', 'cmp-stats-a');
+  const statusEl = document.getElementById('cmp-status');
+  const runBtn = document.getElementById('cmp-run');
+  const resetBtn = document.getElementById('cmp-reset');
+
+  function resetPanel(panel) {
+    panel.state = { settled: new Set(), frontier: new Set(), path: null };
+  }
+
+  function draw(panel) {
+    const ctx = panel.ctx, state = panel.state;
+    ctx.clearRect(0, 0, panel.canvas.width, panel.canvas.height);
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const k = key(r, c);
+        let fill = '#ffffff';
+        if (obstacles.has(k)) fill = '#2c3e50';
+        else if (state.settled.has(k)) fill = '#e74c3c';
+        else if (state.frontier.has(k)) fill = '#3498db';
+        if (r === START.r && c === START.c) fill = '#e74c3c';
+        if (r === GOAL.r && c === GOAL.c) fill = state.settled.has(k) ? '#e74c3c' : (state.frontier.has(k) ? '#3498db' : '#2ecc71');
+        ctx.fillStyle = fill;
+        ctx.fillRect(c * CELL + 1, r * CELL + 1, CELL - 1, CELL - 1);
+      }
+    }
+    ctx.strokeStyle = '#ccc';
+    ctx.lineWidth = 1;
+    for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r * CELL + 0.5); ctx.lineTo(COLS * CELL, r * CELL + 0.5); ctx.stroke(); }
+    for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c * CELL + 0.5, 0); ctx.lineTo(c * CELL + 0.5, ROWS * CELL); ctx.stroke(); }
+    function ring(r, c, color, label) {
+      const cx = c * CELL + CELL / 2, cy = r * CELL + CELL / 2;
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(cx, cy, CELL / 2 - 2.5, 0, 2 * Math.PI); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(label, cx, cy);
+    }
+    ring(START.r, START.c, '#c0392b', 'S');
+    ring(GOAL.r, GOAL.c, '#1e8449', 'G');
+    if (state.path) {
+      ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath();
+      state.path.forEach(([r, c], i) => {
+        const x = c * CELL + CELL / 2, y = r * CELL + CELL / 2;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+  }
+
+  function onGridClick(ev, canvas) {
+    if (running) return;
+    const rect = canvas.getBoundingClientRect();
+    const c = Math.floor((ev.clientX - rect.left) / CELL);
+    const r = Math.floor((ev.clientY - rect.top) / CELL);
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+    if ((r === START.r && c === START.c) || (r === GOAL.r && c === GOAL.c)) return;
+    const k = key(r, c);
+    if (obstacles.has(k)) obstacles.delete(k); else obstacles.add(k);
+    resetPanel(panelD); resetPanel(panelA);
+    panelD.statsEl.textContent = 'settled: 0'; panelA.statsEl.textContent = 'settled: 0';
+    statusEl.textContent = 'Click cells to edit obstacles, then press Run.';
+    draw(panelD); draw(panelA);
+  }
+  panelD.canvas.addEventListener('click', function (ev) { onGridClick(ev, panelD.canvas); });
+  panelA.canvas.addEventListener('click', function (ev) { onGridClick(ev, panelA.canvas); });
+
+  function setControlsEnabled(enabled) {
+    runBtn.disabled = !enabled;
+    resetBtn.disabled = !enabled;
+  }
+
+  function animatePanel(panel, result, label, onDone) {
+    let i = 0;
+    const timer = setInterval(function () {
+      if (i >= result.events.length) {
+        clearInterval(timer);
+        if (result.path) panel.state.path = result.path;
+        draw(panel);
+        onDone();
+        return;
+      }
+      const ev = result.events[i++];
+      const k = key(ev.r, ev.c);
+      if (ev.type === 'settle') { panel.state.settled.add(k); panel.state.frontier.delete(k); }
+      else { if (!panel.state.settled.has(k)) panel.state.frontier.add(k); }
+      panel.statsEl.textContent = 'settled: ' + panel.state.settled.size;
+      draw(panel);
+    }, 18);
+  }
+
+  runBtn.addEventListener('click', function () {
+    if (running) return;
+    resetPanel(panelD); resetPanel(panelA);
+    running = true;
+    setControlsEnabled(false);
+    statusEl.textContent = "Running Dijkstra's algorithm and A* at the same time...";
+    const resultD = runSearch(START, GOAL, obstacles, false);
+    const resultA = runSearch(START, GOAL, obstacles, true);
+    let doneCount = 0;
+    function checkDone() {
+      doneCount++;
+      if (doneCount < 2) return;
+      running = false;
+      setControlsEnabled(true);
+      if (resultD.path) {
+        statusEl.textContent = 'Both found the optimal cost ≈ ' + resultD.cost.toFixed(2) +
+          ' -- Dijkstra settled ' + panelD.state.settled.size + ' nodes, A* settled ' + panelA.state.settled.size + '.';
+      } else {
+        statusEl.textContent = 'No path exists between the red and green nodes with the current obstacles.';
+      }
+    }
+    animatePanel(panelD, resultD, 'Dijkstra', checkDone);
+    animatePanel(panelA, resultA, 'A*', checkDone);
+  });
+
+  resetBtn.addEventListener('click', function () {
+    if (running) return;
+    obstacles = defaultObstacles();
+    resetPanel(panelD); resetPanel(panelA);
+    panelD.statsEl.textContent = 'settled: 0'; panelA.statsEl.textContent = 'settled: 0';
+    statusEl.textContent = 'Click cells to edit obstacles, then press Run.';
+    draw(panelD); draw(panelA);
+  });
+
+  draw(panelD); draw(panelA);
+})();
+</script>
+<p>Returning once more to the Romania road network, a natural heuristic for a search toward Bucharest is the straight-line distance to Bucharest, <span class="math inline">\(h(i)\)</span>, listed below for every city:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>City</th>
+<th><span class="math inline">\(h(i)\)</span></th>
+<th>City</th>
+<th><span class="math inline">\(h(i)\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Neamt</td>
+<td>234</td>
+<td>Giurgiu</td>
+<td>77</td>
+</tr>
+<tr class="even">
+<td>Iasi</td>
+<td>226</td>
+<td>Pitesti</td>
+<td>98</td>
+</tr>
+<tr class="odd">
+<td>Vaslui</td>
+<td>199</td>
+<td>Craiova</td>
+<td>160</td>
+</tr>
+<tr class="even">
+<td>Urziceni</td>
+<td>80</td>
+<td>Fagaras</td>
+<td>178</td>
+</tr>
+<tr class="odd">
+<td>Hirsova</td>
+<td>151</td>
+<td>Sibiu</td>
+<td>253</td>
+</tr>
+<tr class="even">
+<td>Eforie</td>
+<td>161</td>
+<td>Rimnicu Vilcea</td>
+<td>193</td>
+</tr>
+<tr class="odd">
+<td>Bucharest</td>
+<td>0</td>
+<td>Lugoj</td>
+<td>244</td>
+</tr>
+<tr class="even">
+<td></td>
+<td></td>
+<td>Mehadia</td>
+<td>241</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>Dobreta</td>
+<td>242</td>
+</tr>
+<tr class="even">
+<td></td>
+<td></td>
+<td>Timisoara</td>
+<td>329</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>Arad</td>
+<td>366</td>
+</tr>
+<tr class="even">
+<td></td>
+<td></td>
+<td>Zerind</td>
+<td>374</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>Oradea</td>
+<td>380</td>
+</tr>
+</tbody>
+</table>
+<p>Running A* from Lugoj to Bucharest with this heuristic – via the reduction to Dijkstra’s algorithm on the reweighted graph <span class="math inline">\(\bar w_{ij}=w_{ij}+h(j)-h(i)\)</span> – gives:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Iteration</th>
+<th>Pairs <span class="math inline">\(\{i,d_i\}\)</span> in OPEN</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(0\)</span></td>
+<td><span class="math inline">\(\{\text{Lugoj},0\}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(1\)</span></td>
+<td><span class="math inline">\(\{\text{Mehadia},67\}, \{\text{Timisoara},196\}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(2\)</span></td>
+<td><span class="math inline">\(\{\text{Timisoara},196\}, \{\text{Dobreta},143\}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(3\)</span></td>
+<td><span class="math inline">\(\{\text{Timisoara},196\}, \{\text{Craiova},181\}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(4\)</span></td>
+<td><span class="math inline">\(\{\text{Timisoara},196\}, \{\text{Pitesti},257\}, \{\text{Rim. Vilcea},360\}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(5\)</span></td>
+<td><span class="math inline">\(\{\text{Pitesti},257\}, \{\text{Rim. Vilcea},360\}, \{\text{Arad},351\}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(6\)</span></td>
+<td><span class="math inline">\(\{\text{Rim. Vilcea},360\}, \{\text{Arad},351\}, \{\text{Bucharest},260\}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Six iterations, against twelve for plain Dijkstra’s algorithm on the same network – again, the same <span class="math inline">\(\beta\)</span> pointers recover the optimal path and, after undoing the reweighting, the same <span class="math inline">\(504\)</span> km optimal cost.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: the same five-node problem, now with A*">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-10-contents" aria-controls="callout-10" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: the same five-node problem, now with A*
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-10" class="callout-10-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Consider again the graph from the earlier exercise: nodes <span class="math inline">\(\mathcal{V}=\{1,2,3,4,5\}\)</span>, edges <span class="math inline">\(\mathcal{E}=\{(1,2),(1,3),(2,3),(2,4),(2,5),(3,4),(4,5)\}\)</span>, and weights <span class="math inline">\(w_{12}=4\)</span>, <span class="math inline">\(w_{13}=4\)</span>, <span class="math inline">\(w_{23}=3\)</span>, <span class="math inline">\(w_{24}=4\)</span>, <span class="math inline">\(w_{25}=6\)</span>, <span class="math inline">\(w_{34}=4\)</span>, <span class="math inline">\(w_{45}=5\)</span>. As a heuristic, use the straight-line distance to the destination <span class="math inline">\(t=5\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th><span class="math inline">\(i\)</span></th>
+<th><span class="math inline">\(1\)</span></th>
+<th><span class="math inline">\(2\)</span></th>
+<th><span class="math inline">\(3\)</span></th>
+<th><span class="math inline">\(4\)</span></th>
+<th><span class="math inline">\(5\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(h(i)\)</span></td>
+<td><span class="math inline">\(6.1\)</span></td>
+<td><span class="math inline">\(3.0\)</span></td>
+<td><span class="math inline">\(5.4\)</span></td>
+<td><span class="math inline">\(3.6\)</span></td>
+<td><span class="math inline">\(0\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>(You can check that this heuristic is admissible and consistent: it is the straight-line distance between the nodes’ positions in the plane, <span class="math inline">\(1=(0,0)\)</span>, <span class="math inline">\(2=(3,1)\)</span>, <span class="math inline">\(3=(1,3)\)</span>, <span class="math inline">\(4=(4,4)\)</span>, <span class="math inline">\(5=(6,1)\)</span>, and every edge weight above is at least as large as the straight-line distance between its two endpoints.) Run A* from <span class="math inline">\(p=1\)</span> to <span class="math inline">\(t=5\)</span> with this heuristic, as a table of the pairs <span class="math inline">\((i,d_i)\)</span>, <span class="math inline">\(i\in\text{OPEN}\)</span>, ranked by <span class="math inline">\(d_i+h(i)\)</span>. Compare the number of iterations, and the set of nodes settled, to what you found with plain Dijkstra’s algorithm.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-11-contents" aria-controls="callout-11" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-11" class="callout-11-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Iteration</th>
+<th>Pairs <span class="math inline">\((i,d_i)\)</span>, ranked by <span class="math inline">\(d_i+h(i)\)</span></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(0\)</span></td>
+<td><span class="math inline">\((1,0)\)</span>, rank <span class="math inline">\(6.1\)</span></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(1\)</span></td>
+<td><span class="math inline">\((2,4)\)</span> rank <span class="math inline">\(7.0\)</span>; <span class="math inline">\((3,4)\)</span> rank <span class="math inline">\(9.4\)</span></td>
+<td><span class="math inline">\(\beta(2)=1,\ \beta(3)=1\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(2\)</span></td>
+<td><span class="math inline">\((3,4)\)</span> rank <span class="math inline">\(9.4\)</span>; <span class="math inline">\((4,8)\)</span> rank <span class="math inline">\(11.6\)</span>; <span class="math inline">\((5,10)\)</span> rank <span class="math inline">\(10.0\)</span></td>
+<td><span class="math inline">\(\beta(4)=2,\ \beta(5)=2\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(3\)</span></td>
+<td><span class="math inline">\((4,8)\)</span> rank <span class="math inline">\(11.6\)</span>; <span class="math inline">\((5,10)\)</span> rank <span class="math inline">\(10.0\)</span></td>
+<td>(<span class="math inline">\(4\)</span> reached again via <span class="math inline">\(3\)</span> at cost <span class="math inline">\(8\)</span>, not smaller, so <span class="math inline">\(\beta(4)\)</span> unchanged)</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(4\)</span></td>
+<td>Destination removed from OPEN (smallest rank, <span class="math inline">\(10.0&lt;11.6\)</span>) – terminate</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>The optimal path recovered from <span class="math inline">\(\beta\)</span> is again <span class="math inline">\((1,2,5)\)</span>, with cost <span class="math inline">\(10\)</span> – exactly matching Dijkstra’s algorithm, as guaranteed by the heuristic being admissible and consistent. The difference is in the work done: A* stops after settling only <em>four</em> nodes (<span class="math inline">\(1,2,3,5\)</span>), never needing to settle node <span class="math inline">\(4\)</span> at all, whereas plain Dijkstra’s algorithm (see the earlier exercise) settled all five nodes before reaching <span class="math inline">\(5\)</span>. The heuristic <span class="math inline">\(h(4)=3.6\)</span> correctly signals that node <span class="math inline">\(4\)</span> is relatively far from the destination, so it is never worth exploring once <span class="math inline">\(5\)</span> itself becomes cheaper to reach.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled" title="Interactive example: the 8-puzzle on a torus">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-12-contents" aria-controls="callout-12" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Interactive example: the 8-puzzle on a torus
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-12" class="callout-12-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The classic 8-puzzle is a <span class="math inline">\(3\times3\)</span> frame holding eight numbered tiles and one blank cell; a move slides a tile adjacent to the blank into the blank’s place, and the goal is to reach the ordered configuration below.</p>
+<div style="text-align: center;">
+<p><img src="../lectures/figures/lecture3/puzzle8-goal.png" style="width:140px;"></p>
+</div>
+<p>Here we play a variant <em>on a torus</em>: the frame wraps around left-right and top-bottom, so a tile at the edge can slide “off” one side and reappear on the opposite side. As a result, the blank always has exactly four possible moves, regardless of its position – including the two wrap-around ones illustrated below, from the same starting position:</p>
+<div style="text-align: center;">
+<p><img src="../lectures/figures/lecture3/puzzle8-four-moves.png" style="width:100%; max-width:640px;"></p>
+</div>
+<p>Every state of the puzzle is a node of a graph – there are <span class="math inline">\(9!=362{,}880\)</span> of them, far too many to enumerate, exactly the kind of large, implicit graph discussed above – and every move is an edge of weight <span class="math inline">\(1\)</span>, so finding a shortest solution is a shortest-path problem, solvable with A*. The heuristic used below is the one from Duarte’s own notebook (<code>A_3_K_Puzzle8.ipynb</code>): the sum, over the eight numbered tiles, of the straight-line (torus) grid distance between each tile’s current position and its position in the goal configuration – admissible and consistent, since no single tile can be fixed in fewer slides than that.</p>
+<p>Click <strong>Shuffle</strong> to scramble the puzzle, then either solve it yourself by clicking any tile touching the blank cell, or click <strong>Solve with A*</strong> to have the algorithm find and play out an optimal solution – the status line reports how many states it had to expand along the way.</p>
+<div id="puz-wrap" style="margin: 1em 0; text-align:center;">
+  <div id="puz-grid" style="display:grid; grid-template-columns:repeat(3,56px); grid-template-rows:repeat(3,56px); gap:4px; justify-content:center; margin:0 auto 0.6em;"></div>
+  <div id="puz-status" style="font-size:0.95em; margin-bottom:0.6em; min-height:1.4em;">Click Shuffle to scramble the puzzle.</div>
+  <div style="margin-bottom:0.6em;">
+    <button id="puz-shuffle" style="padding:4px 14px; font-size:0.9em;">Shuffle</button>
+    <button id="puz-solve" style="padding:4px 14px; font-size:0.9em; margin-left:0.5em;">Solve with A*</button>
+    <button id="puz-reset" style="padding:4px 14px; font-size:0.9em; margin-left:0.5em;">Reset to goal</button>
+  </div>
+  <div style="font-size:0.8em; color:#555;">Your moves: <span id="puz-moves">0</span></div>
+</div>
+<script>
+(function () {
+  const GOAL = "123456780";
+
+  function neighborsIdx(p) {
+    const r = Math.floor(p / 3), c = p % 3;
+    return [
+      ((r + 2) % 3) * 3 + c, // up
+      ((r + 1) % 3) * 3 + c, // down
+      r * 3 + ((c + 2) % 3), // left
+      r * 3 + ((c + 1) % 3)  // right
+    ];
+  }
+  function torusDist(p, q) {
+    const r1 = Math.floor(p / 3), c1 = p % 3, r2 = Math.floor(q / 3), c2 = q % 3;
+    let dr = Math.abs(r1 - r2); dr = Math.min(dr, 3 - dr);
+    let dc = Math.abs(c1 - c2); dc = Math.min(dc, 3 - dc);
+    return dr + dc;
+  }
+  function heuristic(state) {
+    let h = 0;
+    for (let tile = 1; tile <= 8; tile++) {
+      h += torusDist(state.indexOf(String(tile)), GOAL.indexOf(String(tile)));
+    }
+    return h;
+  }
+  function swapAt(state, blank, n) {
+    const arr = state.split('');
+    const tmp = arr[blank]; arr[blank] = arr[n]; arr[n] = tmp;
+    return arr.join('');
+  }
+  function neighborStates(state) {
+    const blank = state.indexOf('0');
+    return neighborsIdx(blank).map(n => swapAt(state, blank, n));
+  }
+
+  // Small binary min-heap, keyed by f = g + h (lazy deletion: stale
+  // entries for an already-closed state are simply skipped when popped).
+  function MinHeap() { this.data = []; }
+  MinHeap.prototype.push = function (item) {
+    this.data.push(item);
+    let i = this.data.length - 1;
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (this.data[p].f <= this.data[i].f) break;
+      const t = this.data[p]; this.data[p] = this.data[i]; this.data[i] = t;
+      i = p;
+    }
+  };
+  MinHeap.prototype.pop = function () {
+    const top = this.data[0];
+    const last = this.data.pop();
+    if (this.data.length > 0) {
+      this.data[0] = last;
+      let i = 0;
+      while (true) {
+        const l = 2 * i + 1, r = 2 * i + 2;
+        let smallest = i;
+        if (l < this.data.length && this.data[l].f < this.data[smallest].f) smallest = l;
+        if (r < this.data.length && this.data[r].f < this.data[smallest].f) smallest = r;
+        if (smallest === i) break;
+        const t = this.data[i]; this.data[i] = this.data[smallest]; this.data[smallest] = t;
+        i = smallest;
+      }
+    }
+    return top;
+  };
+
+  // A* search over the (implicit) graph of all puzzle configurations.
+  function astarSolve(start) {
+    if (start === GOAL) return { path: [start], expanded: 0 };
+    const gScore = new Map([[start, 0]]);
+    const cameFrom = new Map();
+    const heap = new MinHeap();
+    heap.push({ state: start, f: heuristic(start) });
+    const closed = new Set();
+    let expanded = 0;
+    while (heap.size ? heap.size() : heap.data.length) {
+      const top = heap.pop();
+      const state = top.state;
+      if (closed.has(state)) continue;
+      closed.add(state);
+      expanded++;
+      if (state === GOAL) {
+        const path = [state];
+        let cur = state;
+        while (cameFrom.has(cur)) { cur = cameFrom.get(cur); path.push(cur); }
+        path.reverse();
+        return { path: path, expanded: expanded };
+      }
+      for (const nb of neighborStates(state)) {
+        if (closed.has(nb)) continue;
+        const tentativeG = gScore.get(state) + 1;
+        if (!gScore.has(nb) || tentativeG < gScore.get(nb)) {
+          gScore.set(nb, tentativeG);
+          cameFrom.set(nb, state);
+          heap.push({ state: nb, f: tentativeG + heuristic(nb) });
+        }
+      }
+    }
+    return null;
+  }
+
+  const gridEl = document.getElementById('puz-grid');
+  const statusEl = document.getElementById('puz-status');
+  const movesEl = document.getElementById('puz-moves');
+  const shuffleBtn = document.getElementById('puz-shuffle');
+  const solveBtn = document.getElementById('puz-solve');
+  const resetBtn = document.getElementById('puz-reset');
+
+  let state = GOAL;
+  let moveCount = 0;
+  let busy = false;
+  const cells = [];
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement('div');
+    cell.style.display = 'flex';
+    cell.style.alignItems = 'center';
+    cell.style.justifyContent = 'center';
+    cell.style.fontSize = '1.3em';
+    cell.style.fontWeight = 'bold';
+    cell.style.border = '1px solid #999';
+    cell.style.borderRadius = '4px';
+    cell.style.cursor = 'pointer';
+    cell.style.userSelect = 'none';
+    cell.addEventListener('click', function () { onTileClick(i); });
+    gridEl.appendChild(cell);
+    cells.push(cell);
+  }
+
+  function render() {
+    for (let i = 0; i < 9; i++) {
+      const v = state[i];
+      cells[i].textContent = v === '0' ? '' : v;
+      cells[i].style.background = v === '0' ? '#eee' : '#3498db';
+      cells[i].style.color = v === '0' ? '#000' : '#fff';
+    }
+  }
+
+  function onTileClick(i) {
+    if (busy) return;
+    const blank = state.indexOf('0');
+    if (!neighborsIdx(blank).includes(i)) return;
+    state = swapAt(state, blank, i);
+    moveCount++;
+    movesEl.textContent = moveCount;
+    render();
+    if (state === GOAL) statusEl.textContent = 'Solved! 🎉';
+  }
+
+  function setControlsEnabled(enabled) {
+    shuffleBtn.disabled = !enabled;
+    solveBtn.disabled = !enabled;
+    resetBtn.disabled = !enabled;
+  }
+
+  shuffleBtn.addEventListener('click', function () {
+    if (busy) return;
+    let s = GOAL, last = -1;
+    for (let i = 0; i < 25; i++) {
+      const blank = s.indexOf('0');
+      const opts = neighborsIdx(blank).filter(n => n !== last);
+      const pick = opts[Math.floor(Math.random() * opts.length)];
+      last = blank;
+      s = swapAt(s, blank, pick);
+    }
+    state = s;
+    moveCount = 0;
+    movesEl.textContent = moveCount;
+    statusEl.textContent = 'Scrambled -- click a tile touching the blank, or Solve with A*.';
+    render();
+  });
+
+  solveBtn.addEventListener('click', function () {
+    if (busy) return;
+    if (state === GOAL) { statusEl.textContent = 'Already solved!'; return; }
+    busy = true;
+    setControlsEnabled(false);
+    statusEl.textContent = "Running A*...";
+    const result = astarSolve(state);
+    if (!result) {
+      statusEl.textContent = 'No solution found (this should not happen).';
+      busy = false; setControlsEnabled(true);
+      return;
+    }
+    const path = result.path;
+    let i = 1;
+    const timer = setInterval(function () {
+      if (i >= path.length) {
+        clearInterval(timer);
+        statusEl.textContent = 'Solved by A* in ' + (path.length - 1) + ' moves, after expanding ' + result.expanded + ' states.';
+        busy = false;
+        setControlsEnabled(true);
+        return;
+      }
+      state = path[i++];
+      render();
+    }, 450);
+  });
+
+  resetBtn.addEventListener('click', function () {
+    if (busy) return;
+    state = GOAL;
+    moveCount = 0;
+    movesEl.textContent = moveCount;
+    statusEl.textContent = 'Click Shuffle to scramble the puzzle.';
+    render();
+  });
+
+  render();
+})();
+</script>
+</div>
+</div>
+</div>
+</section>
+<section id="discussion" class="level3" data-number="1.5">
+<h3 data-number="1.5" class="anchored" data-anchor-id="discussion"><span class="header-section-number">1.5</span> Discussion</h3>
+<p>A few practical remarks are worth making about Dijkstra’s algorithm and A<em>. For very large graphs, it may not even be feasible to enumerate every node up front to initialize <span class="math inline">\(d_i=\infty\)</span>; the algorithm still works if instead one maintains a list of </em>closed* nodes – nodes already removed from OPEN in step 1 – so that they are never revisited, which is in any case guaranteed not to help by the check <span class="math inline">\(d_i+w_{ij}&lt;d_j\)</span>. If optimality is not required, many other graph search algorithms exist, such as breadth-first and depth-first search (see the label-correcting methods described in Chapter 2 of Bertsekas’ textbook). For robot motion planning specifically, Dijkstra’s algorithm and A* are in general naive choices: it is usually better to construct nodes as the robot moves along – leaving the graph implicit rather than fully enumerated in advance – and to place new nodes randomly rather than on a fixed grid. Rapidly exploring Random Trees (RRT) are a popular method built around these two ideas.</p>
+<p>More fundamentally, Dijkstra’s algorithm and A* are typically much more computationally efficient than dynamic programming at computing <em>one</em> optimal path. Dynamic programming, by contrast, explores every node and thereby produces the optimal path from <em>every</em> node to the destination at once – overkill if only a single path is needed, but exactly the right output if what is needed is a <em>policy</em>, since a policy must specify a good decision at every state, which is precisely what makes it able to cope with the disturbances discussed in Unit 2. This raises a natural question, addressed next: can Dijkstra’s algorithm also be used, somehow, to produce a policy rather than a single path? And if it can, why bother with dynamic programming at all?</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solving a DP problem with Dijkstra's algorithm">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-13-contents" aria-controls="callout-13" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solving a DP problem with Dijkstra’s algorithm
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-13" class="callout-13-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>As a concrete illustration, Dijkstra’s algorithm can be used to recover the very same optimal policy that dynamic programming produced in Unit 1, by running it repeatedly. Take the Unit 1 transition diagram and: (1) add an artificial terminal node, with the cost of arriving to it from each terminal-stage node set equal to that node’s terminal cost; (2) run Dijkstra’s algorithm from each candidate initial state to this artificial terminal node, and record, for each initial state, only the <em>first</em> decision of the resulting optimal path – this first decision is exactly what the optimal policy prescribes at that state.</p>
+<p><a href="#fig-appendixA-diagram" class="quarto-xref">Fig.&nbsp;22</a> shows the Unit 1 transition diagram with the new artificial terminal node (node 15) added, collecting the terminal costs of the two original terminal-stage nodes (0 from node 13, 4 from node 14).</p>
+<div style="text-align: center;">
+<div id="fig-appendixA-diagram" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-appendixA-diagram-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg38.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:70.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-appendixA-diagram-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;22: The Unit 1 transition diagram with an artificial terminal node (15) added, collecting the terminal costs.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Running Dijkstra’s algorithm from initial state <span class="math inline">\(1\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Iteration</th>
+<th>Pairs <span class="math inline">\((i,d_i)\)</span>, <span class="math inline">\(i\in\text{OPEN}\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(0\)</span></td>
+<td><span class="math inline">\((1,0)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(1\)</span></td>
+<td><span class="math inline">\((3,2),(4,1)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(2\)</span></td>
+<td><span class="math inline">\((3,2),(7,1),(8,2)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(3\)</span></td>
+<td><span class="math inline">\((3,2),(10,2),(11,4),(8,2)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(4\)</span></td>
+<td><span class="math inline">\((6,3),(10,2),(11,4),(8,2)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(5\)</span></td>
+<td><span class="math inline">\((6,3),(10,2),(11,4),(12,7)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(6\)</span></td>
+<td><span class="math inline">\((6,3),(14,4),(13,7),(11,4),(12,7)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(7\)</span></td>
+<td><span class="math inline">\((14,4),(13,7),(11,4),(12,7)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(8\)</span></td>
+<td><span class="math inline">\((15,4),(13,7),(11,4),(12,7)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(9\)</span></td>
+<td><span class="math inline">\((15,8),(13,7),(11,4),(12,7)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(10\)</span></td>
+<td><span class="math inline">\((15,8),(13,6),(12,7)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(11\)</span></td>
+<td><span class="math inline">\((15,6),(12,7)\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>giving the path <span class="math inline">\(1\to4\to7\to10\to13\to15\)</span>: the first decision of this path belongs to the optimal policy at state <span class="math inline">\(1\)</span>, and states <span class="math inline">\(4,7,10\)</span> along the way inherit this same first decision (i.e., the same edge direction) as <em>their</em> optimal first decision, since the tail of an optimal path is itself optimal.</p>
+<p>From initial state <span class="math inline">\(2\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Iteration</th>
+<th>Pairs <span class="math inline">\((i,d_i)\)</span>, <span class="math inline">\(i\in\text{OPEN}\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(0\)</span></td>
+<td><span class="math inline">\((2,0)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(1\)</span></td>
+<td><span class="math inline">\((4,4),(5,1)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(2\)</span></td>
+<td><span class="math inline">\((4,4),(9,4),(8,5)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(3\)</span></td>
+<td><span class="math inline">\((7,4),(9,4),(8,5)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(4\)</span></td>
+<td><span class="math inline">\((10,5),(11,7),(9,4),(8,5)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(5\)</span></td>
+<td><span class="math inline">\((10,5),(11,7),(12,5),(8,5)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(6\)</span></td>
+<td><span class="math inline">\((10,5),(11,7),(14,5),(8,5),(13,10)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(7\)</span></td>
+<td><span class="math inline">\((10,5),(11,7),(15,9),(8,5),(13,10)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(8\)</span></td>
+<td><span class="math inline">\((10,5),(11,7),(15,9),(13,10)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(9\)</span></td>
+<td><span class="math inline">\((11,7),(15,9),(13,10)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(10\)</span></td>
+<td><span class="math inline">\((15,9),(13,10)\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>giving the path <span class="math inline">\(2\to5\to9\to12\to14\to15\)</span>, with <span class="math inline">\(5,9,12,14\)</span> inheriting the same first decision.</p>
+<p>From initial state <span class="math inline">\(3\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Iteration</th>
+<th>Pairs <span class="math inline">\((i,d_i)\)</span>, <span class="math inline">\(i\in\text{OPEN}\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(0\)</span></td>
+<td><span class="math inline">\((3,0)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(1\)</span></td>
+<td><span class="math inline">\((6,1),(7,3),(8,1)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(2\)</span></td>
+<td><span class="math inline">\((10,5),(11,4),(7,3),(8,1)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(3\)</span></td>
+<td><span class="math inline">\((10,5),(11,3),(7,3),(12,6)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(4\)</span></td>
+<td><span class="math inline">\((10,4),(11,3),(12,6)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(5\)</span></td>
+<td><span class="math inline">\((10,4),(13,7),(14,6),(12,6)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(6\)</span></td>
+<td><span class="math inline">\((13,7),(14,6),(12,6)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(7\)</span></td>
+<td><span class="math inline">\((13,7),(15,10),(12,6)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(8\)</span></td>
+<td><span class="math inline">\((15,7),(12,6)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(9\)</span></td>
+<td><span class="math inline">\((15,7),(14,6)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(10\)</span></td>
+<td><span class="math inline">\((15,7)\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>giving the path <span class="math inline">\(3\to8\to11\to13\to15\)</span>, with <span class="math inline">\(8,11,13\)</span> inheriting the same first decision.</p>
+<p>From initial state <span class="math inline">\(6\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Iteration</th>
+<th>Pairs <span class="math inline">\((i,d_i)\)</span>, <span class="math inline">\(i\in\text{OPEN}\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(0\)</span></td>
+<td><span class="math inline">\((6,0)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(1\)</span></td>
+<td><span class="math inline">\((10,4),(11,3)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(2\)</span></td>
+<td><span class="math inline">\((10,4),(13,7),(14,5)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(3\)</span></td>
+<td><span class="math inline">\((13,7),(14,5)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(4\)</span></td>
+<td><span class="math inline">\((13,7),(15,9)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(5\)</span></td>
+<td><span class="math inline">\((13,7)\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>giving the path <span class="math inline">\(6\to11\to13\to15\)</span>, with <span class="math inline">\(11,13\)</span> inheriting the same first decision.</p>
+<p>Combining the first decisions obtained from these (and the remaining, not shown here) runs of Dijkstra’s algorithm for every node yields exactly the same optimal policy that dynamic programming produced directly in Unit 1 (<a href="#fig-appendixA-policy" class="quarto-xref">Fig.&nbsp;23</a>).</p>
+<div style="text-align: center;">
+<div id="fig-appendixA-policy" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-appendixA-policy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg43.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:55.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-appendixA-policy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;23: The optimal policy for the Unit 1 transition diagram, obtained here via repeated application of Dijkstra’s algorithm – matching the policy obtained directly with dynamic programming in Unit 1.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>So Dijkstra’s algorithm <em>can</em> reproduce a dynamic-programming policy, at the cost of running it once per state rather than once overall. This still leaves the question from the main text open: since dynamic programming’s exploration of every node is what makes it comparatively expensive, why use it at all, given that Dijkstra’s algorithm and A* are typically faster? The answer, as noted in the main text, is that dynamic programming extends to <em>stochastic</em> dynamic programming (Unit 2), which copes with random disturbances – something Dijkstra’s algorithm, built around deterministic edge weights, cannot do.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="historical-note" class="level3" data-number="1.6">
+<h3 data-number="1.6" class="anchored" data-anchor-id="historical-note"><span class="header-section-number">1.6</span> Historical note</h3>
+<p>Edsger W. Dijkstra was a professor at TU/Eindhoven from 1962 to 1984.</p>
+<div style="text-align: center;">
+<div id="fig-dijkstra-portrait" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dijkstra-portrait-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg31.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:65.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dijkstra-portrait-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;24: Edsger W. Dijkstra (1930-2002). (Photo: Hamilton Richards, University of Texas at Austin, CC BY-SA 3.0, via Wikimedia Commons.)
+</figcaption>
+</figure>
+</div>
+</div>
+<p>He later recalled designing his shortest-path algorithm in about twenty minutes, without pencil or paper, on a café terrace in Amsterdam:</p>
+<blockquote class="blockquote">
+<p>“What’s the shortest way to travel from Rotterdam to Groningen? It is the algorithm for the shortest path, which I designed in about 20 minutes. One morning I was shopping in Amsterdam with my young fiancée, and tired, we sat down on the café terrace to drink a cup of coffee and I was just thinking about whether I could do this, and I then designed the algorithm for the shortest path. As I said, it was a 20-minute invention. In fact, it was published in 1959, three years later. The publication is still quite nice. One of the reasons that it is so nice was that I designed it without pencil and paper. Without pencil and paper you are almost forced to avoid all avoidable complexities. Eventually that algorithm became, to my great amazement, one of the cornerstones of my fame.”</p>
+<p>– Edsger W. Dijkstra (1930-2002)</p>
+</blockquote>
+</section>
+</section>
+<section id="online-replanning-policy" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="online-replanning-policy"><span class="header-section-number">2</span> Online replanning policy</h2>
+<p>A transition diagram, as we have seen, is just a weighted graph, so methods for computing shortest paths in graphs – Dijkstra’s algorithm, A* – apply directly to it (<a href="#fig-paths-and-policy-a" class="quarto-xref">Fig.&nbsp;25</a>). Doing so for <em>every</em> stage and <em>every</em> state, and each time recording only the first decision of the resulting optimal path, yields exactly the <em>optimal policy</em>: a function that, for each state and stage, gives the first decision of the optimal path from that state onward (<a href="#fig-paths-and-policy-b" class="quarto-xref">Fig.&nbsp;26</a>). This is precisely the strategy worked through in the callout above. As already noted, though, computing the optimal policy this way – one shortest-path computation per state – is typically less computationally efficient than obtaining it directly with dynamic programming.</p>
+<div style="text-align: center;">
+<div id="fig-paths-and-policy-a" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-paths-and-policy-a-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg33a.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:55.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-paths-and-policy-a-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;25: Computing an optimal path from a given state in a transition diagram with Dijkstra’s algorithm or A* (robot grid example; grey cells are obstacles).
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-paths-and-policy-b" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-paths-and-policy-b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg33b.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:70.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-paths-and-policy-b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;26: Repeating the computation for every state and keeping only the first decision of each optimal path yields the optimal policy (right), from the same set of per-state optimal paths (left).
+</figcaption>
+</figure>
+</div>
+</div>
+<p>There is, however, a way to make this approach practical: instead of precomputing the full policy, apply Dijkstra’s algorithm (or A<em>) </em>online*. The idea is simple. First, compute the optimal path for the current initial state only, and take its first decision (<a href="#fig-online-replanning-initial" class="quarto-xref">Fig.&nbsp;27</a>). Then, if no disturbance occurs, simply continue to follow the next decision along this already-computed optimal path; if a disturbance does occur, recompute the optimal path online, from the new current state, and apply the first decision of this new optimal path (<a href="#fig-online-replanning-disturbance" class="quarto-xref">Fig.&nbsp;28</a>).</p>
+<div style="text-align: center;">
+<div id="fig-online-replanning-initial" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-online-replanning-initial-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg34a.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:55.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-online-replanning-initial-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;27: Optimal path computed from the initial state at stage <span class="math inline">\(0\)</span> to the final stage <span class="math inline">\(h\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-online-replanning-disturbance" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-online-replanning-disturbance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg34b.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-online-replanning-disturbance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;28: Two examples where a disturbance forces an online recomputation of the optimal path (red).
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Ignoring the disturbances explicitly modeled in Unit 2, this online replanning strategy produces exactly the same policy as dynamic programming. The two are nonetheless meaningfully different in character: the dynamic-programming policy is <em>explicit</em> – a lookup table computed once, offline, for every state – whereas the online replanning policy is <em>implicit</em>, requiring a fresh shortest-path computation every time a disturbance occurs. In the literature this implicit policy is also known as <em>certainty equivalent control</em>, and it is closely related to <em>model predictive control</em>, a topic addressed later in the course (<a href="#fig-certainty-equivalent-icon" class="quarto-xref">Fig.&nbsp;29</a>).</p>
+<div style="text-align: center;">
+<div id="fig-certainty-equivalent-icon" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-certainty-equivalent-icon-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture3/pg35.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:30.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-certainty-equivalent-icon-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;29: The executed path (highlighted) under the online replanning / certainty-equivalent-control strategy, on the same grid example.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The following table summarizes which of the methods discussed in this unit can be used for which task:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><strong>Optimal paths</strong></td>
+<td>Dynamic programming, and Dijkstra’s algorithm (more efficient)</td>
+</tr>
+<tr class="even">
+<td><strong>Online replanning policy</strong></td>
+<td>Dynamic programming (might be computationally hard), Dijkstra’s algorithm offline (less efficient), or Dijkstra’s algorithm online (requires online computations)</td>
+</tr>
+<tr class="odd">
+<td><strong>Stochastic dynamic programming</strong></td>
+<td>Stochastic dynamic programming only – Dijkstra’s algorithm cannot handle stochastic disturbances</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="summary" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="summary"><span class="header-section-number">3</span> Summary</h2>
+<p>This unit revisited the shortest path problem in weighted graphs, first showing that it can be solved with the dynamic programming algorithm already developed in Units 1 and 2, by building a suitable transition diagram from the graph. Because dynamic programming explores every node and can therefore be inefficient when only a single path is needed, we then introduced two alternative algorithms, Dijkstra’s algorithm and A<em>, which are typically much more efficient at computing one optimal path, with A</em> further sped up by a heuristic estimate of the remaining distance to the destination. We then showed how Dijkstra’s algorithm (and A*) can also be used, applied online after each disturbance, to realize the same policy that dynamic programming computes explicitly and offline – a strategy known as online replanning, or certainty equivalent control, closely related to model predictive control. The main message of the unit is that several methods are available for computing optimal paths and optimal policies in graphs, each with its own trade-offs – chief among them whether online computation is feasible – with one notable exception: only (stochastic) dynamic programming extends to problems with stochastic disturbances.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

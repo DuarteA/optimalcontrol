@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="lecture06-kalman-lqg_files/libs/clipboard/clipboard.min.js"></script>
+<script src="lecture06-kalman-lqg_files/libs/quarto-html/tabby.min.js"></script>
+<script src="lecture06-kalman-lqg_files/libs/quarto-html/popper.min.js"></script>
+<script src="lecture06-kalman-lqg_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="lecture06-kalman-lqg_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="lecture06-kalman-lqg_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="lecture06-kalman-lqg_files/libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
+
+  <meta name="author" content="Duarte Antunes">
+  <title>lecture06-kalman-lqg</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="lecture06-kalman-lqg_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="lecture06-kalman-lqg_files/libs/revealjs/dist/reveal.css">
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="lecture06-kalman-lqg_files/libs/revealjs/dist/theme/quarto-dbdae09e3717e6ee293fc537af762018.css">
+  <link href="lecture06-kalman-lqg_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="lecture06-kalman-lqg_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="lecture06-kalman-lqg_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="lecture06-kalman-lqg_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+  <!--
+  MathJax needs its own macro definitions -- LaTeX's \newcommand in
+  macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+  SAME macro names available when rendering to revealjs/html, so a macro like
+  \costtogo looks identical whether you're viewing slides in the browser or a
+  PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+  -->
+  <script>
+  window.MathJax = {
+    tex: {
+      macros: {
+        E: "\\mathbb{E}",
+        Prob: "\\text{Prob}",
+        R: "\\mathbb{R}",
+        N: "\\mathbb{N}",
+        argmin: ["\\operatorname*{argmin}_{#1}", 1],
+        argmax: ["\\operatorname*{argmax}_{#1}", 1],
+        policy: "\\mu",
+        costtogo: "J",
+        state: "x",
+        action: "u"
+      }
+    }
+  };
+  </script>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+
+<section id="unit-6" class="slide level2 center" style="text-align: center;">
+<h2>Unit 6</h2>
+<!--
+Converted from Slides/Lecture6.pdf (61 slides) on 2026-08-11, following the
+conventions finalized on Lectures 1-5 (see lecture04/lecture05's header
+comments for the full rationale). Quick recap:
+- No image captions anywhere; every figure is a bare
+  ![](path){width="X%" fig-align="center"} with no caption/credit text.
+- Every crop was produced with the row/column pixel-band-detection method,
+  targeting a vertical band that excludes the slide title (top) and the
+  Keynote page number (bottom), then visually spot-checked; a couple of
+  crops were redone after a first pass grabbed the wrong region (verified
+  against the page's own printed corner label, e.g. "C4", "D1", "E2").
+- Slides that are pure text/bullets/equations are retyped natively as
+  Quarto/LaTeX. Slides built around a genuine diagram or a numerical plot
+  are kept as a tightly-cropped image.
+- Decorative cartoon icons (graduation cap / student figures used on
+  slide 7 to illustrate "open loop vs closed loop", and the small
+  "LQR ≡ LQE" icon pair on slide 22) are dropped; only the substantive
+  diagrams and plots are kept as images. Slide 10's ostrich/penguin/wizard
+  icons (illustrating "open loop" / "closed loop") are likewise dropped,
+  keeping only the two rows of time-response plots.
+- The Kalman photo (slide 31, Rudolf Kálmán receiving the National Medal
+  of Science from President Obama, 2009) is an official White House photo
+  (public domain, taken by a federal employee in the course of duty),
+  kept the same way the Bayes/Dijkstra/Bellman portraits were kept in
+  earlier lectures.
+- Figures live in figures/lecture6/, named pgNN-slug.png (matching the
+  original PDF page number NN, 1-indexed from the title slide).
+
+This lecture continues "Part II: Stage decision problems" (see Lecture 5):
+it extends the deterministic LQR to (a) stochastic disturbances (still
+full state feedback) and (b) partial/noisy state information via the
+Kalman filter, culminating in the separation principle and the LQG
+(linear-quadratic-Gaussian) controller.
+
+FIRST-PASS CAVEAT: this is a first pass prioritizing correct structure,
+faithful transcription of every equation, and careful figure crops. Expect
+a slide-by-slide refinement round, same as Lectures 1-5.
+-->
+<h3 style="text-align: center;" id="stochastic-and-output-feedback-linear-quadratic-control-the-kalman-filter-and-lqg">Stochastic and Output-Feedback Linear Quadratic Control: the Kalman Filter and LQG</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/shared/tue-logo.png" class="quarto-figure quarto-figure-center" style="width:15.0%"></p>
+</figure>
+</div>
+<div class="title-slide-meta">
+<p>4SC000, Q2 2026-2027</p>
+<p>Duarte Antunes</p>
+</div>
+</section>
+<section id="outline" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Stochastic dynamic programming and linear quadratic control</li>
+<li>Output feedback linear quadratic control
+<ul>
+<li>Separation principle</li>
+<li>Kalman filter</li>
+<li>LQG design</li>
+</ul></li>
+</ul>
+</section>
+<section id="stochastic-formulation" class="slide level2">
+<h2>Stochastic formulation</h2>
+<p><strong>Dynamic model</strong> <span class="math inline">\(\quad x_{k+1} = f_k(x_k,u_k,w_k) \qquad w_k \in \mathbb{R}^{n_w} \text{ (stochastic disturbances)}\)</span></p>
+<p><strong>Cost</strong> <span class="math inline">\(\quad \displaystyle\sum_{k=0}^{h-1} g_k(x_k,u_k,w_k) + g_h(x_h)\)</span></p>
+<p>Find a policy <span class="math inline">\(\pi=\{\mu_0,\dots,\mu_{h-1}\}\)</span>, <span class="math inline">\(u_k=\mu_k(x_k)\)</span>, that minimizes</p>
+<p><span class="math display">\[J_\pi(x_0) = \mathbb{E}\Big[\sum_{k=0}^{h-1} g_k(x_k,\mu_k(x_k),w_k) + g_h(x_h)\Big]\]</span></p>
+<p>We assume that the stochastic disturbances have zero mean and are statistically independent (white).</p>
+</section>
+<section id="stochastic-dynamic-programming-algorithm" class="slide level2 smaller">
+<h2>Stochastic dynamic programming algorithm</h2>
+<div style="border: 2px solid #333; border-radius: 8px; padding: 0.8em;">
+<p>Start with <span class="math inline">\(J_h(x_h)=g_h(x_h)\)</span> for every <span class="math inline">\(x_h \in X_h\)</span> and for each decision stage, starting at the last and moving backwards, <span class="math inline">\(k \in \{h-1,h-2,\dots,0\}\)</span>, compute <span class="math inline">\(\mu_k\)</span> and <span class="math inline">\(J_k\)</span> from</p>
+<p><span class="math display">\[J_k(x_k) = \min_{u_k \in U_k(x_k)} \mathbb{E}_{w_k}\big[g_k(x_k,u_k,w_k) + J_{k+1}(f_k(x_k,u_k,w_k))\big] \quad \text{(DP equation)}\]</span></p>
+<p>and</p>
+<p><span class="math display">\[\mu_k(x_k) = u_k\]</span></p>
+<p>where <span class="math inline">\(u_k\)</span> is the minimizer in the DP equation. Then <span class="math inline">\(\{\mu_0,\dots,\mu_{h-1}\}\)</span> is an optimal policy.</p>
+</div>
+<p>To be more precise we can write the right hand side of the DP equation as</p>
+<p><span class="math display">\[\mathbb{E}_{w_k}\big[g_k(x_k,u_k,w_k)+J_{k+1}(f_k(x_k,u_k,w_k))\,|\,x_k\big]\]</span></p>
+<p>which reinforces the fact that <span class="math inline">\(x_k\)</span> is assumed to be constant when computing the expected value and evaluating the minimum.</p>
+</section>
+<section id="linear-quadratic-control" class="slide level2 smaller">
+<h2>Linear quadratic control</h2>
+<p><strong>Dynamic model</strong> <span class="math inline">\(\quad x_{k+1}=A_kx_k+B_ku_k+w_k \qquad k\in\{0,\dots,h-1\} \qquad \mathbb{E}[w_k]=0 \text{ and white}\)</span></p>
+<p><strong>Cost function</strong> <span class="math inline">\(\quad \displaystyle\sum_{k=0}^{h-1} \begin{bmatrix}x_k^\intercal &amp; u_k^\intercal\end{bmatrix}\begin{bmatrix}Q_k &amp; S_k \\ S_k^\intercal &amp; R_k\end{bmatrix}\begin{bmatrix}x_k \\ u_k\end{bmatrix} + x_h^\intercal Q_h x_h\)</span></p>
+<p>Find a policy <span class="math inline">\(\pi=\{\mu_0,\dots,\mu_{h-1}\}\)</span>, <span class="math inline">\(u_k=\mu_k(x_k)\)</span>, that minimizes</p>
+<p><span class="math display">\[\mathbb{E}\Big[\sum_{k=0}^{h-1} \begin{bmatrix}x_k^\intercal &amp; u_k^\intercal\end{bmatrix}\begin{bmatrix}Q_k &amp; S_k \\ S_k^\intercal &amp; R_k\end{bmatrix}\begin{bmatrix}x_k \\ u_k\end{bmatrix} + x_h^\intercal Q_h x_h\Big]\]</span></p>
+</section>
+<section id="optimal-policy" class="slide level2 smaller">
+<h2>Optimal policy</h2>
+<div style="border: 2px solid #333; border-radius: 8px; padding: 0.8em;">
+<p><strong>Theorem.</strong> The optimal policy for the linear quadratic control problem is</p>
+<p><span class="math display">\[u_k = K_kx_k \qquad k \in \{0,\dots,h-1\}\]</span></p>
+<p>where</p>
+<p><span class="math display">\[K_k = -\big(B_k^\intercal P_{k+1}B_k+R_k\big)^{-1}\big(S_k^\intercal+B_k^\intercal P_{k+1}A_k\big)\]</span></p>
+<p><span class="math display">\[P_k = A_k^\intercal P_{k+1}A_k+Q_k - \big(S_k+A_k^\intercal P_{k+1}B_k\big)\big(B_k^\intercal P_{k+1}B_k+R_k\big)^{-1}\big(S_k^\intercal+B_k^\intercal P_{k+1}A_k\big)\]</span></p>
+<p><span class="math display">\[P_h=Q_h \qquad k\in\{h-1,\dots,0\} \qquad \text{(Riccati iterations)}\]</span></p>
+<p>and the resulting expected cost is given by</p>
+<p><span class="math display">\[J_0(x_0) = x_0^\intercal P_0 x_0 + \sum_{k=0}^{h-1} \text{trace}\big(P_{k+1}\mathbb{E}[w_kw_k^\intercal]\big)\]</span></p>
+</div>
+<p>Proof: see Appendix A.</p>
+</section>
+<section id="discussion" class="slide level2">
+<h2>Discussion</h2>
+<ul>
+<li>The optimal policy is exactly the same as in the case <span class="math inline">\(w_k=0\)</span>.</li>
+<li>Recall the approaches to cope with stochastic disturbances: open loop (use the decisions of the optimal path), closed-loop (use the policy from deterministic DP), closed-loop (use the policy from stochastic DP).</li>
+<li>The result of the previous slide says that when the dynamic model is linear and the cost is quadratic, the following holds: these three approaches coincide.</li>
+<li>When this happens we say that we have <strong>certainty equivalence</strong>.</li>
+<li>The cost increases when we consider disturbances (intuitive!)</li>
+</ul>
+<p><span class="math display">\[J_0(x_0) = \underbrace{x_0^\intercal P_0 x_0}_{\text{cost without disturbances}} + \underbrace{\sum_{k=0}^{h-1}\text{trace}(P_{k+1}\mathbb{E}[w_kw_k^\intercal])}_{\text{additional cost}}\]</span></p>
+</section>
+<section id="discussion-1" class="slide level2 smaller">
+<h2>Discussion</h2>
+<ul>
+<li>The result carries over if we consider an infinite horizon cost, under the same assumptions that we have considered in the deterministic case</li>
+</ul>
+<p><span class="math display">\[\mathbb{E}\Big[\sum_{k=0}^\infty x_k^\intercal Qx_k+2x_k^\intercal Su_k+u_k^\intercal Ru_k\Big]\]</span></p>
+<p>(optimal policy <span class="math inline">\(u_k=\bar Kx_k\)</span>, <span class="math inline">\(\bar K=-(B^\intercal \bar P B+R)^{-1}(S^\intercal+B^\intercal \bar P A)\)</span> where <span class="math inline">\(\bar P\)</span> satisfies the algebraic Riccati equation).</p>
+<ul>
+<li>However, now we need the extra assumption that the cost is bounded. If this is the case (e.g.&nbsp;if <span class="math inline">\(w_\ell=0\)</span>, <span class="math inline">\(\ell&gt;L&gt;0\)</span>) it is given by</li>
+</ul>
+<p><span class="math display">\[x_0^\intercal \bar P x_0 + \sum_{k=0}^\infty \text{trace}(\bar P \mathbb{E}[w_kw_k^\intercal])\]</span></p>
+<ul>
+<li>If the cost is not bounded we can consider an alternative (average) cost</li>
+</ul>
+<p><span class="math display">\[\lim_{T\to\infty} \frac{1}{T}\mathbb{E}\Big[\sum_{k=0}^{T-1} x_k^\intercal Qx_k+2x_k^\intercal Su_k+u_k^\intercal Ru_k\Big]\]</span></p>
+<p>which converges to <span class="math inline">\(\text{trace}(\bar P W)\)</span>, assuming <span class="math inline">\(W=\mathbb{E}[w_kw_k^\intercal]\ \forall k\)</span>.</p>
+</section>
+<section id="example" class="slide level2">
+<h2>Example</h2>
+<p>Double integrator considered previously</p>
+<p><span class="math display">\[x_{k+1} = \begin{bmatrix}1&amp;\tau\\0&amp;1\end{bmatrix}x_k + \begin{bmatrix}\frac{\tau^2}{2}\\\tau\end{bmatrix}u_k \qquad \tau=0.2\]</span></p>
+<p><span class="math display">\[\sum_{k=0}^{h-1}(x_k^\intercal Qx_k+u_k^\intercal Ru_k)+x_h^\intercal Q_hx_h \qquad Q=\begin{bmatrix}1&amp;0\\0&amp;1\end{bmatrix} \qquad R=1\]</span></p>
+<p>Optimal policy <span class="math inline">\(u_k=Kx_k\)</span>, <span class="math inline">\(k\geq 0\)</span> <span class="math inline">\(\qquad K=\begin{bmatrix}-0.8412 &amp; -1.54\end{bmatrix}\)</span></p>
+<p>Optimal control input and states for <span class="math inline">\(x_0=[y_0\ \ v_0]^\intercal=[1\ \ 0]^\intercal\)</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg09-example-plots.png" class="quarto-figure quarto-figure-center" style="width:75.0%"></p>
+</figure>
+</div>
+</section>
+<section id="effects-of-disturbances" class="slide level2 smaller">
+<h2>Effects of disturbances</h2>
+<p>Consider now a disturbance at time 2 sec (<span class="math inline">\(k=10\)</span>)</p>
+<p><span class="math display">\[x_{k+1} = \begin{bmatrix}1&amp;\tau\\0&amp;1\end{bmatrix}x_k + \begin{bmatrix}\frac{\tau^2}{2}\\\tau\end{bmatrix}u_k+w_k \qquad w_k = \begin{cases}\begin{bmatrix}0\\0\end{bmatrix}, &amp; \text{if } k\in\mathbb{N}_0\setminus\{10\} \\ \begin{bmatrix}0\\a\end{bmatrix}, &amp; \text{if } k=10\end{cases}\]</span></p>
+<p>where <span class="math inline">\(a\)</span> is a uniform random variable in the interval <span class="math inline">\([-0.5\ \ 0.5]\)</span>.</p>
+<p><strong>Open loop</strong> (top row) / <strong>Closed loop</strong> (bottom row)</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg10-disturbance-plots.png" class="quarto-figure quarto-figure-center" style="width:70.0%"></p>
+</figure>
+</div>
+</section>
+<section id="computing-the-expected-cost" class="slide level2 smaller">
+<h2>Computing the expected cost</h2>
+<p>We can compute the expected cost based on the expression</p>
+<p><span class="math display">\[x_0^\intercal \bar P x_0+\sum_{k=0}^\infty \text{trace}\big(\bar P\,\mathbb{E}[w_kw_k^\intercal]\big) = x_0^\intercal \bar P x_0+\text{trace}\Big(\bar P\begin{bmatrix}0&amp;0\\0&amp;\mathbb{E}[a^2]\end{bmatrix}\Big)\]</span></p>
+<p>where <span class="math inline">\(\bar P\)</span> is the solution to the algebraic Riccati equation which for the considered parameters is</p>
+<p><span class="math display">\[\bar P = \begin{bmatrix}9.1890 &amp; 5.0249\\5.0249 &amp; 9.2324\end{bmatrix}\]</span></p>
+<p>and we used the fact that <span class="math inline">\(w_k=\begin{cases}\begin{bmatrix}0\\0\end{bmatrix}, &amp; \text{if } k\in\mathbb{N}_0\setminus\{10\} \\ \begin{bmatrix}0\\a\end{bmatrix}, &amp; \text{if } k=10\end{cases}\)</span></p>
+<p>Since <span class="math inline">\(x_0=[0\ \ 1]^\intercal\)</span> and <span class="math inline">\(\mathbb{E}[a^2]=\int_{-0.5}^{0.5} t^2dt = 1/12\)</span> we obtain the cost <span class="math inline">\(9.95\)</span>.</p>
+</section>
+<section id="computing-the-expected-value" class="slide level2">
+<h2>Computing the expected value</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg12-montecarlo-plots.png" class="quarto-figure quarto-figure-center" style="width:80.0%"></p>
+</figure>
+</div>
+<p>average cost of 5000 simulations: <span class="math inline">\(9.95\)</span></p>
+</section>
+<section id="outline-1" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Stochastic dynamic programming and linear quadratic control</li>
+<li><u>Output feedback linear quadratic control</u>
+<ul>
+<li>Separation principle</li>
+<li>Kalman filter</li>
+<li>LQG design</li>
+</ul></li>
+</ul>
+</section>
+<section id="problem-formulation" class="slide level2">
+<h2>Problem formulation</h2>
+<p><strong>Dynamic model</strong> <span class="math inline">\(\quad x_{k+1}=f_k(x_k,u_k,w_k) \qquad\)</span> (stochastic disturbances, initial state unknown)</p>
+<p><strong>Cost</strong> <span class="math inline">\(\quad \displaystyle\sum_{k=0}^{h-1} g_k(x_k,u_k,w_k)+g_h(x_h)\)</span></p>
+<p><strong>Output</strong> <span class="math inline">\(\quad y_k=h_k(x_k,u_{k-1},n_k) \qquad\)</span> (noise)</p>
+<p><strong>Information set</strong> <span class="math inline">\(\quad I_0=(y_0), \quad I_k=(y_0,y_1,\dots,y_k,u_0,u_1,\dots,u_{k-1}), \quad k\geq 1\)</span></p>
+<p>Find a policy <span class="math inline">\(\pi=\{\mu_0,\dots,\mu_{h-1}\}\)</span>, <span class="math inline">\(u_k=\mu_k(I_k)\)</span>, which minimizes</p>
+<p><span class="math display">\[J_\pi = \mathbb{E}\Big[\sum_{k=0}^{h-1} g_k(x_k,\mu_k(I_k),w_k) + g_h(x_h)\Big]\]</span></p>
+<p>We assume that the initial state, the stochastic disturbances and the output noise have zero mean, are statistically independent and have a known probability distribution.</p>
+</section>
+<section id="first-approach" class="slide level2">
+<h2>First approach</h2>
+<p>We can reformulate a partial information optimal control problem as a standard full information optimal control problem by considering the state to be the information set. The problem is that the state space dimension increases exponentially.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg15-first-approach.png" class="quarto-figure quarto-figure-center" style="width:90.0%"></p>
+</figure>
+</div>
+</section>
+<section id="second-approach" class="slide level2">
+<h2>Second approach</h2>
+<p>It is possible to show that the knowledge of the probability distribution of the state given the information obtained so far, denoted by <span class="math inline">\(P_{x_k|I_k}\)</span>, is sufficient to determine optimal decisions.</p>
+<p><span class="math display">\[u_k = \mu_k(P_{x_k|I_k})\]</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg16-second-approach.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+<p>The state space dimension is now fixed. However, it is typically not easy to store <span class="math inline">\(P_{x_k|I_k}\)</span>.</p>
+</section>
+<section id="problem-formulation-1" class="slide level2 smaller">
+<h2>Problem formulation</h2>
+<p><strong>Dynamic model</strong> <span class="math inline">\(\quad x_{k+1}=Ax_k+Bu_k+w_k \qquad k\in\{0,\dots,h-1\} \qquad\)</span> (zero mean <span class="math inline">\(\mathbb{E}[w_k]=0\)</span> and independent)</p>
+<p><strong>Cost function</strong> <span class="math inline">\(\quad \displaystyle\sum_{k=0}^{h-1}\begin{bmatrix}x_k^\intercal &amp; u_k^\intercal\end{bmatrix}\begin{bmatrix}Q&amp;S\\S^\intercal&amp;R\end{bmatrix}\begin{bmatrix}x_k\\u_k\end{bmatrix}+x_h^\intercal Q_hx_h\)</span></p>
+<p><strong>Output equation</strong> <span class="math inline">\(\quad y_k=Cx_k+n_k \qquad\)</span> (noise: zero mean and independent)</p>
+<p><strong>Information set</strong> <span class="math inline">\(\quad I_k=(y_0,y_1,\dots,y_k,u_0,u_1,\dots,u_{k-1})\)</span></p>
+<p>Find a policy <span class="math inline">\(\pi=\{\mu_0,\dots,\mu_{h-1}\}\)</span>, <span class="math inline">\(u_k=\mu_k(I_k)\)</span>, which minimizes</p>
+<p><span class="math display">\[\mathbb{E}\Big[\sum_{k=0}^{h-1}\begin{bmatrix}x_k^\intercal &amp; u_k^\intercal\end{bmatrix}\begin{bmatrix}Q&amp;S\\S^\intercal&amp;R\end{bmatrix}\begin{bmatrix}x_k\\u_k\end{bmatrix}+x_h^\intercal Q_hx_h\Big]\]</span></p>
+</section>
+<section id="problem-formulation-2" class="slide level2 smaller">
+<h2>Problem formulation</h2>
+<ul>
+<li>The initial condition follows a Gaussian (or Normal) distribution with mean <span class="math inline">\(\bar x_0\)</span> and covariance <span class="math inline">\(\bar\Phi_0=\mathbb{E}[(x_0-\bar x_0)(x_0-\bar x_0)^\intercal]\)</span>, denoted <span class="math inline">\(x_0 \sim \mathcal{N}(\bar x_0,\bar\Phi_0)\)</span></li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg18-gaussian-3d.png" class="quarto-figure quarto-figure-center" style="width:42.0%"></p>
+</figure>
+</div>
+<p><span class="math display">\[f(x) = \frac{1}{\sqrt{(2\pi)^k\det(\Sigma)}}e^{-\frac{1}{2}(x-\bar x_0)^\intercal \bar\Phi_0^{-1}(x-\bar x_0)} \qquad \text{Prob}[x_0\in A] = \int_A f(x)dx\]</span></p>
+<p>Example: <span class="math inline">\(x_0=[1\ \ 2]^\intercal\)</span>, <span class="math inline">\(\bar\Phi_0=\begin{bmatrix}2&amp;0.5\\0.5&amp;2\end{bmatrix}\)</span></p>
+<ul>
+<li>The noise variables <span class="math inline">\(n_k\)</span> are independent random variables following a Gaussian distribution with zero mean and covariance <span class="math inline">\(V=\mathbb{E}[n_kn_k^\intercal]\)</span>, i.e., <span class="math inline">\(n_k\sim\mathcal{N}(0,V)\)</span>.</li>
+<li>The disturbances variables <span class="math inline">\(w_k\)</span> are independent random variables following a Gaussian distribution with zero mean and covariance <span class="math inline">\(W=\mathbb{E}[w_kw_k^\intercal]\)</span>, i.e., <span class="math inline">\(w_k\sim\mathcal{N}(0,W)\)</span>.</li>
+<li>For simplicity we consider time-invariant matrices for the model and cost.</li>
+</ul>
+</section>
+<section id="outline-2" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Stochastic dynamic programming and linear quadratic control</li>
+<li>Output feedback linear quadratic control
+<ul>
+<li><u>Separation principle</u></li>
+<li>Kalman filter</li>
+<li>LQG design</li>
+</ul></li>
+</ul>
+</section>
+<section id="general-solution-structure" class="slide level2">
+<h2>General solution structure</h2>
+<p>From our general discussion, we know that we can first estimate <span class="math inline">\(P_{x_k|I_k}\)</span> and then make decisions (control)</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg20-general-solution.png" class="quarto-figure quarto-figure-center" style="width:65.0%"></p>
+</figure>
+</div>
+</section>
+<section id="solution" class="slide level2 smaller">
+<h2>Solution</h2>
+<p>It turns out that (see Appendix D):</p>
+<ul>
+<li><span class="math inline">\(P_{x_k|I_k}\)</span> is Gaussian, characterized by mean <span class="math inline">\(\hat x_{k|k}\)</span> and covariance <span class="math inline">\(\Phi_{k|k}=\mathbb{E}[(x_k-\hat x_{k|k})(x_k-\hat x_{k|k})^\intercal|I_k]\)</span> which can be obtained by the Kalman filter.</li>
+<li>The decision maker is the linear quadratic controller <span class="math inline">\(u_k=K_k\hat x_{k|k}\)</span> with the state replaced by the estimate where the gains are obtained from the Riccati equations.</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg21-solution-diagram.png" class="quarto-figure quarto-figure-center" style="width:58.0%"></p>
+</figure>
+</div>
+</section>
+<section id="discussion-2" class="slide level2 smaller">
+<h2>Discussion</h2>
+<ul>
+<li>This is one of the most beautiful &amp; most useful results in control theory! The controller is called linear quadratic Gaussian (LQG) compensator.</li>
+<li>Separation principle: LQG = LQR + LQE.*
+<ul>
+<li>As we have seen the LQR is the optimal controller when full state feedback is available.</li>
+<li>For a linear system with the dynamic and output models above and known input, the Kalman filter can be shown to be the optimal estimator in the sense that for <span class="math inline">\(F\in\mathbb{R}^{1\times n}\)</span> and output <span class="math inline">\(z_k=Fx_k\)</span>, the estimate <span class="math inline">\(\hat z_k=F\hat x_{k|k}\)</span> minimises, for every <span class="math inline">\(k\)</span>, the cost <span class="math inline">\(\mathbb{E}[(z_k-\hat z_k)^2|I_k]\)</span>.</li>
+<li>The LQG is the optimal controller among all the possible controllers (including non-linear controllers) when the noise, disturbances and initial conditions are Gaussian (non-Gaussian noise mentioned later).</li>
+</ul></li>
+<li>Resulting optimal cost is (see appendix D):</li>
+</ul>
+<p><span class="math display">\[J_0(I_0) = \underbrace{\mathbb{E}[x_0^\intercal P_0x_0|I_0]}_{\text{full state \&amp; no disturbances}} + \underbrace{\sum_{k=0}^{h-1}\text{trace}(P_{k+1}\mathbb{E}[w_kw_k^\intercal])}_{\text{additional cost of disturbances}} + \underbrace{\sum_{k=0}^{h-1}\text{trace}(X_k\mathbb{E}[(x_k-\hat x_{k|k})(x_k-\hat x_{k|k})^\intercal|I_k])}_{\text{additional cost of partial information}}\]</span></p>
+<p>*LQE: linear quadratic estimator, other term for the Kalman filter. <span class="math inline">\(X_k=A^\intercal P_{k+1}B(R+B^\intercal P_{k+1}B)^{-1}B^\intercal P_{k+1}A\)</span></p>
+</section>
+<section id="discussion-3" class="slide level2 smaller">
+<h2>Discussion</h2>
+<ul>
+<li>The separation principle also holds for the infinite horizon problem where we consider the average cost</li>
+</ul>
+<p><span class="math display">\[\lim_{T\to\infty}\frac{1}{T}\sum_{k=0}^{T-1}\mathbb{E}\Big[\begin{bmatrix}x_k^\intercal &amp; u_k^\intercal\end{bmatrix}\begin{bmatrix}Q&amp;S\\S^\intercal&amp;R\end{bmatrix}\begin{bmatrix}x_k\\u_k\end{bmatrix}\Big]\]</span></p>
+<ul>
+<li>In this case the observer is the so-called stationary Kalman filter and the control is the LQR controller with static gains.</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg23-stationary-kf-diagram.png" class="quarto-figure quarto-figure-center" style="width:65.0%"></p>
+</figure>
+</div>
+</section>
+<section id="outline-3" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Stochastic dynamic programming and linear quadratic control</li>
+<li>Output feedback linear quadratic control
+<ul>
+<li>Separation principle</li>
+<li><u>Kalman filter</u></li>
+<li>LQG design</li>
+</ul></li>
+</ul>
+</section>
+<section id="kalman-filter" class="slide level2 smaller">
+<h2>Kalman filter</h2>
+<p><strong>Given:</strong></p>
+<p>Dynamic model <span class="math inline">\(\ x_{k+1}=Ax_k+Bu_k+w_k\)</span>, <span class="math inline">\(x_0\sim\mathcal{N}(\bar x_0,\bar\Phi_0)\)</span> <span class="math inline">\(\qquad\)</span> Output equation <span class="math inline">\(\ y_k=Cx_k+n_k\)</span>, <span class="math inline">\(n_k\sim\mathcal{N}(0,V)\)</span>, <span class="math inline">\(w_k\sim\mathcal{N}(0,W)\)</span></p>
+<p>Information set <span class="math inline">\(\ I_k=(y_0,y_1,\dots,y_k,u_0,u_1,\dots,u_{k-1})\)</span>, <span class="math inline">\(k\geq 0\)</span></p>
+<p><strong>Then:</strong> <span class="math inline">\(P_{x_k|I_k} \sim \mathcal{N}(\hat x_{k|k},\Phi_{k|k})\)</span> is Gaussian with mean and covariance iteratively computed by:</p>
+<p><span class="math display">\[\hat x_{k|k} = \hat x_{k|k-1}+L_k(y_k-C\hat x_{k|k-1}) \qquad \hat x_{k+1|k}=A\hat x_{k|k}+Bu_k\]</span></p>
+<p><span class="math display">\[\Phi_{k|k} = \Phi_{k|k-1}-\Phi_{k|k-1}C^\intercal(C\Phi_{k|k-1}C^\intercal+V)^{-1}C\Phi_{k|k-1} \qquad \Phi_{k+1|k}=A\Phi_{k|k}A^\intercal+W\]</span></p>
+<p><span class="math display">\[L_k = \Phi_{k|k-1}C^\intercal(C\Phi_{k|k-1}C^\intercal+V)^{-1}\]</span></p>
+<p>Initial condition: <span class="math inline">\(\hat x_{0|-1}=\bar x_0\)</span>, <span class="math inline">\(\Phi_{0|-1}=\bar\Phi_0\)</span></p>
+</section>
+<section id="justification" class="slide level2">
+<h2>Justification</h2>
+<p>Why is <span class="math inline">\(P_{x_k|I_k}\sim\mathcal{N}(\hat x_{k|k},\Phi_{k|k})\)</span> Gaussian? Bayes’ rule!</p>
+<p>Let us consider a simple example. General case is discussed in Appendix B.</p>
+<p>Consider the initial stage, <span class="math inline">\(x_0\in\mathbb{R}\)</span>, <span class="math inline">\(y_0=x_0+n_0\)</span>, and let the a priori probability distributions be</p>
+<p><span class="math display">\[f_{x_0}(x_0) = \frac{1}{\sqrt{2\pi}\sigma_0}e^{-\frac{(x_0-\bar x_0)^2}{2\sigma_0^2}} \qquad f_{y_0|x_0}(y_0) = \frac{1}{\sqrt{2\pi}\sigma_n}e^{-\frac{(y_0-x_0)^2}{2\sigma_n^2}}\]</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg26-gaussian-pair.png" class="quarto-figure quarto-figure-center" style="width:70.0%"></p>
+</figure>
+</div>
+<p>Think of <span class="math inline">\(x_0\)</span> as the position of a robot and <span class="math inline">\(y_0\)</span> as a sensor measurement.</p>
+</section>
+<section id="justification-1" class="slide level2 smaller">
+<h2>Justification</h2>
+<p>Then, from Bayes’ rule</p>
+<p><span class="math display">\[\text{Prob}[x_0\in A|y_0\in B] = \alpha\,\text{Prob}[y_0\in B|x_0\in A]\,\text{Prob}[x_0\in A]\]</span></p>
+<p>or in terms of probability densities</p>
+<p><span class="math display">\[f_{x_0|y_0}(x_0) = \alpha f_{y_0|x_0}(y_0)f_{x_0}(x_0) \qquad \alpha \text{ -- function of } \bar x_0, y_0\]</span></p>
+<p><span class="math display">\[= \alpha\frac{1}{\sqrt{2\pi}\sigma_n}e^{-\frac{(y_0-x_0)^2}{2\sigma_n^2}}\frac{1}{\sqrt{2\pi}\sigma_0}e^{-\frac{(x_0-\bar x_0)^2}{2\sigma_0^2}} = \frac{1}{\sqrt{2\pi}\sigma_{0|0}}e^{-\frac{(x_0-\hat x_{0|0})^2}{2\sigma_{0|0}^2}} \quad \text{(after some calculations)}\]</span></p>
+<p>also Gaussian!</p>
+<p><span class="math display">\[\hat x_{0|0} = \bar x_0+L_0(y_0-\bar x_0) \qquad \sigma_{0|0}^2 = \sigma_0^2-\frac{\sigma_0^4}{\sigma_0^2+\sigma_n^2} \qquad L_0=\frac{\sigma_0^2}{\sigma_0^2+\sigma_n^2}\]</span></p>
+</section>
+<section id="justification-2" class="slide level2">
+<h2>Justification</h2>
+<p><span class="math inline">\(P_{x_0}\)</span>, <span class="math inline">\(P_{y_0|x_0}\)</span> (as above), and, based on the measurement <span class="math inline">\(y_0\)</span>, we update our new belief <span class="math inline">\(P_{x_0|I_0}\)</span> on <span class="math inline">\(x_0\)</span>:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg28-gaussian-update.png" class="quarto-figure quarto-figure-center" style="width:80.0%"></p>
+</figure>
+</div>
+<p>Shown for three example measurements <span class="math inline">\(y=1.2\)</span>, <span class="math inline">\(y=3\)</span>, <span class="math inline">\(y=0.5\)</span>.</p>
+</section>
+<section id="justification-3" class="slide level2">
+<h2>Justification</h2>
+<p>What about <span class="math inline">\(P_{x_1|I_1}\)</span>?</p>
+<ul>
+<li><span class="math inline">\(x_1\)</span> is a sum of Gaussian random variables when conditioned on <span class="math inline">\(u_0,y_0\)</span></li>
+</ul>
+<p><span class="math display">\[x_1 = ax_0+bu_0+w\]</span></p>
+<p>and therefore <span class="math inline">\(P_{x_1|u_0,y_0}\)</span> is Gaussian.</p>
+<ul>
+<li>Apply again Bayes’ rule to prove that <span class="math inline">\(P_{x_1|I_1}\)</span> is Gaussian.</li>
+</ul>
+<p>If we continue this procedure we obtain that <span class="math inline">\(P_{x_k|I_k}\)</span> is Gaussian for every <span class="math inline">\(k\)</span>.</p>
+</section>
+<section id="updating-the-pdf" class="slide level2">
+<h2>Updating the pdf</h2>
+<p>Special case of the Bayes’ filter: the Kalman filter (Gaussian) state distributions are updated recursively.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg30-updating-pdf.png" class="quarto-figure quarto-figure-center" style="width:80.0%"></p>
+</figure>
+</div>
+</section>
+<section id="rudolf-e.-kalman" class="slide level2">
+<h2>Rudolf E. Kalman</h2>
+<p><strong>Historical note</strong></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg31-kalman-photo.png" class="quarto-figure quarto-figure-center" style="width:45.0%"></p>
+</figure>
+</div>
+<p><em>Photo: President Obama presenting Kalman with the National Medal of Science, White House East Room, October 7, 2009 – official White House photograph, public domain (17 U.S.C. § 105, work of a federal employee).</em></p>
+<p>Rudolf E. Kalman (1930 – 2016). Kalman’s ideas on filtering were initially met with vast skepticism, so much so that he was forced to do the first publication of his results in mechanical engineering, rather than in electrical engineering or systems engineering. Kálmán had more success in presenting his ideas, however, while visiting Stanley F. Schmidt at the NASA Ames Research Center in 1960. This led to the use of Kálmán filters during the Apollo program, and furthermore, in the NASA Space Shuttle, in Navy submarines, and in unmanned aerospace vehicles and weapons, such as cruise missiles (source: wikipedia).</p>
+</section>
+<section id="outline-4" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Stochastic dynamic programming and linear quadratic control</li>
+<li>Output feedback linear quadratic control
+<ul>
+<li>Separation principle</li>
+<li>Kalman filter</li>
+<li><u>LQG design</u></li>
+</ul></li>
+</ul>
+</section>
+<section id="lqg-design" class="slide level2 smaller">
+<h2>LQG design</h2>
+<p><strong>Given:</strong> <span class="math inline">\(\ x_{k+1}=Ax_k+Bu_k+w_k\)</span>, <span class="math inline">\(x_0\sim\mathcal{N}(\bar x_0,\bar\Phi_0)\)</span> <span class="math inline">\(\qquad\)</span> <span class="math inline">\(y_k=Cx_k+n_k\)</span>, <span class="math inline">\(n_k\sim\mathcal{N}(0,V)\)</span>, <span class="math inline">\(w_k\sim\mathcal{N}(0,W)\)</span></p>
+<p><strong>Cost function</strong> <span class="math inline">\(\quad \displaystyle\lim_{T\to\infty}\frac{1}{T}\sum_{k=0}^{T-1}\mathbb{E}\Big[\begin{bmatrix}x_k^\intercal &amp; u_k^\intercal\end{bmatrix}\begin{bmatrix}Q&amp;S\\S^\intercal&amp;R\end{bmatrix}\begin{bmatrix}x_k\\u_k\end{bmatrix}\Big]\)</span></p>
+<p><strong>Obtain:</strong></p>
+<p>Controller gains <span class="math inline">\(\quad \bar P=A^\intercal \bar PA+Q-(S+A^\intercal \bar PB)(B^\intercal \bar PB+R)^{-1}(S^\intercal+B^\intercal \bar PA) \qquad \bar K=-(B^\intercal \bar PB+R)^{-1}(S^\intercal+B^\intercal \bar PA)\)</span></p>
+<p>Observer gains <span class="math inline">\(\quad \bar\Phi=A\bar\Phi A^\intercal-A\bar\Phi C^\intercal(C\bar\Phi C^\intercal+V)^{-1}C\bar\Phi A^\intercal+W \qquad \bar L=\bar\Phi C^\intercal(C\bar\Phi C^\intercal+V)^{-1}\)</span></p>
+<p><strong>LQG controller:</strong></p>
+<p><span class="math display">\[\hat x_{k+1|k}=A\hat x_{k|k}+Bu_k \qquad \hat x_{k|k}=\hat x_{k|k-1}+\bar L(y_k-C\hat x_{k|k-1}) \qquad u_k=\bar K\hat x_{k|k}\]</span></p>
+</section>
+<section id="remarks" class="slide level2 smaller">
+<h2>Remarks</h2>
+<ul>
+<li>According to our convention <span class="math inline">\(u_k\)</span> depends on <span class="math inline">\(y_k\)</span>. This means that we assume that at instant <span class="math inline">\(k\)</span>, the sensor measurement <span class="math inline">\(y_k\)</span> is acquired, the control input is computed, and the actuation is updated.</li>
+<li>Since there are inevitably computation delays it is common practice to make <span class="math inline">\(u_k=\bar K\hat x_{k|k-1}\)</span> which can be computed between time steps <span class="math inline">\(k\)</span> and <span class="math inline">\(k+1\)</span>.</li>
+<li>In the latter case we only need to run the following equations (Luenberger observer)</li>
+</ul>
+<p><span class="math display">\[\hat x_{k+1|k} = A\hat x_{k|k-1}+Bu_k+\tilde L(y_k-C\hat x_{k|k-1}) \qquad u_k=\bar K\hat x_{k|k-1}\]</span></p>
+<p>where <span class="math inline">\(\tilde L=A\bar L\)</span>.</p>
+<ul>
+<li>To use our implementation with Matlab function <code>kalman.m</code> used option ‘current’, and for this other implementation use ‘delayed’.</li>
+<li>Using either implementation one can show that the closed-loop is stable due to stability of <span class="math inline">\(A+B\bar K\)</span>, <span class="math inline">\(A+\tilde LC\)</span>.</li>
+<li>The average cost function has now the value (which can be concluded by dividing the finite horizon cost by the horizon, taking the limit as <span class="math inline">\(T\to\infty\)</span>)</li>
+</ul>
+<p><span class="math display">\[\text{trace}(\bar PW)+\text{trace}(\bar X\bar\Phi) \qquad \bar X=A^\intercal \bar PB(R+B^\intercal \bar PB)^{-1}B^\intercal \bar PA\]</span></p>
+</section>
+<section id="inverted-pendulum" class="slide level2 smaller">
+<h2>Inverted pendulum</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg35-inverted-pendulum.png" class="quarto-figure quarto-figure-center" style="width:40.0%"></p>
+</figure>
+</div>
+<p><strong>Linearized model</strong> (see [1, p.&nbsp;32]) <span class="math inline">\(\quad (I+m\ell^2)\ddot\theta-mg\ell\theta=m\ell\ddot x \qquad (M+m)\ddot x+b\dot x-m\ell\ddot\theta=u\)</span></p>
+<p><strong>State space</strong></p>
+<p><span class="math display">\[\frac{d}{dt}\begin{bmatrix}x\\\dot x\\\theta\\\dot\theta\end{bmatrix} = \begin{bmatrix}0&amp;1&amp;0&amp;0\\0&amp;-\frac{(I+m\ell^2)b}{q}&amp;\frac{m^2g\ell^2}{q}&amp;0\\0&amp;0&amp;0&amp;1\\0&amp;-\frac{m\ell b}{q}&amp;\frac{mg\ell(M+m)}{q}&amp;0\end{bmatrix}\begin{bmatrix}x\\\dot x\\\theta\\\dot\theta\end{bmatrix} + \begin{bmatrix}0\\\frac{I+m\ell^2}{q}\\0\\\frac{m\ell}{q}\end{bmatrix}u(t) \qquad q=(I+m\ell^2)(M+m)-m^2\ell^2\]</span></p>
+<p><span class="math display">\[y_k = \begin{bmatrix}1&amp;0&amp;0&amp;0\end{bmatrix}\begin{bmatrix}x(k\tau)\\\dot x(k\tau)\\\theta(k\tau)\\\dot\theta(k\tau)\end{bmatrix} + n_k \qquad n_k\sim\mathcal{N}(0,\sigma_n) \qquad \tau \text{ -- sampling period}\]</span></p>
+<p>[1] Feedback control of dynamic systems, Franklin, Powell, Emani-Naeini</p>
+</section>
+<section id="time-responses" class="slide level2">
+<h2>Time responses</h2>
+<p><span class="math inline">\(Q=I, S=0, R=1, \tau=0.1 \qquad W=I, V=1 \qquad \sigma_n=0.0001 \qquad x_0=[1\ \ 0\ \ 0\ \ 0]^\intercal\)</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg36-noisy-time-responses.png" class="quarto-figure quarto-figure-center" style="width:90.0%"></p>
+</figure>
+</div>
+</section>
+<section id="tuning" class="slide level2">
+<h2>Tuning</h2>
+<ul>
+<li>In practice the matrices <span class="math inline">\(V=\mathbb{E}[n_kn_k^\intercal]\)</span>, <span class="math inline">\(W=\mathbb{E}[w_kw_k^\intercal]\)</span> are used as tuning knobs to improve the state estimation.</li>
+<li>To facilitate the tuning, these matrices are typically chosen as diagonal matrices.</li>
+<li>If the filter is too “nervous”, i.e.&nbsp;it reacts very fast, and consequently the estimates are very noisy – in this case, pick weights to trust less the sensors and more the model, that is, increase <span class="math inline">\(V\)</span> and decrease <span class="math inline">\(W\)</span>.</li>
+<li>If it reacts too slow (although it filters out noise), it adds a delay in the control loop which is in general bad. In this case decrease <span class="math inline">\(V\)</span> and increase <span class="math inline">\(W\)</span>.</li>
+</ul>
+</section>
+<section id="concluding-remarks" class="slide level2">
+<h2>Concluding remarks</h2>
+<p><strong>Summary</strong></p>
+<ul>
+<li>We considered output feedback linear quadratic control. In this case, and assuming that the disturbances are Gaussian: use the Kalman filter to compute <span class="math inline">\(P_{x_k|I_k}\)</span>; use the optimal linear state-feedback controller (LQR infinite horizon cost); output feedback controller = LQR + LQE (separation principle).</li>
+</ul>
+</section>
+<section id="appendix-a" class="slide level2 center" style="text-align: center;">
+<h2>Appendix A</h2>
+<h3 style="text-align: center;" id="proof-of-theorem-1">Proof of Theorem 1</h3>
+</section>
+<section id="proof-of-linear-quadratic-control-result" class="slide level2 smaller">
+<h2>Proof of linear quadratic control result</h2>
+<p>Let us prove by induction that the cost-to-go, at a given time step <span class="math inline">\(k\)</span>, obtained by applying the stochastic dynamic programming algorithm to the linear quadratic control problem is</p>
+<p><span class="math display">\[J_k(x_k) = x_k^\intercal P_kx_k+c_k \qquad c_k = \sum_{\ell=k}^{h-1} \text{trace}(P_{\ell+1}\mathbb{E}[w_\ell w_\ell^\intercal])\]</span></p>
+<p>This holds for <span class="math inline">\(k=h\)</span> since <span class="math inline">\(J_h(x_h)=x_h^\intercal Q_hx_h\)</span> (<span class="math inline">\(c_h=0\)</span>).</p>
+<p>Assuming that it holds for a given step <span class="math inline">\(k+1\)</span>, i.e., <span class="math inline">\(J_{k+1}(x_{k+1}) = x_{k+1}^\intercal P_{k+1}x_{k+1}+c_{k+1}\)</span>, we have for step <span class="math inline">\(k\)</span></p>
+<p><span class="math display">\[J_k(x_k) = \min_{u_k} \mathbb{E}_{w_k}\big[x_k^\intercal Q_kx_k+u_k^\intercal R_ku_k+2x_k^\intercal S_ku_k+x_{k+1}^\intercal P_{k+1}x_{k+1}+c_{k+1}\,|\,x_k\big]\]</span></p>
+<p>Replacing <span class="math inline">\(x_{k+1}=A_kx_k+B_ku_k+w_k\)</span> we obtain:</p>
+<p><span class="math display">\[\underbrace{J_k(x_k)}_{} = \underbrace{\mathbb{E}_{w_k}\big[w_k^\intercal P_{k+1}(A_kx_k+B_ku_k)+(A_kx_k+B_ku_k)^\intercal P_{k+1}w_k+w_k^\intercal P_{k+1}w_k\big]+c_{k+1}}_{\text{new terms with respect to deterministic DP}}\]</span> <span class="math display">\[+\ \underbrace{\min_{u_k}\big[x_k^\intercal Q_kx_k+u_k^\intercal R_ku_k+2x_k^\intercal S_ku_k+(A_kx_k+B_ku_k)^\intercal P_{k+1}(A_kx_k+B_ku_k)\big]}_{\text{the same terms obtained with deterministic DP}}\]</span></p>
+</section>
+<section id="proof-of-linear-quadratic-control-result-1" class="slide level2 smaller">
+<h2>Proof of linear quadratic control result</h2>
+<p>Note that the first two terms are zero since</p>
+<p><span class="math display">\[\mathbb{E}_{w_k}\big[w_k^\intercal P_{k+1}(A_kx_k+B_ku_k)\big] = \underbrace{\mathbb{E}_{w_k}[w_k]}_{=0}^\intercal P_{k+1}(A_kx_k+B_ku_k)\]</span></p>
+<p>and the third term is <span class="math inline">\(\mathbb{E}[w_k^\intercal Pw_k] = \mathbb{E}[\text{trace}(w_k^\intercal Pw_k)] = \text{trace}(P_{k+1}\mathbb{E}[w_kw_k^\intercal])\)</span>.</p>
+<p>For the same terms obtained with the deterministic DP, from the previous lecture we know that the minimisation will result in the cost <span class="math inline">\(x_k^\intercal P_kx_k\)</span> and the control input minimiser is <span class="math inline">\(u_k=K_kx_k\)</span>.</p>
+<p>An important conclusion is that this is also the optimal policy obtained by the stochastic DP algorithm. Then,</p>
+<p><span class="math display">\[J_k(x_k) = x_k^\intercal P_kx_k + \underbrace{c_{k+1}+\text{trace}(P_{k+1}\mathbb{E}[w_kw_k^\intercal])}_{c_k}\]</span></p>
+<p>concluding the induction proof. The expression for the cost is then <span class="math inline">\(J_0(x_0)=x_0^\intercal P_0x_0+c_0\)</span>.</p>
+</section>
+<section id="appendix-b" class="slide level2 center" style="text-align: center;">
+<h2>Appendix B</h2>
+<h3 style="text-align: center;" id="derivation-of-the-kalman-filter">Derivation of the Kalman filter</h3>
+</section>
+<section id="derivation-of-the-kalman-filter-1" class="slide level2 smaller">
+<h2>Derivation of the Kalman filter</h2>
+<p>The following lemma, which can be found in Astrom’s book, Section 5.3, will be useful.</p>
+<div style="border: 2px solid #333; border-radius: 8px; padding: 0.6em;">
+<p><strong>Lemma:</strong> If <span class="math inline">\(\begin{bmatrix}x\\y\end{bmatrix} \sim \mathcal{N}\Big(\begin{bmatrix}\bar x\\\bar y\end{bmatrix}, \begin{bmatrix}R_{xx}&amp;R_{xy}\\R_{yx}&amp;R_{yy}\end{bmatrix}\Big)\)</span> then <span class="math inline">\(P_{x|y}\)</span> is Gaussian with mean <span class="math inline">\(\bar x+R_{xy}R_y^{-1}(y-\bar y)\)</span> and covariance <span class="math inline">\(R_{xx}-R_{xy}R_{yy}^{-1}R_{yx}\)</span>.</p>
+</div>
+<p>At the initial step we have <span class="math inline">\(x_0\sim\mathcal{N}(\hat x_{0|-1},\Phi_{0|-1})\)</span>, <span class="math inline">\(y_0=Cx_0+n_0\)</span>, <span class="math inline">\(n_k\sim\mathcal{N}(0,V)\)</span>. Then both <span class="math inline">\(y_0,x_0\)</span> are Gaussian and</p>
+<p><span class="math display">\[\mathbb{E}\Big[\begin{bmatrix}x_0\\y_0\end{bmatrix}\Big] = \begin{bmatrix}\hat x_{0|-1}\\C\hat x_{0|-1}\end{bmatrix}, \qquad \mathbb{E}\Big[\begin{bmatrix}x_0-\hat x_{0|-1}\\y_0-C\hat x_{0|-1}\end{bmatrix}\begin{bmatrix}x_0-\hat x_{0|-1}\\y_0-C\hat x_{0|-1}\end{bmatrix}^\intercal\Big] = \begin{bmatrix}\Phi_{0|-1} &amp; \Phi_{0|-1}C^\intercal \\ C\Phi_{0|-1} &amp; C\Phi_{0|-1}C^\intercal+V\end{bmatrix}\]</span></p>
+<p>Using the Lemma above, we conclude that <span class="math inline">\(P_{x_0|y_0}\)</span> is Gaussian with mean</p>
+<p><span class="math display">\[\hat x_{0|0} = \hat x_{0|-1} + \underbrace{\Phi_{0|-1}C^\intercal(C\Phi_{0|-1}C^\intercal+V)^{-1}}_{L_0}(y_0-C\hat x_{0|-1})\]</span></p>
+<p>and covariance <span class="math inline">\(\quad \Phi_{0|0} = \Phi_{0|-1}-\Phi_{0|-1}C^\intercal(C\Phi_{0|-1}C^\intercal+V)^{-1}C\Phi_{0|-1}\)</span></p>
+<p>Astrom’s book: Introduction to stochastic control theory, K. Astrom, 1970.</p>
+</section>
+<section id="derivation-of-the-kalman-filter-2" class="slide level2">
+<h2>Derivation of the Kalman filter</h2>
+<p>Since <span class="math inline">\(x_1=Ax_0+Bu_0+w_0\)</span>, <span class="math inline">\(x_1\)</span> is a sum of Gaussian random variables when conditioned on <span class="math inline">\(u_0,y_0\)</span>.</p>
+<p>Therefore <span class="math inline">\(P_{x_1|u_0,y_0}\)</span> is Gaussian with mean</p>
+<p><span class="math display">\[\hat x_{1|0} = A\hat x_{0|0}+Bu_0\]</span></p>
+<p>and covariance</p>
+<p><span class="math display">\[\Phi_{1|0} = A\Phi_{0|0}A^\intercal+W\]</span></p>
+<p>With a similar argument to the one used in the previous slide one can conclude that <span class="math inline">\(P_{x_1|I_1}\)</span> is Gaussian with mean <span class="math inline">\(\hat x_{1|1}\)</span> and covariance <span class="math inline">\(\Phi_{1|1}\)</span> and an induction argument allows to conclude the desired result.</p>
+</section>
+<section id="appendix-c" class="slide level2 center" style="text-align: center;">
+<h2>Appendix C</h2>
+<h3 style="text-align: center;" id="example-kalman-filter">Example: Kalman filter</h3>
+</section>
+<section id="example-kalman-filter-1" class="slide level2">
+<h2>Example: Kalman filter</h2>
+<p>Consider a mass spring system with unitary mass</p>
+<p><span class="math display">\[\ddot y(t) = -k_sy(t)\]</span></p>
+<p><span class="math display">\[\dot x(t) = \underbrace{\begin{bmatrix}0&amp;1\\-\omega_n^2&amp;0\end{bmatrix}}_{A_c}x(t) \qquad x(t)=\begin{bmatrix}y(t)\\\dot y(t)\end{bmatrix}\]</span></p>
+<p>with natural period of one second (<span class="math inline">\(\omega_n=2\pi\)</span>) and suppose that we wish to obtain an estimate of the state at a rate <span class="math inline">\(\tau=0.1\)</span> from sensor measurements of position.</p>
+<p><code>LiveScript/Lecture6/Kalman.mlx</code></p>
+</section>
+<section id="discretization" class="slide level2">
+<h2>Discretization</h2>
+<p>To this effect we discretize the system, obtaining</p>
+<p><span class="math display">\[x_{k+1} = \underbrace{\begin{bmatrix}0.8090 &amp; 0.0935\\-3.6932 &amp; 0.8090\end{bmatrix}}_{A=e^{A_c\tau}}x_k + \underbrace{\begin{bmatrix}0\\\sigma_w\end{bmatrix}}_{w_k}d_k\]</span></p>
+<p>where the <span class="math inline">\(d_k\)</span> are independent Gaussian random variables with unitary variance modeling disturbances.</p>
+<p>The output equation is</p>
+<p><span class="math display">\[y_k = \underbrace{\begin{bmatrix}1&amp;0\end{bmatrix}}_{C}x_k + \underbrace{\sigma_n v_k}_{n_k} \qquad \sigma_n=0.1 \qquad \sigma_w=0.5\]</span></p>
+<p>where the <span class="math inline">\(v_k\)</span> are independent Gaussian random variables with unitary variance.</p>
+<p>Thus, <span class="math inline">\(W=\mathbb{E}[w_kw_k^\intercal]=\begin{bmatrix}0&amp;0\\0&amp;\sigma_w^2\end{bmatrix} \qquad V=\mathbb{E}[n_kn_k^\intercal]=\sigma_n^2\)</span></p>
+</section>
+<section id="iterations" class="slide level2">
+<h2>Iterations</h2>
+<p>Assume that the covariance on the initial state <span class="math inline">\(\bar\Phi_0=\mathbb{E}[(x_0-\bar x_0)(x_0-\bar x_0)^\intercal]\)</span> is given by</p>
+<p><span class="math display">\[\Phi_{0|-1} = \bar\Phi_0 = \begin{bmatrix}1&amp;0\\0&amp;1\end{bmatrix}\]</span></p>
+<p>Then we can iterate</p>
+<p><span class="math display">\[\Phi_{k|k} = \Phi_{k|k-1}-\Phi_{k|k-1}C^\intercal(C\Phi_{k|k-1}C^\intercal+V)^{-1}C\Phi_{k|k-1}\]</span></p>
+<p><span class="math display">\[\Phi_{k+1|k} = A\Phi_{k|k}A^\intercal+W\]</span></p>
+<p>and obtain the gains <span class="math inline">\(\quad L_k = \Phi_{k|k-1}C^\intercal(C\Phi_{k|k-1}C^\intercal+V)^{-1}\)</span></p>
+</section>
+<section id="iterations-1" class="slide level2 smaller">
+<h2>Iterations</h2>
+<p>For <span class="math inline">\(k=0\)</span>:</p>
+<p><span class="math display">\[\Phi_{0|0} = \begin{bmatrix}1&amp;0\\0&amp;1\end{bmatrix} - \begin{bmatrix}1&amp;0\\0&amp;1\end{bmatrix}\begin{bmatrix}1\\0\end{bmatrix}\Big(\begin{bmatrix}1&amp;0\end{bmatrix}\begin{bmatrix}1&amp;0\\0&amp;1\end{bmatrix}\begin{bmatrix}1\\0\end{bmatrix}+0.01\Big)^{-1}\begin{bmatrix}1&amp;0\end{bmatrix}\begin{bmatrix}1&amp;0\\0&amp;1\end{bmatrix} = \begin{bmatrix}0.0099&amp;0\\0&amp;1\end{bmatrix}\]</span></p>
+<p><span class="math display">\[L_0 = \begin{bmatrix}1&amp;0\\0&amp;1\end{bmatrix}\begin{bmatrix}1\\0\end{bmatrix}\Big(\begin{bmatrix}1&amp;0\end{bmatrix}\begin{bmatrix}1&amp;0\\0&amp;1\end{bmatrix}\begin{bmatrix}1\\0\end{bmatrix}+0.01\Big)^{-1} = \begin{bmatrix}0.9901\\0\end{bmatrix}\]</span></p>
+<p><span class="math display">\[\Phi_{1|0} = \begin{bmatrix}0.8090&amp;0.0935\\-3.6932&amp;0.8090\end{bmatrix}\begin{bmatrix}0.0099&amp;0\\0&amp;1\end{bmatrix}\begin{bmatrix}0.8090&amp;0.0935\\-3.6932&amp;0.8090\end{bmatrix}^\intercal + \begin{bmatrix}0&amp;0\\0&amp;0.25\end{bmatrix} = \begin{bmatrix}0.0152&amp;0.0461\\0.0461&amp;1.0396\end{bmatrix}\]</span></p>
+</section>
+<section id="iterations-2" class="slide level2 smaller">
+<h2>Iterations</h2>
+<p>For <span class="math inline">\(k=1\)</span>:</p>
+<p><span class="math display">\[\Phi_{1|1} = \begin{bmatrix}0.0152&amp;0.0461\\0.0461&amp;1.0396\end{bmatrix} - \begin{bmatrix}0.0152&amp;0.0461\\0.0461&amp;1.0396\end{bmatrix}\begin{bmatrix}1\\0\end{bmatrix}\Big(\begin{bmatrix}1&amp;0\end{bmatrix}\begin{bmatrix}0.0152&amp;0.0461\\0.0461&amp;1.0396\end{bmatrix}\begin{bmatrix}1\\0\end{bmatrix}+0.01\Big)^{-1}\begin{bmatrix}1&amp;0\end{bmatrix}\begin{bmatrix}0.0152&amp;0.0461\\0.0461&amp;1.0396\end{bmatrix} = \begin{bmatrix}0.0060&amp;0.0183\\0.0183&amp;0.9553\end{bmatrix}\]</span></p>
+<p><span class="math display">\[L_1 = \begin{bmatrix}1\\0\end{bmatrix}^\intercal\!\Big/\Big(\begin{bmatrix}1&amp;0\end{bmatrix}\begin{bmatrix}0.0152&amp;0.0461\\0.0461&amp;1.0396\end{bmatrix}\begin{bmatrix}1\\0\end{bmatrix}+0.01\Big) \to L_1=\begin{bmatrix}0.6037\\1.8271\end{bmatrix}\]</span></p>
+<p><span class="math display">\[\Phi_{2|1} = \begin{bmatrix}0.8090&amp;0.0935\\-3.6932&amp;0.8090\end{bmatrix}\begin{bmatrix}0.0060&amp;0.0183\\0.0183&amp;0.9553\end{bmatrix}\begin{bmatrix}0.8090&amp;0.0935\\-3.6932&amp;0.8090\end{bmatrix}^\intercal + \begin{bmatrix}0&amp;0\\0&amp;0.25\end{bmatrix} = \begin{bmatrix}0.0151&amp;0.0599\\0.0599&amp;0.8484\end{bmatrix}\]</span></p>
+<p>For <span class="math inline">\(k=2,\dots\)</span></p>
+</section>
+<section id="expected-value" class="slide level2">
+<h2>Expected value</h2>
+<p>Suppose that the true initial condition is <span class="math inline">\(x_0=\begin{bmatrix}1\\0\end{bmatrix}\)</span> and that the mean of the initial estimate is <span class="math inline">\(\hat x_{0|-1}=\bar x_0=\begin{bmatrix}1.3\\0\end{bmatrix}\)</span></p>
+<p>We can then iterate</p>
+<p><span class="math display">\[\hat x_{k|k} = \hat x_{k|k-1}+L_k(y_k-C\hat x_{k|k-1})\]</span></p>
+<p><span class="math display">\[\hat x_{k+1|k} = A\hat x_{k|k}\]</span></p>
+</section>
+<section id="iterations-3" class="slide level2 smaller">
+<h2>Iterations</h2>
+<p>For an output <span class="math inline">\(y_0=1.0979\)</span>:</p>
+<p><span class="math display">\[\hat x_{0|0} = \begin{bmatrix}1.3\\0\end{bmatrix}+\begin{bmatrix}0.9901\\0\end{bmatrix}(1.0979-1.3) = \begin{bmatrix}1.0999\\0\end{bmatrix} \qquad \hat x_{1|0} = \begin{bmatrix}0.8090&amp;0.0935\\-3.6932&amp;0.8090\end{bmatrix}\begin{bmatrix}1.0999\\0\end{bmatrix} = \begin{bmatrix}0.8899\\-4.0623\end{bmatrix}\]</span></p>
+<p>For an output <span class="math inline">\(y_1=0.7542\)</span>:</p>
+<p><span class="math display">\[\hat x_{1|1} = \begin{bmatrix}0.8899\\-4.0623\end{bmatrix}+\begin{bmatrix}0.6037\\1.8271\end{bmatrix}(0.7542-0.8899) = \begin{bmatrix}0.8080\\-4.3102\end{bmatrix} \qquad \hat x_{2|1} = \begin{bmatrix}0.8090&amp;0.0935\\-3.6932&amp;0.8090\end{bmatrix}\begin{bmatrix}0.8080\\-4.3102\end{bmatrix} = \begin{bmatrix}0.2504\\-6.4710\end{bmatrix}\]</span></p>
+</section>
+<section id="iterations-4" class="slide level2">
+<h2>Iterations</h2>
+<p><span class="math inline">\(k\in\{0,\dots,9\}\)</span>: estimated trajectory <span class="math inline">\(x_{k|k-1}\)</span> (prediction, +) and <span class="math inline">\(x_{k|k}\)</span> (correction, <span class="math inline">\(\times\)</span>) versus the true state <span class="math inline">\(x_k\)</span> (o), in the <span class="math inline">\((y,\dot y)\)</span> plane.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg53-iterations-scatter.png" class="quarto-figure quarto-figure-center" style="width:55.0%"></p>
+</figure>
+</div>
+</section>
+<section id="iterations-5" class="slide level2">
+<h2>Iterations</h2>
+<p>Uncertainty ellipses <span class="math inline">\(\{\frac{1}{4}\sqrt{\Phi_{k|k-1}}x \mid \|x\|=1\}\)</span> (green, prediction) and <span class="math inline">\(\{\frac{1}{4}\sqrt{\Phi_{k|k}}x\mid\|x\|=1\}\)</span> (red, correction), for <span class="math inline">\(k=0\)</span> and <span class="math inline">\(k=1\)</span>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture6/pg54-iterations-ellipses.png" class="quarto-figure quarto-figure-center" style="width:65.0%"></p>
+</figure>
+</div>
+</section>
+<section id="appendix-d" class="slide level2 center" style="text-align: center;">
+<h2>Appendix D</h2>
+<h3 style="text-align: center;" id="derivation-of-the-lqg-controller">Derivation of the LQG controller</h3>
+</section>
+<section id="derivation-of-lqg-controller" class="slide level2 smaller">
+<h2>Derivation of LQG controller</h2>
+<p>Recall that we can view <span class="math inline">\(I_k\)</span> as the state. Therefore, these are now the costs-to-go:</p>
+<p><span class="math display">\[J_\ell(I_\ell) = \mathbb{E}\Big[\sum_{k=\ell}^{h-1} x_k^\intercal Qx_k+u_k^\intercal Ru_k+x_h^\intercal Q_hx_h\,\Big|\,I_\ell\Big]\]</span></p>
+<p>when <span class="math inline">\(u_k=\mu_k(I_k)\)</span> is the optimal policy.</p>
+<p>Let us prove by induction that</p>
+<p><span class="math display">\[J_\ell(I_\ell) = \mathbb{E}[x_\ell^\intercal P_\ell x_\ell|I_\ell]+a_\ell \qquad a_\ell = \sum_{k=\ell}^{h-1}\text{trace}(P_{k+1}W)+\sum_{k=\ell}^{h-1}\text{trace}(X_k\Phi_k)\]</span></p>
+<p>This holds for <span class="math inline">\(\ell=h\)</span> with <span class="math inline">\(a_h=0\)</span>; let us assume it holds for <span class="math inline">\(\ell+1\)</span> and let us prove it for <span class="math inline">\(\ell\)</span>.</p>
+<p>From the stochastic DP algorithm we have</p>
+<p><span class="math display">\[J_\ell(I_\ell) = \min_{u_\ell=\mu_\ell(I_\ell)} \mathbb{E}\big[x_\ell^\intercal Qx_\ell+u_\ell^\intercal Ru_\ell+\underbrace{J_{\ell+1}(I_{\ell+1})}_{\mathbb{E}[x_{\ell+1}^\intercal P_{\ell+1}x_{\ell+1}|I_{\ell+1}]+a_{\ell+1}}\,\big|\,I_{\ell+1}\big]\]</span></p>
+<p>From the tower property <span class="math inline">\(\mathbb{E}[\mathbb{E}[x_{\ell+1}^\intercal P_{\ell+1}x_{\ell+1}|I_{\ell+1}]|I_\ell]=\mathbb{E}[x_{\ell+1}^\intercal P_{\ell+1}x_{\ell+1}|I_\ell]\)</span>, therefore</p>
+<p><span class="math display">\[J_\ell(I_\ell) = \min_{u_\ell=\mu_\ell(I_\ell)} \mathbb{E}\big[x_\ell^\intercal Qx_\ell+u_\ell^\intercal Ru_\ell+x_{\ell+1}^\intercal P_{\ell+1}x_{\ell+1}\,\big|\,I_\ell\big]+a_{\ell+1}\]</span></p>
+</section>
+<section id="derivation-of-lqg-controller-1" class="slide level2 smaller">
+<h2>Derivation of LQG controller</h2>
+<p>Using similar derivations to the case of full state feedback (<span class="math inline">\(w_k\)</span> independent of <span class="math inline">\(I_k\)</span>)</p>
+<p><span class="math display">\[\mathbb{E}\big[x_\ell^\intercal(A^\intercal P_{\ell+1}A+Q)x_\ell+u_\ell^\intercal(R+B^\intercal P_{\ell+1}B)u_\ell+2u_\ell^\intercal B^\intercal P_{\ell+1}Ax_\ell\,|\,I_\ell\big] + \text{trace}\big(P_{\ell+1}\underbrace{\mathbb{E}[w_\ell w_\ell^\intercal|I_\ell]}_{W}\big)\]</span></p>
+<p>Since <span class="math inline">\(u_\ell\)</span> are constant given <span class="math inline">\(I_\ell\)</span> the minimisation boils down to</p>
+<p><span class="math display">\[\min_{u_\ell} u_\ell^\intercal(R+B^\intercal P_{\ell+1}B)u_\ell+2u_\ell^\intercal B^\intercal P_{\ell+1}A\,\mathbb{E}[x_\ell|I_\ell]\]</span></p>
+<p>whose optimal solution is</p>
+<p><span class="math display">\[u_\ell = -(R+B^\intercal P_{\ell+1}B)^{-1}B^\intercal P_{\ell+1}A\,\mathbb{E}[x_\ell|I_\ell]\]</span></p>
+<p>Replacing this expression in the expression for the cost-to-go, and noting that <span class="math inline">\(\mathbb{E}[x_\ell|I_\ell]=x_\ell+(\mathbb{E}[x_\ell|I_\ell]-x_\ell)\)</span>, and that <span class="math inline">\(\mathbb{E}[x_\ell^\intercal Y(\mathbb{E}[x_\ell|I_\ell]-x_\ell)|I_\ell]=0\)</span> for any <span class="math inline">\(Y\)</span>,</p>
+<p><span class="math display">\[J_\ell(I_\ell) = \mathbb{E}\Big[x_\ell^\intercal\underbrace{(A^\intercal P_{\ell+1}A+Q-X_\ell)}_{P_\ell}x_\ell\,\Big|\,I_\ell\Big] + \underbrace{\text{trace}\Big(X_\ell\mathbb{E}\big[(x_\ell-\mathbb{E}[x_\ell|I_\ell])(x_\ell-\mathbb{E}[x_\ell|I_\ell])^\intercal\big]\Big)+a_{\ell+1}+\text{trace}(P_{\ell+1}W)}_{a_\ell}\]</span></p>
+<p>as desired.</p>
+</section>
+<section id="derivation-of-lqg-controller-2" class="slide level2">
+<h2>Derivation of LQG controller</h2>
+<p>The optimal policy is</p>
+<p><span class="math display">\[u_\ell = -(R+B^\intercal P_{\ell+1}B)^{-1}B^\intercal P_{\ell+1}A\,\mathbb{E}[x_\ell|I_\ell] = K_k\hat x_{k|k}\]</span></p>
+<p>The optimal cost is</p>
+<p><span class="math display">\[J_0(I_0) = \mathbb{E}[x_0^\intercal P_0x_0|I_0] + \sum_{k=0}^{h-1}\text{trace}(P_{k+1}\mathbb{E}[w_kw_k^\intercal]) + \sum_{k=0}^{h-1}\text{trace}\big(X_k\underbrace{\mathbb{E}[(x_k-\hat x_{k|k})(x_k-\hat x_{k|k})^\intercal|I_k]}_{\Phi_{k|k}}\big)\]</span></p>
+</section>
+<section id="appendix-e" class="slide level2 center" style="text-align: center;">
+<h2>Appendix E</h2>
+<h3 style="text-align: center;" id="further-insights-on-the-kalman-filter">Further insights on the Kalman filter</h3>
+</section>
+<section id="remarks-1" class="slide level2 smaller">
+<h2>Remarks</h2>
+<ul>
+<li>The Kalman filter can be divided into two steps with the following interpretation.</li>
+<li><strong>Prediction step</strong></li>
+</ul>
+<p><span class="math display">\[\hat x_{k+1|k} = A\hat x_{k|k}+Bu_k \qquad \Phi_{k+1|k} = A\Phi_{k|k}A^\intercal+W\]</span></p>
+<p>Based on the previous estimate predict in open loop the state at the next step.</p>
+<ul>
+<li><strong>Correction/innovation/update step</strong></li>
+</ul>
+<p><span class="math display">\[\hat x_{k|k} = \hat x_{k|k-1} + \underbrace{L_k(y_k-C\hat x_{k|k-1})}_{\text{Innovation}} \qquad \Phi_{k|k} = \Phi_{k|k-1}-\Phi_{k|k-1}C^\intercal(C\Phi_{k|k-1}C^\intercal+V)^{-1}C\Phi_{k|k-1}\]</span></p>
+<p>Based on the new measurements update the estimate.</p>
+<ul>
+<li>Note that in the innovation step the covariance decreases and in the prediction step the covariance (typically) increases.</li>
+</ul>
+</section>
+<section id="remarks-2" class="slide level2 smaller">
+<h2>Remarks</h2>
+<ul>
+<li>Albeit counter-intuitive, the covariance matrices do not depend on the measurements and on the control input and can be computed a priori.</li>
+<li>(Duality) The equations to update <span class="math inline">\(\Phi_{k+1|k}\)</span></li>
+</ul>
+<p><span class="math display">\[\Phi_{k+1|k} = A\Phi_{k|k-1}A^\intercal - A\Phi_{k|k-1}C^\intercal(C\Phi_{k|k-1}C^\intercal+V)^{-1}C\Phi_{k|k-1}A^\intercal+W\]</span></p>
+<p>coincide with the Riccati equations from last lecture if we replace <span class="math inline">\((A,B,Q,R) \to (A^\intercal,C^\intercal,W,V)\)</span>, <span class="math inline">\(S=0\)</span>.</p>
+<ul>
+<li>In particular we know that <span class="math inline">\(\Phi_{k+1|k}\to\bar\Phi\)</span> as <span class="math inline">\(k\to\infty\)</span>, and <span class="math inline">\(L_k\to\bar L\)</span></li>
+</ul>
+<p><span class="math display">\[\bar\Phi = A\bar\Phi A^\intercal - A\bar\Phi C^\intercal(C\bar\Phi C^\intercal+V)^{-1}C\bar\Phi A^\intercal+W \qquad \bar L = \bar\Phi C^\intercal(C\bar\Phi C^\intercal+V)^{-1}\]</span></p>
+<p>where <span class="math inline">\(A+\tilde LC\)</span> is stable if <span class="math inline">\((A,C)\)</span> observable*, <span class="math inline">\(\tilde L=A\bar L\)</span>.</p>
+<ul>
+<li>Thus, the equations for the state estimator become</li>
+</ul>
+<p><span class="math display">\[\hat x_{k+1|k} = A\hat x_{k|k} + Bu_k \qquad \hat x_{k|k} = \hat x_{k|k-1}+\bar L(y_k-C\hat x_{k|k-1})\]</span></p>
+<p>*less stringent conditions for convergence can be inferred from the conditions for the dual problem (slide 34, Lec. 5).</p>
+
+</section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+<p>4SC000 – Optimal Control and Reinforcement Learning</p>
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="lecture06-kalman-lqg_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="lecture06-kalman-lqg_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="lecture06-kalman-lqg_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="lecture06-kalman-lqg_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="lecture06-kalman-lqg_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="lecture06-kalman-lqg_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="lecture06-kalman-lqg_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="lecture06-kalman-lqg_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="lecture06-kalman-lqg_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="lecture06-kalman-lqg_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>

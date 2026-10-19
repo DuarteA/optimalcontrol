@@ -1,0 +1,2146 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>Unit 4 – Partially Observable Markov Decision Processes and the Bayes’ Filter</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="unit4-notes_files/libs/clipboard/clipboard.min.js"></script>
+<script src="unit4-notes_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="unit4-notes_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="unit4-notes_files/libs/quarto-html/popper.min.js"></script>
+<script src="unit4-notes_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="unit4-notes_files/libs/quarto-html/anchor.min.js"></script>
+<link href="unit4-notes_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="unit4-notes_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="unit4-notes_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="unit4-notes_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="unit4-notes_files/libs/bootstrap/bootstrap-5f5514ab72c605193d28bd5ace4a0252.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      argmin: ["\\operatorname*{argmin}_{#1}", 1],
+      argmax: ["\\operatorname*{argmax}_{#1}", 1],
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#problem-formulation" id="toc-problem-formulation" class="nav-link active" data-scroll-target="#problem-formulation"><span class="header-section-number">1</span> Problem formulation</a>
+  <ul class="collapse">
+  <li><a href="#two-approaches-and-the-role-of-the-bayes-filter" id="toc-two-approaches-and-the-role-of-the-bayes-filter" class="nav-link" data-scroll-target="#two-approaches-and-the-role-of-the-bayes-filter"><span class="header-section-number">1.1</span> Two approaches, and the role of the Bayes’ filter</a></li>
+  </ul></li>
+  <li><a href="#the-bayes-filter" id="toc-the-bayes-filter" class="nav-link" data-scroll-target="#the-bayes-filter"><span class="header-section-number">2</span> The Bayes’ filter</a>
+  <ul class="collapse">
+  <li><a href="#bayes-rule" id="toc-bayes-rule" class="nav-link" data-scroll-target="#bayes-rule"><span class="header-section-number">2.1</span> Bayes’ rule</a></li>
+  <li><a href="#example-tracking-a-robot-behind-a-door" id="toc-example-tracking-a-robot-behind-a-door" class="nav-link" data-scroll-target="#example-tracking-a-robot-behind-a-door"><span class="header-section-number">2.2</span> Example: tracking a robot behind a door</a></li>
+  <li><a href="#the-bayes-filter-algorithm" id="toc-the-bayes-filter-algorithm" class="nav-link" data-scroll-target="#the-bayes-filter-algorithm"><span class="header-section-number">2.3</span> The Bayes’ filter algorithm</a></li>
+  </ul></li>
+  <li><a href="#applications-of-the-bayes-filter" id="toc-applications-of-the-bayes-filter" class="nav-link" data-scroll-target="#applications-of-the-bayes-filter"><span class="header-section-number">3</span> Applications of the Bayes filter</a>
+  <ul class="collapse">
+  <li><a href="#tracking-a-robot-in-a-grid-world" id="toc-tracking-a-robot-in-a-grid-world" class="nav-link" data-scroll-target="#tracking-a-robot-in-a-grid-world"><span class="header-section-number">3.1</span> Tracking a robot in a grid world</a></li>
+  <li><a href="#gps-denied-navigation-in-a-tunnel" id="toc-gps-denied-navigation-in-a-tunnel" class="nav-link" data-scroll-target="#gps-denied-navigation-in-a-tunnel"><span class="header-section-number">3.2</span> GPS-denied navigation in a tunnel</a></li>
+  <li><a href="#estimating-plant-attributes-in-precision-farming" id="toc-estimating-plant-attributes-in-precision-farming" class="nav-link" data-scroll-target="#estimating-plant-attributes-in-precision-farming"><span class="header-section-number">3.3</span> Estimating plant attributes in precision farming</a></li>
+  </ul></li>
+  <li><a href="#solving-pomdps" id="toc-solving-pomdps" class="nav-link" data-scroll-target="#solving-pomdps"><span class="header-section-number">4</span> Solving POMDPs</a>
+  <ul class="collapse">
+  <li><a href="#optimal-policy-structure" id="toc-optimal-policy-structure" class="nav-link" data-scroll-target="#optimal-policy-structure"><span class="header-section-number">4.1</span> Optimal policy structure</a></li>
+  <li><a href="#historical-note" id="toc-historical-note" class="nav-link" data-scroll-target="#historical-note"><span class="header-section-number">4.2</span> Historical note</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">5</span> Summary</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="unit4-notes.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Unit 4 – Partially Observable Markov Decision Processes and the Bayes’ Filter</h1>
+<p class="subtitle lead">4SC000 Optimal Control and Reinforcement Learning</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Textbook-prose companion to lectures/lecture04-pomdp-bayes-filter.qmd,
+intended as a booklet chapter for readers who did not attend the lecture.
+Same content and figures as the slides, but written as connected prose
+rather than bullet points, so it can stand on its own. Figures are the
+same ones already cropped/verified for the slide deck, referenced from
+../lectures/figures/lecture4/ rather than duplicated. First pass: same
+scope as the original units 1-3 notes (straightforward prose conversion
+with figures and math); interactive examples/exercises, if wanted, would
+be added in a later pass. Appendices A, B and C are folded into
+collapsible callouts placed near the main-text section they extend,
+rather than kept as trailing appendix sections. The two "Results" video
+slides (pg24/pg25) had no video files available in the course folder, so
+they are represented as a plain-text note, same as in the slides.
+-->
+<p><a href="../lectures/lecture04-pomdp-bayes-filter.html">Slides</a> · <a href="../exercises/unit4-exercises.html">Exercises</a> · <a href="../code/unit4/notebooks.html">Jupyter notebooks</a></p>
+<section id="problem-formulation" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="problem-formulation"><span class="header-section-number">1</span> Problem formulation</h2>
+<p>In several control problems considered so far, we implicitly assumed that the full state <span class="math inline">\(x_k\)</span> is available for feedback. In many practical situations this is not the case: only an <em>output</em>, a subset or a noisy function of the state, can actually be measured. For instance, when controlling the position of a mass on a surface using only position sensors, the state – which also includes velocity – is not fully known. More generally, the available output might carry only partial information about the state. This unit studies <em>Partially Observable Markov Decision Processes</em> (POMDPs), the framework for optimal control under this kind of limited information, and the <em>Bayes’ filter</em>, the tool that turns a stream of partial measurements into a running estimate of the state. Most of the unit is devoted to the Bayes’ filter itself, since it is useful well beyond the control problems that motivate it here.</p>
+<p>A POMDP has the same dynamic model and cost as the discrete decision problems of Unit 2,</p>
+<p><span class="math display">\[
+x_{k+1} = f_k(x_k, u_k, w_k), \qquad
+\text{cost} = \sum_{k=0}^{h-1} g_k(x_k, u_k, w_k) + g_h(x_h),
+\]</span></p>
+<p>but now the decision-maker does not observe <span class="math inline">\(x_k\)</span> directly. Instead, at every stage <span class="math inline">\(k\)</span> it receives an <em>output</em></p>
+<p><span class="math display">\[
+y_k = h_k(x_k, n_k),
+\]</span></p>
+<p>where <span class="math inline">\(n_k\)</span> is measurement noise, and the state, input and disturbances live in the same sets as in Unit 2, while the output <span class="math inline">\(y_k\)</span> and the noise <span class="math inline">\(n_k\)</span> live in finite sets <span class="math inline">\(Y_k:=\{1,\dots,q_{k,i}\}\)</span>, <span class="math inline">\(N_k:=\{1,\dots,\nu_{k,i}\}\)</span> (possibly depending on the current state <span class="math inline">\(x_k=i\)</span>). All the information available to the decision-maker at stage <span class="math inline">\(k\)</span> is collected in the <em>information set</em></p>
+<p><span class="math display">\[
+I_0 = (y_0), \qquad
+I_k = (y_0, y_1, \dots, y_k, u_0, u_1, \dots, u_{k-1}), \quad k \geq 1,
+\]</span></p>
+<p>and decisions must be functions of this information set, <span class="math inline">\(u_k = \mu_k(I_k)\)</span>, rather than of the state itself. The problem is to find a policy <span class="math inline">\(\pi = \{\mu_0,\dots,\mu_{h-1}\}\)</span> minimizing</p>
+<p><span class="math display">\[
+J_\pi = \mathbb{E}\Big[\sum_{k=0}^{h-1} g_k(x_k, \mu_k(I_k), w_k) + g_h(x_h)\Big].
+\]</span></p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: partial information in inventory control and robot path planning">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: partial information in inventory control and robot path planning
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Justify a model with partial state information for the inventory control problem and the robot path planning problem considered in Unit 2, and write such problems in the framework just described.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>Inventory control.</strong> A shop rarely knows its stock level <span class="math inline">\(x_k\)</span> exactly and in real time. Physical counts are typically done periodically rather than continuously, and even then they are not perfectly reliable: items can be misplaced, damaged, or stolen without this being recorded, and barcode or RFID scanners occasionally fail to register an item during a count. So what is actually available at each stage is a noisy count of the stock, not the true value <span class="math inline">\(x_k\)</span>.</p>
+<p>The dynamic model and cost are unchanged from Units 1-2, with the demand <span class="math inline">\(d_k\)</span> playing the role of the disturbance <span class="math inline">\(w_k\)</span>, <span class="math display">\[
+x_{k+1} = f_k(x_k,u_k,w_k) = \max\{x_k+u_k-w_k,\,0\}, \qquad u_k \in \{0,1,\dots,N-x_k\},
+\]</span> <span class="math display">\[
+g_k(x_k,u_k,w_k) = \big(c_1(x_k) + c\,u_k + c_{tr}\lVert u_k\rVert_0\big) - p\min\{w_k,x_k+u_k\}.
+\]</span> For the output, model the periodic count as being off by one item with some small probability <span class="math inline">\(q\)</span>, independently of everything else (a single missed or misplaced item being the typical failure mode, rather than large miscounts): <span class="math display">\[
+y_k = h_k(x_k,n_k) = \max\{x_k-n_k,\,0\}, \qquad n_k \in \{0,1\}, \qquad \text{Prob}[n_k=1]=q,\ \ \text{Prob}[n_k=0]=1-q,
+\]</span> so that <span class="math inline">\(y_k \in Y_k=\{0,\dots,N\}\)</span>, exactly as required by the general framework. The information set is then <span class="math inline">\(I_k=(y_0,\dots,y_k,u_0,\dots,u_{k-1})\)</span>, and the shop must decide how much to order, <span class="math inline">\(u_k=\mu_k(I_k)\)</span>, based on this history of noisy counts and past orders rather than on the true (unknown) stock level <span class="math inline">\(x_k\)</span>.</p>
+<p><strong>Robot path planning.</strong> A robot moving through the grid of Unit 2 likewise has no direct way of reading off its exact row <span class="math inline">\(x_k\)</span>: there is typically no GPS indoors, and dead-reckoning from wheel encoders drifts over time. A cheap sensor, however – e.g.&nbsp;an infrared proximity sensor – can reliably detect whether the robot is currently forced against a wall or an obstacle, without revealing which row it is actually in. This is exactly the same kind of binary, “contact-only” output already used for Sensor II in this unit’s grid-world example.</p>
+<p>The dynamic model and cost are again unchanged from Unit 2’s (deterministic- or stochastic-disturbance) robot-grid problem, <span class="math display">\[
+x_{k+1}=f_k(x_k,u_k,w_k), \qquad g_k(x_k,u_k,w_k),
+\]</span> with <span class="math inline">\(x_k=i\in\{1,\dots,n\}\)</span> the row and <span class="math inline">\(u_k\in\{\text{up},\text{straight},\text{down}\}\)</span> the decision (a singleton at wall or obstacle rows). Writing <span class="math inline">\(\text{touch}(i)=1\)</span> if row <span class="math inline">\(i\)</span> is a wall row (<span class="math inline">\(i\in\{1,n\}\)</span>) or an obstacle row, and <span class="math inline">\(\text{touch}(i)=0\)</span> otherwise, the output is a possibly-flipped version of this contact bit, <span class="math display">\[
+y_k = h_k(x_k,n_k) = \text{touch}(x_k)\oplus n_k, \qquad n_k \in \{0,1\}, \qquad \text{Prob}[n_k=1]=\varepsilon,\ \ \text{Prob}[n_k=0]=1-\varepsilon,
+\]</span> where <span class="math inline">\(\oplus\)</span> denotes addition modulo <span class="math inline">\(2\)</span> and <span class="math inline">\(\varepsilon\)</span> is a small sensor-error probability, so that <span class="math inline">\(y_k \in Y_k=\{0,1\}\)</span>. The information set is <span class="math inline">\(I_k=(y_0,\dots,y_k,u_0,\dots,u_{k-1})\)</span>, and the robot chooses its next move <span class="math inline">\(u_k=\mu_k(I_k)\)</span> based only on this history of (possibly mistaken) wall/obstacle contact readings and its own past decisions, not on its actual row <span class="math inline">\(x_k\)</span>.</p>
+</div>
+</div>
+</div>
+<section id="two-approaches-and-the-role-of-the-bayes-filter" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="two-approaches-and-the-role-of-the-bayes-filter"><span class="header-section-number">1.1</span> Two approaches, and the role of the Bayes’ filter</h3>
+<p>A first, direct approach is to reformulate the partial-information problem as an ordinary full-information problem by treating the <em>information set itself</em> as the state: since <span class="math inline">\(I_k\)</span> evolves in a known way as <span class="math inline">\(y_{k+1}\)</span> and <span class="math inline">\(u_k\)</span> are appended to it, dynamic programming applies directly, with <span class="math inline">\(I_k\)</span> playing the role of <span class="math inline">\(x_k\)</span>. The trouble is that the size of the information set grows very quickly with <span class="math inline">\(k\)</span> – already after just two stages, the space of possible information sets is large, as illustrated in <a href="#fig-info-growth" class="quarto-xref">Fig.&nbsp;1</a> – so the number of “states” of this reformulated problem grows exponentially with time, making the direct approach impractical for essentially any application of interest.</p>
+<div style="text-align: center;">
+<div id="fig-info-growth" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-info-growth-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg05-infoset.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-info-growth-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;1: The measurement/information space grows quickly with the stage: at stage <span class="math inline">\(0\)</span> there are as many possible information sets as values of <span class="math inline">\(y_0\)</span>; at stage <span class="math inline">\(1\)</span>, as many as pairs <span class="math inline">\((y_0,y_1)\)</span>; and so on.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>A second, much more economical approach exploits a key fact: it can be shown that the conditional probability distribution of the current state given all information gathered so far, <span class="math inline">\(P_{x_k\mid I_k}\)</span>, is a <em>sufficient statistic</em> for optimal decision-making – that is, an optimal policy can always be written as <span class="math inline">\(u_k=\mu_k(P_{x_k\mid I_k})\)</span>, a function of this distribution rather than of the raw information set <span class="math inline">\(I_k\)</span> itself (<a href="#fig-belief-decomp" class="quarto-xref">Fig.&nbsp;2</a>). Since <span class="math inline">\(P_{x_k\mid I_k}\)</span> lives in a fixed-dimensional space (the simplex of probability distributions over the states), regardless of <span class="math inline">\(k\)</span>, this sidesteps the exponential blow-up of the first approach entirely.</p>
+<div style="text-align: center;">
+<div id="fig-belief-decomp" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-belief-decomp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg06-belief-decomp.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-belief-decomp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;2: As decisions and observations accumulate, the belief <span class="math inline">\(P_{x_k\mid I_k}\)</span> always lives in the same fixed-dimensional probability space, however the raw information set <span class="math inline">\(I_k\)</span> itself keeps growing.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>This has an appealing structural consequence for the optimal decision-maker, proved at the end of this section: it can always be decomposed into a <em>state estimator</em>, which computes <span class="math inline">\(P_{x_k\mid I_k}\)</span> from the measurements <span class="math inline">\(y_k\)</span> and past decisions <span class="math inline">\(u_{k-1}\)</span>, and an <em>actuator</em>, which maps this belief to a decision <span class="math inline">\(u_k=\mu_k(P_{x_k\mid I_k})\)</span> (<a href="#fig-decomposition" class="quarto-xref">Fig.&nbsp;3</a>). This is exactly the classical <em>separation</em> between estimation and control that recurs throughout control theory.</p>
+<div style="text-align: center;">
+<div id="fig-decomposition" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-decomposition-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg07-decomposition.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-decomposition-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;3: The optimal POMDP policy decomposes into a state estimator, producing the belief <span class="math inline">\(P_{x_k\mid I_k}\)</span>, and an actuator (the optimal policy <span class="math inline">\(\mu_k\)</span>) mapping that belief to a decision <span class="math inline">\(u_k\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The first approach is therefore typically impractical, while the second is the one used in practice; a crucial ingredient in computing <span class="math inline">\(P_{x_k\mid I_k}\)</span> is Bayes’ rule, and the resulting state estimator is precisely the Bayes filter, which is the focus of most of this unit. How to solve POMDPs – i.e., how to obtain the actuator <span class="math inline">\(\mu_k\)</span> – is addressed only briefly, toward the end.</p>
+<p>It will be convenient throughout to work with the transition probabilities already introduced in Unit 2, <span class="math display">\[
+[P_k(j)]_{ri} = \text{Prob}[x_{k+1}=r\mid x_k=i,u_k=j],
+\]</span> which collapses to a single matrix <span class="math inline">\(P\)</span> if there is no input and the model is time-invariant. Likewise, the output model <span class="math inline">\(y_k=h_k(x_k,n_k)\)</span> can be represented by matrices <span class="math display">\[
+[R_k]_{\ell i} = \text{Prob}[y_k=\ell\mid x_k=i],
+\]</span> which collapses to a single matrix <span class="math inline">\(R\)</span> if the output is time-invariant. Assuming, for simplicity, that the input, disturbance, output and noise spaces do not depend on the state (though they may still depend on time), <span class="math inline">\(x_k\in\{1,\dots,\bar n_k\}\)</span>, <span class="math inline">\(u_k\in\{1,\dots,m_k\}\)</span>, <span class="math inline">\(w_k\in\{1,\dots,\omega_k\}\)</span>, <span class="math inline">\(y_k\in\{1,\dots,\bar q_k\}\)</span>, <span class="math inline">\(n_k\in\{1,\dots,\nu_k\}\)</span>, these matrices have the following dimensions, for each <span class="math inline">\(j\in\{1,\dots,m_k\}\)</span> and each <span class="math inline">\(k\in\{0,\dots,h-1\}\)</span>:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 27%">
+<col style="width: 45%">
+<col style="width: 27%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: center;">dimensions</th>
+<th>Components</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>state transition matrices <span class="math inline">\(P_k(j)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\bar n_{k+1}\times\bar n_k\)</span></td>
+<td><span class="math inline">\([P_k(j)]_{ri}=\text{Prob}[x_{k+1}=r\mid x_k=i,u_k=j]\)</span></td>
+</tr>
+<tr class="even">
+<td>output matrices <span class="math inline">\(R_k\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\bar q_k\times\bar n_k\)</span></td>
+<td><span class="math inline">\([R_k]_{\ell i}=\text{Prob}[y_k=\ell\mid x_k=i]\)</span></td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-note callout-titled" title="Proof: the belief is a sufficient statistic, and the optimal decision-maker decomposes into an estimator and an actuator">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Proof: the belief is a sufficient statistic, and the optimal decision-maker decomposes into an estimator and an actuator
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>We prove the claim made above: the optimal cost-to-go, and an optimal action, at every stage <span class="math inline">\(k\)</span> depend on the information set <span class="math inline">\(I_k\)</span> only through the belief <span class="math inline">\(p_{k,i}:=\text{Prob}[x_k=i\mid I_k]\)</span>, <span class="math inline">\(i\in\{1,\dots,\bar n_k\}\)</span>. In particular, the optimal policy can always be written as a function of <span class="math inline">\(p_k\)</span> alone, <span class="math inline">\(u_k=\tilde\mu_k(p_k)\)</span> (the <em>actuator</em>), and <span class="math inline">\(p_k\)</span> can itself be updated recursively from <span class="math inline">\(p_{k-1}\)</span>, <span class="math inline">\(u_{k-1}\)</span> and <span class="math inline">\(y_k\)</span> alone, without needing the rest of <span class="math inline">\(I_k\)</span> (the <em>state estimator</em>).</p>
+<p>Consider the full-information reformulation of the POMDP with <span class="math inline">\(I_k\)</span> as the state, introduced above. Applying the DP algorithm to this reformulation, backward from <span class="math inline">\(k=h\)</span>, <span class="math display">\[
+J_h(I_h) = \mathbb{E}[g_h(x_h)\mid I_h],
+\]</span> <span class="math display">\[
+J_k(I_k) = \min_{u_k}\ \mathbb{E}\big[g_k(x_k,u_k,w_k) + J_{k+1}(I_{k+1}) \mid I_k,u_k\big], \quad k\in\{h-1,\dots,0\}.
+\]</span> We show, by backward induction on <span class="math inline">\(k\)</span>, that <span class="math inline">\(J_k(I_k)\)</span> depends on <span class="math inline">\(I_k\)</span> only through <span class="math inline">\(p_k\)</span>; whenever this holds, write <span class="math inline">\(J_k(I_k)=\tilde J_k(p_k)\)</span>.</p>
+<p><em>Base case.</em> At <span class="math inline">\(k=h\)</span>, <span class="math display">\[
+J_h(I_h) = \mathbb{E}[g_h(x_h)\mid I_h] = \sum_{i=1}^{\bar n_h} g_h(i)\,p_{h,i} =: \tilde J_h(p_h),
+\]</span> manifestly a function of <span class="math inline">\(p_h\)</span> alone.</p>
+<p><em>Inductive step.</em> Assume <span class="math inline">\(J_{k+1}(I_{k+1})=\tilde J_{k+1}(p_{k+1})\)</span>. Splitting the expectation defining <span class="math inline">\(J_k(I_k)\)</span> into its two terms: first, <span class="math display">\[
+\mathbb{E}[g_k(x_k,u_k,w_k)\mid I_k,u_k] = \sum_{i=1}^{\bar n_k} p_{k,i}\,\bar g_k(i,u_k), \qquad \bar g_k(i,u_k):=\mathbb{E}_{w_k}[g_k(i,u_k,w_k)],
+\]</span> already a function of <span class="math inline">\(p_k\)</span> and <span class="math inline">\(u_k\)</span> alone. Second, condition on the next output <span class="math inline">\(y_{k+1}=\ell\)</span>: by the Markov property of the state transitions and of the output map, <span class="math display">\[
+\text{Prob}[x_{k+1}=r,\,y_{k+1}=\ell\mid I_k,u_k] = [R_k]_{\ell r}\sum_{i=1}^{\bar n_k} [P_k(u_k)]_{ri}\,p_{k,i},
+\]</span> which depends on <span class="math inline">\(I_k\)</span> only through <span class="math inline">\(p_k\)</span>. Summing over <span class="math inline">\(r\)</span> gives <span class="math inline">\(\text{Prob}[y_{k+1}=\ell\mid I_k,u_k]\)</span>, and dividing gives the updated belief after observing <span class="math inline">\(\ell\)</span>, <span class="math display">\[
+p_{k+1,r}(\ell) = \frac{[R_k]_{\ell r}\sum_{i=1}^{\bar n_k} [P_k(u_k)]_{ri}\,p_{k,i}}{\text{Prob}[y_{k+1}=\ell\mid I_k,u_k]},
+\]</span> both again functions of <span class="math inline">\((p_k,u_k,\ell)\)</span> alone – and no other part of <span class="math inline">\(I_k\)</span>. Hence <span class="math display">\[
+\mathbb{E}[J_{k+1}(I_{k+1})\mid I_k,u_k] = \sum_{\ell} \text{Prob}[y_{k+1}=\ell\mid p_k,u_k]\,\tilde J_{k+1}\big(p_{k+1}(\ell)\big)
+\]</span> is also a function of <span class="math inline">\(p_k\)</span> and <span class="math inline">\(u_k\)</span> alone. Adding the two terms and minimizing over <span class="math inline">\(u_k\)</span>, <span class="math display">\[
+J_k(I_k) = \min_{u_k}\Big[\sum_{i} p_{k,i}\,\bar g_k(i,u_k) + \sum_{\ell} \text{Prob}[y_{k+1}=\ell\mid p_k,u_k]\,\tilde J_{k+1}\big(p_{k+1}(\ell)\big)\Big] =: \tilde J_k(p_k),
+\]</span> depends on <span class="math inline">\(I_k\)</span> only through <span class="math inline">\(p_k\)</span>, completing the induction.</p>
+<p>In particular, a minimizer <span class="math inline">\(u_k\)</span> in the last display is itself a function of <span class="math inline">\(p_k\)</span> alone, so the optimal policy is <span class="math inline">\(u_k=\tilde\mu_k(p_k)\)</span>: this is the <em>actuator</em>. Moreover, the update formula for <span class="math inline">\(p_{k+1}(\ell)\)</span> derived above shows that the belief can be maintained online using only <span class="math inline">\(p_k\)</span>, <span class="math inline">\(u_k\)</span>, and the realized output <span class="math inline">\(y_{k+1}\)</span> – never needing to store or revisit the rest of <span class="math inline">\(I_k\)</span>: this recursive update is exactly the Bayes filter, worked out concretely in the next section, and is the <em>state estimator</em>. Together, these two facts establish the claimed decomposition.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="the-bayes-filter" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="the-bayes-filter"><span class="header-section-number">2</span> The Bayes’ filter</h2>
+<section id="bayes-rule" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="bayes-rule"><span class="header-section-number">2.1</span> Bayes’ rule</h3>
+<p>The Bayes filter is built on the ordinary Bayes’ rule from probability theory. For random variables <span class="math inline">\(x\in\{1,\dots,n\}\)</span>, <span class="math inline">\(y\in\{1,\dots,m\}\)</span>,</p>
+<div class="dp-box" style="font-size: 0.85em;">
+<p><span class="math display">\[
+\text{Prob}[x=i\mid y=j] = \frac{\text{Prob}[y=j\mid x=i]\,\text{Prob}[x=i]}{\text{Prob}[y=j]}
+= \frac{\text{Prob}[y=j\mid x=i]\,\text{Prob}[x=i]}{\sum_{\ell=1}^n \text{Prob}[y=j\mid x=\ell]\,\text{Prob}[x=\ell]}.
+\]</span></p>
+</div>
+<p>Thinking of <span class="math inline">\(y\)</span> as a sensor measurement and <span class="math inline">\(x\)</span> as the state (<a href="#fig-probspace" class="quarto-xref">Fig.&nbsp;4</a>), Bayes’ rule lets us infer something about the state <em>a posteriori</em> of a measurement, <span class="math inline">\(\text{Prob}[x=i\mid y=j]\)</span>, starting from <em>a priori</em> information <span class="math inline">\(\text{Prob}[y=j\mid x=i]\)</span> (how the sensor behaves in each state) and <span class="math inline">\(\text{Prob}[x=i]\)</span> (how likely each state was to begin with).</p>
+<div style="text-align: center;">
+<div id="fig-probspace" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-probspace-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg11-probspace.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:55.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-probspace-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;4: A joint probability space for a discrete state <span class="math inline">\(x\in\{1,2,3\}\)</span> and a discrete measurement <span class="math inline">\(y\in\{1,2,3\}\)</span>: the colored region shows how probability mass is shared between the possible values of <span class="math inline">\(y\)</span> within each value of <span class="math inline">\(x\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: reading conditional probabilities off the picture">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: reading conditional probabilities off the picture
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>In <a href="#fig-probspace" class="quarto-xref">Fig.&nbsp;4</a> the whole rectangle is the sample space, split by the two vertical lines into the strips <span class="math inline">\(x=1\)</span>, <span class="math inline">\(x=2\)</span> and <span class="math inline">\(x=3\)</span>. Inside the ellipse, the red part is <span class="math inline">\(y=1\)</span> and the blue part is <span class="math inline">\(y=2\)</span>; everything outside the ellipse (the grey background) is <span class="math inline">\(y=3\)</span>.</p>
+<p>Writing <span class="math inline">\(|R|\)</span> for the area of a region <span class="math inline">\(R\)</span>, and <span class="math inline">\(\{x=3\}\)</span> for the strip <span class="math inline">\(x=3\)</span>, which of the following gives <span class="math inline">\(\text{Prob}[y=j\mid x=3]\)</span> for <span class="math inline">\(j\in\{1,2,3\}\)</span>? Exactly one is correct.</p>
+<p><strong>(a)</strong></p>
+<p><span class="math display">\[
+\begin{aligned}
+\text{Prob}[y=1\mid x=3] &amp;= 0, \\
+\text{Prob}[y=2\mid x=3] &amp;= \frac{|\text{blue}\cap\{x=3\}|}{|\text{whole rectangle}|}, \\
+\text{Prob}[y=3\mid x=3] &amp;= \frac{|\text{grey}\cap\{x=3\}|}{|\text{whole rectangle}|}.
+\end{aligned}
+\]</span></p>
+<p><strong>(b)</strong></p>
+<p><span class="math display">\[
+\begin{aligned}
+\text{Prob}[y=1\mid x=3] &amp;= 0, \\
+\text{Prob}[y=2\mid x=3] &amp;= \frac{|\text{blue}\cap\{x=3\}|}{|\{x=3\}|}, \\
+\text{Prob}[y=3\mid x=3] &amp;= \frac{|\text{grey}\cap\{x=3\}|}{|\{x=3\}|}.
+\end{aligned}
+\]</span></p>
+<p><strong>(c)</strong></p>
+<p><span class="math display">\[
+\begin{aligned}
+\text{Prob}[y=1\mid x=3] &amp;= 0, \\
+\text{Prob}[y=2\mid x=3] &amp;= \frac{|\text{blue}\cap\{x=3\}|}{|\text{blue}|}, \\
+\text{Prob}[y=3\mid x=3] &amp;= \frac{|\text{grey}\cap\{x=3\}|}{|\text{grey}|}.
+\end{aligned}
+\]</span></p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(b) is correct.</strong></p>
+<p>All three options agree that <span class="math inline">\(\text{Prob}[y=1\mid x=3]=0\)</span>, and that much is simply read off the figure: the red region lies entirely to the left of the second vertical line, so it has no overlap at all with the strip <span class="math inline">\(x=3\)</span>. A measurement <span class="math inline">\(y=1\)</span> is impossible when the state is <span class="math inline">\(3\)</span>.</p>
+<p>The three options differ only in what the remaining areas are divided by, and that is the whole point of the exercise. Conditioning on <span class="math inline">\(x=3\)</span> means <em>restricting attention to the strip <span class="math inline">\(x=3\)</span> and treating it as the new sample space</em>, so the areas must be normalized by the area of that strip. Within the strip the ellipse contributes only blue, and the rest is grey, so the two probabilities add up to <span class="math inline">\(1\)</span> as they must.</p>
+<p>Option <strong>(a)</strong> divides by the area of the whole rectangle instead. Those are the <em>joint</em> probabilities <span class="math inline">\(\text{Prob}[y=j \text{ and } x=3]\)</span>, not the conditional ones; they add up to <span class="math inline">\(\text{Prob}[x=3]\)</span>, which is less than <span class="math inline">\(1\)</span>.</p>
+<p>Option <strong>(c)</strong> normalizes each measurement value by its own total area, which conditions the wrong way round: it computes <span class="math inline">\(\text{Prob}[x=3\mid y=j]\)</span>, the probability of the state given the measurement, rather than the probability of the measurement given the state. Keeping these two apart is exactly what Bayes’ rule is for – the rule above is precisely the recipe for turning one into the other.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: now the other way round">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: now the other way round
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Still reading off <a href="#fig-probspace" class="quarto-xref">Fig.&nbsp;4</a>, and with the same notation <span class="math inline">\(|R|\)</span> for the area of a region <span class="math inline">\(R\)</span>, compute <span class="math inline">\(\text{Prob}[x=2\mid y=1]\)</span> in terms of areas of regions in the figure.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><span class="math display">\[
+\text{Prob}[x=2\mid y=1] = \frac{|\text{red}\cap\{x=2\}|}{|\text{red}|}.
+\]</span></p>
+<p>Conditioning on <span class="math inline">\(y=1\)</span> means restricting attention to the red region and treating <em>it</em> as the new sample space – exactly as conditioning on <span class="math inline">\(x=3\)</span> in the previous exercise meant restricting attention to the strip <span class="math inline">\(x=3\)</span>. The event <span class="math inline">\(x=2\)</span> then corresponds to the part of the red region lying to the right of the first vertical line, and its probability is that part’s share of the red region as a whole.</p>
+<p>Note that this is the quantity option (c) of the previous exercise was really computing. It is the <em>a posteriori</em> probability of the state given the measurement – what we actually want when a sensor reading arrives – whereas <span class="math inline">\(\text{Prob}[y=j\mid x=i]\)</span> is the sensor model we are given. Bayes’ rule is what connects the two, and in this picture it is the almost trivial observation that both are ratios of the same overlapping area, differing only in what they are normalized by.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="A one-shot application of Bayes' rule: should she buy the alarm?">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>A one-shot application of Bayes’ rule: should she buy the alarm?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-8" class="callout-8-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Bayes’ rule is useful even outside of a filtering/tracking context, whenever a single a-posteriori probability needs to be computed from a single measurement. Here is a simple illustration.</p>
+<p>An international student is deciding whether it is worthwhile to install a hobby alarm (an ultrasound sensor near the door) to detect burglars while she is away for the Christmas break. The alarm is faulty and characterized by</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 23%">
+<col style="width: 38%">
+<col style="width: 38%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: center;">Burglar breaks in <span class="math inline">\(B\)</span></th>
+<th style="text-align: center;">Burglar does not break in <span class="math inline">\(\neg B\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Alarm does not go off <span class="math inline">\(\neg A\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\text{Prob}[\neg A\mid B]=0.01\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\text{Prob}[\neg A\mid \neg B]=0.9\)</span></td>
+</tr>
+<tr class="even">
+<td>Alarm goes off <span class="math inline">\(A\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\text{Prob}[A\mid B]=0.99\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\text{Prob}[A\mid \neg B]=0.1\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>and historical data shows that <span class="math inline">\(2\)</span> out of every <span class="math inline">\(100\)</span> rooms are burgled each Christmas, i.e.&nbsp;<span class="math inline">\(\text{Prob}[B]=0.02\)</span>, <span class="math inline">\(\text{Prob}[\neg B]=0.98\)</span>. Her belongings are worth <span class="math inline">\(2000\)</span> euros, and calling a security agency to check the room whenever the alarm goes off costs <span class="math inline">\(300\)</span> euros; she will only call if <span class="math inline">\(\text{Prob}[B\mid A]\cdot2000 &gt; 300\)</span>, i.e.&nbsp;if <span class="math inline">\(\text{Prob}[B\mid A] &gt; 0.15\)</span>. Should she buy the alarm?</p>
+<p>By Bayes’ rule, <span class="math display">\[
+\text{Prob}[B\mid A] = \frac{\text{Prob}[A\mid B]\,\text{Prob}[B]}{\text{Prob}[A\mid B]\,\text{Prob}[B] + \text{Prob}[A\mid\neg B]\,\text{Prob}[\neg B]}
+= \frac{0.99\times0.02}{0.99\times0.02 + 0.1\times0.98} = \frac{0.0198}{0.1178} \approx 0.168,
+\]</span> which exceeds <span class="math inline">\(0.15\)</span> – so yes, she should buy the alarm (and call the agency whenever it goes off).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="example-tracking-a-robot-behind-a-door" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="example-tracking-a-robot-behind-a-door"><span class="header-section-number">2.2</span> Example: tracking a robot behind a door</h3>
+<p>A robot can be at one of <span class="math inline">\(8\)</span> positions on a circular floor with a door (<a href="#fig-floor" class="quarto-xref">Fig.&nbsp;5</a>). It moves around the circle with some slip, according to</p>
+<p><span class="math display">\[
+\text{Prob}[p_{k+1}=i\mid p_k=i] = 0.1,
+\]</span> <span class="math display">\[
+\text{Prob}[p_{k+1}=i\oplus 2\mid p_k=i] = 0.2,
+\]</span> <span class="math display">\[
+\text{Prob}[p_{k+1}=i\oplus 1\mid p_k=i] = 0.7,
+\]</span></p>
+<p>where <span class="math inline">\(i\oplus r := ((i-1+r)\bmod 8)+1\)</span> wraps around the <span class="math inline">\(8\)</span> positions.</p>
+<div style="text-align: center;">
+<div id="fig-floor" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-floor-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg12-floor.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:42.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-floor-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;5: A robot moving in a circular fashion among <span class="math inline">\(8\)</span> positions on a floor with a door; a sensor may detect the door when the robot is close to it.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>If the robot is close to the door, a sensor might detect it (<span class="math inline">\(y_k=1\)</span>) with <span class="math display">\[
+\text{Prob}[y_k=1\mid p_k=2]=1, \qquad
+\text{Prob}[y_k=1\mid p_k=1]=\text{Prob}[y_k=1\mid p_k=3]=0.4,
+\]</span> and if <span class="math inline">\(p_k\notin\{1,2,3\}\)</span> then <span class="math inline">\(y_k=0\)</span> with probability one. Suppose the robot starts at <span class="math inline">\(p_0=1\)</span>; we would like to compute <span class="math inline">\(\text{Prob}[p_2\mid p_0=1]\)</span> and, once a measurement is available, <span class="math inline">\(\text{Prob}[p_2\mid p_0=1,y_2=1]\)</span>.</p>
+<p>The first quantity can be obtained by simply following the branching probabilities two steps forward, as in <a href="#fig-tree" class="quarto-xref">Fig.&nbsp;6</a>.</p>
+<div style="text-align: center;">
+<div id="fig-tree" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-tree-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg13-tree.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:85.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-tree-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;6: Propagating <span class="math inline">\(\text{Prob}[p_0=1]\)</span> two steps forward through the transition probabilities <span class="math inline">\(0.1,0.2,0.7\)</span> to obtain <span class="math inline">\(\text{Prob}[p_2=i\mid p_0=1]\)</span> for every <span class="math inline">\(i\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Equivalently, and more systematically, define the transition matrix <span class="math inline">\(P_{ij}=\text{Prob}[x_{k+1}=i\mid x_k=j]\)</span> and the probability vector <span class="math inline">\(p_k\)</span> with entries <span class="math inline">\(\text{Prob}[x_k=i\mid x_0=1]\)</span>:</p>
+<p><span class="math display">\[
+P = \begin{bmatrix}0.1&amp;0&amp;0&amp;0&amp;0&amp;0&amp;0&amp;0\\0.7&amp;0.1&amp;0&amp;0&amp;0&amp;0&amp;0&amp;0\\0.2&amp;0.7&amp;0.1&amp;0&amp;0&amp;0&amp;0&amp;0\\0&amp;0.2&amp;0.7&amp;0.1&amp;0&amp;0&amp;0&amp;0\\0&amp;0&amp;0.2&amp;0.7&amp;0.1&amp;0&amp;0&amp;0\\0&amp;0&amp;0&amp;0.2&amp;0.7&amp;0.1&amp;0&amp;0\\0&amp;0&amp;0&amp;0&amp;0.2&amp;0.7&amp;0.1&amp;0\\0&amp;0&amp;0&amp;0&amp;0&amp;0.2&amp;0.7&amp;0.1\end{bmatrix},
+\]</span> <span class="math display">\[
+p_0=\begin{bmatrix}1\\0\\\vdots\\0\end{bmatrix},\qquad
+p_1=\begin{bmatrix}0.1\\0.7\\0.2\\0\\0\\0\\0\\0\end{bmatrix},\qquad
+p_2=\begin{bmatrix}0.01\\0.14\\0.53\\0.28\\0.04\\0\\0\\0\end{bmatrix},
+\]</span></p>
+<p>obtained simply by iterating <span class="math inline">\(p_{k+1}=Pp_k\)</span>.</p>
+<p>To fold in the measurement <span class="math inline">\(y_2=1\)</span>, apply Bayes’ rule (with normalizing factor <span class="math inline">\(\alpha=1/\text{Prob}[y_2=1\mid p_0=1]\)</span>):</p>
+<p><span class="math display">\[
+\text{Prob}[p_2=i\mid p_0=1,y_2=1] = \frac{1}{\alpha}\,\text{Prob}[y_2=1\mid p_0=1,p_2=i]\,\text{Prob}[p_2=i\mid p_0=1].
+\]</span></p>
+<p>Writing the sensor model as a diagonal matrix <span class="math inline">\(R=\text{diag}(0.4,\,1,\,0.4,\,0,\,0,\,0,\,0,\,0)\)</span> (the probability of <span class="math inline">\(y_2=1\)</span> at each possible position), this becomes a simple matrix-vector product followed by a normalization:</p>
+<p><span class="math display">\[
+Rp_2 = \begin{bmatrix}0.004\\0.14\\0.212\\0\\0\\0\\0\\0\end{bmatrix}, \qquad \alpha = 0.004+0.14+0.212=0.356,
+\]</span> <span class="math display">\[
+\text{Prob}[p_2\mid p_0=1,y_2=1] = \begin{bmatrix}0.0112\\0.3933\\0.5955\\0\\0\\0\\0\\0\end{bmatrix}.
+\]</span></p>
+<p>In general, multiplying by the diagonal matrix <span class="math inline">\(D(y_k)=\text{diag}([R]_{y_k,1},\dots,[R]_{y_k,\bar n})\)</span> – apart from the normalizing factor – is exactly how a measurement updates the belief, and this is the essence of the <em>correction</em> step of the Bayes filter, formalized next.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: a different starting position and measurement">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-9-contents" aria-controls="callout-9" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: a different starting position and measurement
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-9" class="callout-9-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Repeat the computation above for a robot that starts at <span class="math inline">\(p_0=2\)</span> instead of <span class="math inline">\(p_0=1\)</span>, and suppose that at stage <span class="math inline">\(2\)</span> the door is <em>not</em> detected, <span class="math inline">\(y_2=0\)</span>, instead of detected. Compute <span class="math inline">\(\text{Prob}[p_2\mid p_0=2,y_2=0]\)</span>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-10-contents" aria-controls="callout-10" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-10" class="callout-10-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>Prediction.</strong> Iterating <span class="math inline">\(p_{k+1}=Pp_k\)</span> from <span class="math inline">\(p_0=2\)</span> (i.e., <span class="math inline">\(p_0=\begin{bmatrix}0&amp;1&amp;0&amp;0&amp;0&amp;0&amp;0&amp;0\end{bmatrix}^\top\)</span>),</p>
+<p><span class="math display">\[
+p_1=\begin{bmatrix}0\\0.1\\0.7\\0.2\\0\\0\\0\\0\end{bmatrix}, \qquad
+p_2=\begin{bmatrix}0\\0.01\\0.14\\0.53\\0.28\\0.04\\0\\0\end{bmatrix}.
+\]</span></p>
+<p>This is exactly the <span class="math inline">\(p_2\)</span> found earlier for <span class="math inline">\(p_0=1\)</span>, shifted by one position around the circle – as expected, since the dynamics (unlike the sensor model) are the same at every position.</p>
+<p><strong>Correction.</strong> Since <span class="math inline">\(y_2=0\)</span> instead of <span class="math inline">\(y_2=1\)</span>, the relevant sensor row is now <span class="math inline">\(\text{Prob}[y_2=0\mid p_2=i]=1-\text{Prob}[y_2=1\mid p_2=i]\)</span>, i.e.&nbsp;the diagonal matrix <span class="math inline">\(D(0)=\text{diag}(0.6,\,0,\,0.6,\,1,\,1,\,1,\,1,\,1)\)</span>. Then</p>
+<p><span class="math display">\[
+D(0)\,p_2 = \begin{bmatrix}0\\0\\0.084\\0.53\\0.28\\0.04\\0\\0\end{bmatrix}, \qquad \alpha = 0.084+0.53+0.28+0.04=0.934,
+\]</span> <span class="math display">\[
+\text{Prob}[p_2\mid p_0=2,y_2=0] = \begin{bmatrix}0\\0\\0.0899\\0.5675\\0.2998\\0.0428\\0\\0\end{bmatrix}.
+\]</span></p>
+<p>Two things are worth noting. First, position <span class="math inline">\(2\)</span> (where the door sensor would fire with certainty) is ruled out entirely once <span class="math inline">\(y_2=0\)</span> is observed, and position <span class="math inline">\(1\)</span> also drops out since it started with negligible mass. Second, compared to the <em>prediction</em> <span class="math inline">\(p_2\)</span> above, the belief shifts further away from the door (positions <span class="math inline">\(1\)</span>-<span class="math inline">\(3\)</span>) and concentrates more on position <span class="math inline">\(4\)</span>, since observing “no door” is evidence <em>against</em> being close to it.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled" title="Interactive example: run the Bayes filter yourself">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-11-contents" aria-controls="callout-11" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Interactive example: run the Bayes filter yourself
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-11" class="callout-11-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The interactive panel below lets you run the Bayes filter yourself on the robot-and-door example of <a href="#fig-floor" class="quarto-xref">Fig.&nbsp;5</a> (the very same image is used here). Choose an initial belief <span class="math inline">\(p_0\)</span> over the <span class="math inline">\(8\)</span> positions – any nonnegative numbers, automatically normalized to sum to one – then build a sequence of measurements (<span class="math inline">\(y=1\)</span>: door detected, <span class="math inline">\(y=0\)</span>: door not detected), one per stage. “Step” advances the filter by one half-step at a time (first the <em>prediction</em>, then the <em>correction</em> using the next measurement in the sequence); “Play” runs through the whole sequence automatically. The number shown at each position, and the intensity of its highlight, is the current belief <span class="math inline">\(\text{Prob}[x_k=i\mid I_k]\)</span> at that position.</p>
+<div id="bf-wrap" style="max-width:560px;margin:1.5em auto;border:1px solid #ccc;border-radius:8px;padding:1em;">
+  <div style="margin-bottom:0.6em;">
+    <strong>Initial belief p₀ (values are normalized to sum to 1):</strong>
+    <div id="bf-p0-inputs" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;"></div>
+    <div style="margin-top:6px;">
+      <button id="bf-preset-uniform" type="button">Uniform</button>
+      <button id="bf-preset-pos1" type="button">All at position 1</button>
+    </div>
+  </div>
+  <div style="margin-bottom:0.6em;">
+    <strong>Measurement sequence (one per stage):</strong>
+    <div style="margin-top:4px;">
+      <button id="bf-add-y0" type="button">+ y = 0 (no door)</button>
+      <button id="bf-add-y1" type="button">+ y = 1 (door)</button>
+      <button id="bf-undo" type="button">Remove last</button>
+      <button id="bf-clear-seq" type="button">Clear</button>
+    </div>
+    <div id="bf-seq-display" style="margin-top:6px; font-family: monospace; font-size:0.9em; color:#333;"></div>
+  </div>
+  <div style="margin-bottom:0.6em;">
+    <button id="bf-play" type="button">▶ Play</button>
+    <button id="bf-step" type="button">Step</button>
+    <button id="bf-reset" type="button">↻ Reset</button>
+  </div>
+  <div id="bf-status" style="margin-bottom:0.6em; font-size:0.92em; color:#333; min-height:2.4em;"></div>
+  <div id="bf-imgwrap" style="position:relative; width:100%; max-width:480px; margin:0 auto;">
+    <img src="../lectures/figures/lecture4/pg12-floor.png" alt="Robot on a circular floor with a door" style="width:100%; display:block;">
+  </div>
+</div>
+<script>
+(function () {
+  const wrapEl = document.getElementById('bf-wrap');
+  if (!wrapEl) return;
+
+  const N = 8;
+  function wrapIdx(i, r) { return ((i - 1 + r) % N) + 1; }
+  const detect = [0.4, 1, 0.4, 0, 0, 0, 0, 0]; // Prob[y=1|state=i], i=1..8
+
+  function predict(p) {
+    const out = new Array(N).fill(0);
+    for (let j = 1; j <= N; j++) {
+      const pj = p[j - 1];
+      if (!pj) continue;
+      out[j - 1] += pj * 0.1;
+      out[wrapIdx(j, 1) - 1] += pj * 0.7;
+      out[wrapIdx(j, 2) - 1] += pj * 0.2;
+    }
+    return out;
+  }
+  function correct(pbar, y) {
+    const q = pbar.map((v, idx) => v * (y === 1 ? detect[idx] : (1 - detect[idx])));
+    const s = q.reduce((a, b) => a + b, 0);
+    if (s < 1e-9) return { ok: false, p: pbar.slice() };
+    return { ok: true, p: q.map(v => v / s) };
+  }
+
+  const p0Container = document.getElementById('bf-p0-inputs');
+  const inputs = [];
+  for (let i = 1; i <= N; i++) {
+    const col = document.createElement('div');
+    col.style.textAlign = 'center';
+    const lab = document.createElement('div');
+    lab.textContent = String(i);
+    lab.style.fontSize = '0.75em';
+    lab.style.color = '#555';
+    const inp = document.createElement('input');
+    inp.type = 'number';
+    inp.min = '0';
+    inp.step = '0.1';
+    inp.value = (i === 1 ? '1' : '0');
+    inp.style.width = '42px';
+    col.appendChild(lab);
+    col.appendChild(inp);
+    p0Container.appendChild(col);
+    inputs.push(inp);
+  }
+
+  function normalizedP0() {
+    const raw = inputs.map(inp => Math.max(0, parseFloat(inp.value) || 0));
+    const s = raw.reduce((a, b) => a + b, 0);
+    if (s <= 0) return new Array(N).fill(1 / N);
+    return raw.map(v => v / s);
+  }
+
+  document.getElementById('bf-preset-uniform').addEventListener('click', () => {
+    inputs.forEach(inp => { inp.value = '1'; });
+    resetToInitial();
+  });
+  document.getElementById('bf-preset-pos1').addEventListener('click', () => {
+    inputs.forEach((inp, idx) => { inp.value = (idx === 0 ? '1' : '0'); });
+    resetToInitial();
+  });
+
+  let sequence = [];
+  const seqDisplay = document.getElementById('bf-seq-display');
+  function renderSeq() {
+    seqDisplay.textContent = sequence.length ? ('y: ' + sequence.join(' -> ')) : '(no measurements added yet)';
+  }
+  document.getElementById('bf-add-y0').addEventListener('click', () => { sequence.push(0); renderSeq(); });
+  document.getElementById('bf-add-y1').addEventListener('click', () => { sequence.push(1); renderSeq(); });
+  document.getElementById('bf-undo').addEventListener('click', () => { sequence.pop(); renderSeq(); });
+  document.getElementById('bf-clear-seq').addEventListener('click', () => { sequence = []; renderSeq(); resetToInitial(); });
+  renderSeq();
+
+  const posFrac = {
+    1: [0.274, 0.421], 2: [0.479, 0.421], 3: [0.682, 0.421],
+    4: [0.824, 0.608], 5: [0.716, 0.840], 6: [0.479, 0.881],
+    7: [0.242, 0.840], 8: [0.155, 0.608]
+  };
+  const imgWrap = document.getElementById('bf-imgwrap');
+  const badges = {};
+  for (let i = 1; i <= N; i++) {
+    const b = document.createElement('div');
+    b.style.position = 'absolute';
+    b.style.left = (posFrac[i][0] * 100) + '%';
+    b.style.top = (posFrac[i][1] * 100) + '%';
+    b.style.transform = 'translate(-50%,-50%)';
+    b.style.minWidth = '34px';
+    b.style.padding = '2px 4px';
+    b.style.borderRadius = '4px';
+    b.style.fontSize = '0.82em';
+    b.style.fontWeight = '600';
+    b.style.textAlign = 'center';
+    b.style.transition = 'background-color 0.35s, color 0.35s';
+    b.style.pointerEvents = 'none';
+    b.textContent = '0.00';
+    imgWrap.appendChild(b);
+    badges[i] = b;
+  }
+
+  function colorFor(v) {
+    const a = Math.min(1, v * 1.6);
+    return 'rgba(37,99,235,' + a.toFixed(3) + ')';
+  }
+  function textColorFor(v) { return v > 0.55 ? '#fff' : '#111'; }
+
+  function renderBelief(p) {
+    for (let i = 1; i <= N; i++) {
+      const v = p[i - 1];
+      badges[i].textContent = v.toFixed(2);
+      badges[i].style.backgroundColor = colorFor(v);
+      badges[i].style.color = textColorFor(v);
+    }
+  }
+
+  const statusEl = document.getElementById('bf-status');
+
+  let currentP = normalizedP0();
+  let stageIdx = 0;
+  let phase = 'initial'; // 'initial' | 'predict' | 'correct'
+  let playing = false;
+  let timer = null;
+
+  function resetToInitial() {
+    stopPlay();
+    currentP = normalizedP0();
+    stageIdx = 0;
+    phase = 'initial';
+    renderBelief(currentP);
+    statusEl.textContent = 'Initial belief p0 (before any measurement).';
+  }
+
+  function stepOnce() {
+    if (stageIdx >= sequence.length) {
+      statusEl.textContent = 'All measurements in the sequence have been used. Add more, or reset.';
+      return false;
+    }
+    if (phase !== 'predict') {
+      const pbar = predict(currentP);
+      currentP = pbar;
+      phase = 'predict';
+      renderBelief(currentP);
+      statusEl.textContent = 'Stage ' + stageIdx + ' -> ' + (stageIdx + 1) + ': prediction (before observing y_' + (stageIdx + 1) + ' = ' + sequence[stageIdx] + ').';
+      return true;
+    } else {
+      const y = sequence[stageIdx];
+      const res = correct(currentP, y);
+      if (!res.ok) {
+        statusEl.textContent = 'y_' + (stageIdx + 1) + ' = ' + y + ' has probability 0 given the predicted belief -- this measurement is impossible here. Try a different sequence.';
+        return false;
+      }
+      currentP = res.p;
+      stageIdx += 1;
+      phase = 'correct';
+      renderBelief(currentP);
+      statusEl.textContent = 'Stage ' + stageIdx + ': correction using y_' + stageIdx + ' = ' + y + '.';
+      return stageIdx < sequence.length;
+    }
+  }
+
+  function stopPlay() { playing = false; if (timer) { clearTimeout(timer); timer = null; } }
+
+  document.getElementById('bf-step').addEventListener('click', () => { stopPlay(); stepOnce(); });
+  document.getElementById('bf-reset').addEventListener('click', resetToInitial);
+  document.getElementById('bf-play').addEventListener('click', () => {
+    if (playing) return;
+    resetToInitial();
+    playing = true;
+    function loop() {
+      if (!playing) return;
+      const more = stepOnce();
+      if (more) {
+        timer = setTimeout(loop, 1000);
+      } else {
+        playing = false;
+      }
+    }
+    timer = setTimeout(loop, 400);
+  });
+
+  resetToInitial();
+})();
+</script>
+</div>
+</div>
+</div>
+</section>
+<section id="the-bayes-filter-algorithm" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="the-bayes-filter-algorithm"><span class="header-section-number">2.3</span> The Bayes’ filter algorithm</h3>
+<p>Write the belief <span class="math inline">\(P_{x_k\mid I_k}\)</span> as the vector <span class="math inline">\(p_k=\begin{bmatrix}p_{k,1}&amp;\dots&amp;p_{k,\bar n}\end{bmatrix}^\top\)</span>, <span class="math inline">\(p_{k,i}=\text{Prob}[x_k=i\mid I_k]\)</span>. When there is no input and the model is time-invariant (<a href="#fig-filter-noinput" class="quarto-xref">Fig.&nbsp;7</a>), the Bayes filter alternates a <em>prediction</em> step, which propagates the belief through the dynamics, and a <em>correction</em> step, which folds in the new measurement:</p>
+<p><strong>Prediction</strong> <span class="math inline">\(\quad \bar p_{k+1} = Pp_k\)</span></p>
+<p><strong>Correction</strong> <span class="math inline">\(\quad q_{k+1} = D(y_{k+1})\bar p_{k+1} \qquad p_{k+1} = \dfrac{q_{k+1}}{\mathbb{1}^\top q_{k+1}}\)</span></p>
+<p><strong>Initial condition</strong> <span class="math inline">\(\quad p_0 = \dfrac{q_0}{\mathbb{1}^\top q_0} \qquad q_0 = D(y_0)\tilde p_0 \qquad \tilde p_{0,i} = \text{Prob}[x_0=i]\)</span></p>
+<div style="text-align: center;">
+<div id="fig-filter-noinput" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-filter-noinput-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg16-filterblock.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:85.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-filter-noinput-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;7: The Bayes filter (no input, time-invariant case): a state estimator that alternates a prediction step and an update (correction) step to produce the belief <span class="math inline">\(P_{x_k\mid I_k}\)</span> from the measurements <span class="math inline">\(y_k\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>In the general case, with an input and possibly time-varying dynamics and output maps (<a href="#fig-filter-general" class="quarto-xref">Fig.&nbsp;8</a>), the prediction step simply uses the transition matrix corresponding to the decision actually taken:</p>
+<p><strong>Prediction</strong> <span class="math inline">\(\quad \bar p_{k+1} = P_k(u_k)p_k\)</span></p>
+<p><strong>Correction</strong> <span class="math inline">\(\quad q_{k+1} = D(y_{k+1})\bar p_{k+1} \qquad p_{k+1} = \dfrac{q_{k+1}}{\mathbb{1}^\top q_{k+1}}\)</span></p>
+<p><strong>Initial condition</strong> <span class="math inline">\(\quad p_0 = \dfrac{q_0}{\mathbb{1}^\top q_0} \qquad q_0 = D(y_0)\tilde p_0 \qquad \tilde p_{0,i} = \text{Prob}[x_0=i]\)</span></p>
+<div style="text-align: center;">
+<div id="fig-filter-general" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-filter-general-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg17-filterblock.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-filter-general-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;8: The Bayes filter, general case: dynamics and output map may depend on time and on the applied input <span class="math inline">\(u_k\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Derivation of the Bayes filter">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-12-contents" aria-controls="callout-12" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Derivation of the Bayes filter
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-12" class="callout-12-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Both steps of the filter follow directly from the Markov property and Bayes’ rule.</p>
+<p><strong>Prediction step.</strong> Define <span class="math inline">\(\bar p_k=\begin{bmatrix}\bar p_{k,1}&amp;\dots&amp;\bar p_{k,\bar n_k}\end{bmatrix}^\top\)</span>, <span class="math inline">\(\bar p_{k,i}=\text{Prob}[x_k=i\mid I_{k-1},u_{k-1}]\)</span>. Conditioning on <span class="math inline">\(x_k\)</span>, <span class="math display">\[
+\bar p_{k+1,i} = \text{Prob}[x_{k+1}=i\mid I_k,u_k]
+= \sum_{\tau=1}^{\bar n_k}\text{Prob}[x_{k+1}=i\mid x_k=\tau,I_k,u_k]\,\text{Prob}[x_k=\tau\mid I_k,u_k].
+\]</span> Since <span class="math inline">\(x_k\)</span> is independent of <span class="math inline">\(u_k\)</span> (the decision at stage <span class="math inline">\(k\)</span> cannot influence the state already reached at stage <span class="math inline">\(k\)</span>), and by the Markov property <span class="math inline">\(\text{Prob}[x_{k+1}=i\mid x_k=\tau,I_k,u_k]=\text{Prob}[x_{k+1}=i\mid x_k=\tau,u_k]=[P_k(u_k)]_{i\tau}\)</span>, this becomes <span class="math display">\[
+\bar p_{k+1,i} = \sum_{\tau=1}^{\bar n_k} [P_k(u_k)]_{i\tau}\,p_{k,\tau},
+\qquad\text{i.e., in matrix form}\qquad
+\bar p_{k+1} = P_k(u_k)p_k.
+\]</span></p>
+<p><strong>Correction step.</strong> Suppose a measurement <span class="math inline">\(y_{k+1}=\theta\)</span> arrives. Then, by Bayes’ rule (conditioning on the third variable <span class="math inline">\(I_k,u_k\)</span>) and again the Markov property (<span class="math inline">\(y_{k+1}\)</span> depends on <span class="math inline">\(x_{k+1}\)</span> only), <span class="math display">\[
+p_{k+1,i} = \text{Prob}[x_{k+1}=i\mid I_k,y_{k+1}=\theta,u_k]
+= \alpha\,\text{Prob}[y_{k+1}=\theta\mid x_{k+1}=i]\,\text{Prob}[x_{k+1}=i\mid I_k,u_k],
+\]</span> with <span class="math inline">\(\alpha=1/\text{Prob}[y_{k+1}=\theta\mid I_k,u_k]\)</span>. In matrix form, <span class="math inline">\(p_{k+1}=\alpha q_{k+1}\)</span> with <span class="math inline">\(q_{k+1}=D(y_{k+1})\bar p_{k+1}\)</span>; since <span class="math inline">\(p_{k+1}\)</span> must sum to one, <span class="math inline">\(\alpha=1/\mathbb{1}^\top q_{k+1}\)</span>, giving <span class="math display">\[
+p_{k+1} = \frac{q_{k+1}}{\mathbb{1}^\top q_{k+1}}.
+\]</span></p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="applications-of-the-bayes-filter" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="applications-of-the-bayes-filter"><span class="header-section-number">3</span> Applications of the Bayes filter</h2>
+<section id="tracking-a-robot-in-a-grid-world" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="tracking-a-robot-in-a-grid-world"><span class="header-section-number">3.1</span> Tracking a robot in a grid world</h3>
+<p>A more involved, but structurally identical, example is tracking the position of a robot moving in a grid-world environment. Every cell of the environment is labeled <span class="math inline">\(i\in\{1,\dots,n\}\)</span>, and <span class="math inline">\(x_k=i\)</span> indicates that the robot’s position coincides with the centre of cell <span class="math inline">\(i\)</span> (<a href="#fig-gridworld" class="quarto-xref">Fig.&nbsp;9</a>). The robot moves according to a fixed, autonomous policy, <span class="math inline">\(x_{k+1}=f(x_k,w_k)\)</span> (there is no control input in this example, so the derivations above specialize immediately, simply dropping <span class="math inline">\(u_k\)</span>). Without disturbances, the motion follows a fixed <em>vector field</em> (<a href="#fig-vectorfield" class="quarto-xref">Fig.&nbsp;10</a>).</p>
+<div style="text-align: center;">
+<div id="fig-gridworld" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-gridworld-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg19-gridworld.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:55.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-gridworld-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;9: A grid-world environment: every cell is labeled <span class="math inline">\(i\in\{1,\dots,n\}\)</span>, and the robot’s state <span class="math inline">\(x_k\)</span> is the cell it currently occupies.
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-vectorfield" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-vectorfield-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg20-vectorfield.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:85.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vectorfield-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;10: The deterministic vector field driving the robot’s motion (no disturbances), zoomed in on a small region of the grid on the right.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>With disturbances, the next state <span class="math inline">\(x_{k+1}=f(x_k,w_k)\)</span> is uncertain and takes values in a neighbourhood of the deterministic next state <span class="math inline">\(f(x_k,0)\)</span>, with probabilities that decay with distance (<a href="#fig-disturbance" class="quarto-xref">Fig.&nbsp;11</a>): the most likely outcome, <span class="math inline">\(p_1=0.65\)</span>, is the deterministic one, while cells <span class="math inline">\(1\)</span>, <span class="math inline">\(2\)</span>, and <span class="math inline">\(3\)</span> steps away receive successively smaller probabilities <span class="math inline">\(p_2\)</span>, <span class="math inline">\(p_3\)</span>, <span class="math inline">\(p_4\)</span>.</p>
+<div style="text-align: center;">
+<div id="fig-disturbance" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-disturbance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg21-disturbance.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:95.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-disturbance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;11: Disturbance model: given the deterministic next cell (green), the actual next cell is uncertain and spreads over a neighbourhood with decreasing probability <span class="math inline">\(p_1&gt;p_2&gt;p_3&gt;p_4\)</span> as illustrated on the (zoomed-in) grid on the right.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Two different sensor models are considered for this example. In the first, the measurement <span class="math inline">\(y_k=h(x_k,n_k)\)</span> is itself uncertain and spreads over a neighbourhood of the true state <span class="math inline">\(x_k\)</span>, in the same decaying-with-distance fashion as the disturbance model, with its own probabilities <span class="math inline">\(q_1=0.5,q_2,q_3,q_4\)</span> (<a href="#fig-sensor1" class="quarto-xref">Fig.&nbsp;12</a>). In the second, the measurement <span class="math inline">\(y_k=h(x_k)\)</span> is deterministic and simply reports whether there is an object or wall within a distance <span class="math inline">\(M=5\)</span> cell-lengths of the robot, and if so, whether the closest one is to the left (L), right (R), up (U) or down (D) – or “no object close” (NO) if none is within range (<a href="#fig-sensor2" class="quarto-xref">Fig.&nbsp;13</a>).</p>
+<div style="text-align: center;">
+<div id="fig-sensor1" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-sensor1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg22-sensor1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:95.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-sensor1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;12: Sensor model I: the measurement <span class="math inline">\(y_k\)</span> spreads probabilistically over a neighbourhood of the true state, in the same fashion as the disturbance model (zoomed-in view on the right).
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-sensor2" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-sensor2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg23-sensor2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-sensor2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;13: Sensor model II: a deterministic measurement reporting the direction (Left, Right, Up, Down) of the nearest object/wall within a fixed range, or “No object close” (NO) if none is in range.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Running the Bayes filter on these two sensor models produces the videos below, which track the evolving belief over the grid as the robot moves and measurements arrive. In both, the left panel shows the environment – walls and the central obstacle in yellow – with the robot (green marker) driving anticlockwise along the red circular path, and prints the true position, the measurement <span class="math inline">\(y_k\)</span> actually received, and the stage counter <span class="math inline">\(k\)</span>. The right panel shows the belief <span class="math inline">\(P_{x_k\mid I_k}\)</span> that the filter maintains over the whole grid, brighter meaning more probable.</p>
+<p>With <strong>sensor model I</strong>, the measurement is a noisy position: <span class="math inline">\(y_k\)</span> is a pair of coordinates scattered around the true one, and the belief stays collapsed onto a near-point blob that follows the robot around the circle.</p>
+<div style="text-align:center; margin: 1em 0;">
+  <video controls="" playsinline="" style="max-width:100%; width:720px;">
+    <source src="../lectures/figures/lecture4/LEC4sensor1.mp4" type="video/mp4">
+    Your browser does not support embedded video. You can download the
+    video directly instead.
+  </video>
+</div>
+<p>With <strong>sensor model II</strong>, the measurement is the deterministic directional reading, so <span class="math inline">\(y_k\)</span> is a single symbol rather than a pair of coordinates and carries much less information per stage. The belief is correspondingly broader, and – more tellingly – it is <em>elongated</em>: at any moment it smears out along the direction that the current reading cannot resolve, stretching horizontally, diagonally or vertically as the robot works its way around the obstacle. Compare the two right-hand panels side by side; this is the picture to keep in mind of what a weaker sensor costs you.</p>
+<div style="text-align:center; margin: 1em 0;">
+  <video controls="" playsinline="" style="max-width:100%; width:720px;">
+    <source src="../lectures/figures/lecture4/LEC4sensor2.mp4" type="video/mp4">
+    Your browser does not support embedded video. You can download the
+    video directly instead.
+  </video>
+</div>
+<div class="callout callout-style-default callout-important callout-titled" title="Interactive example: build your own environment and run the Bayes filter">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-13-contents" aria-controls="callout-13" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Interactive example: build your own environment and run the Bayes filter
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-13" class="callout-13-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The same ideas can be explored interactively. In the demo below the environment is yours to design: <strong>click any cell</strong> to turn it into a wall or clear it again, exactly as in the Dijkstra demo of Unit 3. The robot then moves stochastically through whatever environment you have built – at every stage it stays put or steps to one of its free orthogonal neighbours, all equally likely, which is the motion model of <code>A_4_K_gridworldBayes.ipynb</code> – and the Bayes filter tracks it using <strong>sensor model II</strong>: the robot only gets feedback when it is close to something, reporting the direction (U, D, L or R) of the nearest wall within <span class="math inline">\(M\)</span> cells, or <code>NO</code> when nothing is within range.</p>
+<p>The left panel shows the environment and the robot’s true position (green), with a red arrow towards the wall it is currently sensing. The right panel shows the belief <span class="math inline">\(P_{x_k\mid I_k}\)</span>, brightest where the robot is most likely to be, with the true cell outlined in red.</p>
+<p>Because this sensor is <em>deterministic</em>, the correction step does something very easy to see: it simply rules out every cell whose reading differs from the one just received, and renormalizes over the rest. So the bright region is exactly the set of positions still consistent with the whole history of readings, and the counter below the panels tracks how many those are. Watch what happens as the robot moves along a wall and then out into the open – in open space every cell reports <code>NO</code>, the measurements stop discriminating, and the belief spreads back out.</p>
+<div id="gw-wrap" style="margin:1em 0; text-align:center;">
+  <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+    <div>
+      <div style="font-size:0.85em; color:#555; margin-bottom:3px;">Environment and true position</div>
+      <div id="gw-left"></div>
+    </div>
+    <div>
+      <div style="font-size:0.85em; color:#555; margin-bottom:3px;">Belief over the grid</div>
+      <div id="gw-right"></div>
+    </div>
+  </div>
+  <div id="gw-status" style="font-size:0.9em; margin:0.6em 0; min-height:1.4em;"></div>
+  <div style="margin-bottom:0.5em;">
+    <button id="gw-step" style="padding:4px 12px; font-size:0.9em;">Step</button>
+    <button id="gw-play" style="padding:4px 12px; font-size:0.9em; margin-left:0.4em;">Play</button>
+    <button id="gw-newrun" style="padding:4px 12px; font-size:0.9em; margin-left:0.4em;">New run</button>
+    <button id="gw-reset" style="padding:4px 12px; font-size:0.9em; margin-left:0.4em;">Reset grid</button>
+    <label style="margin-left:0.8em; font-size:0.9em;">sensor range M
+      <select id="gw-range">
+        <option value="2" selected="">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+    </label>
+  </div>
+  <div style="font-size:0.8em; color:#555; line-height:1.6;">
+    <span style="display:inline-block; width:12px; height:12px; background:#2c3e50; border-radius:2px; vertical-align:middle;"></span> wall
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:12px; height:12px; background:#27ae60; border-radius:50%; vertical-align:middle;"></span> true position
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:16px; height:3px; background:#c0392b; vertical-align:middle;"></span> sensed direction
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:36px; height:12px; background:linear-gradient(90deg,#121858,#20a0be,#f5e13c); border-radius:2px; vertical-align:middle;"></span> belief, low to high
+  </div>
+</div>
+<script>
+(function () {
+  const COLS = 19, ROWS = 13, CELL = 20;
+  const DIRS = [['U', -1, 0], ['D', 1, 0], ['L', 0, -1], ['R', 0, 1]]; // fixed tie-break order
+  const key = (r, c) => r + ',' + c;
+
+  function defaultObstacles() {
+    const s = new Set();
+    for (let r = 0; r <= 5; r++) s.add(key(r, 6));
+    for (let c = 6; c <= 10; c++) s.add(key(5, c));
+    for (let r = 7; r < ROWS; r++) s.add(key(r, 12));
+    for (let c = 2; c <= 5; c++) s.add(key(9, c));
+    for (const [r, c] of [[2,14],[2,15],[3,14],[3,15]]) s.add(key(r, c));
+    return s;
+  }
+
+  let obstacles = defaultObstacles();
+  let M = 2;
+  let model = null, belief = null, truth = -1, k = 0, lastY = null, playing = false, timer = null;
+
+  function buildModel() {
+    const isWall = (r, c) => (r < 0 || r >= ROWS || c < 0 || c >= COLS) ? true : obstacles.has(key(r, c));
+    const free = [], idx = new Map();
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++)
+      if (!isWall(r, c)) { idx.set(key(r, c), free.length); free.push([r, c]); }
+    const succ = free.map(([r, c]) => {
+      const out = [idx.get(key(r, c))];
+      for (const [, dr, dc] of DIRS) if (!isWall(r + dr, c + dc)) out.push(idx.get(key(r + dr, c + dc)));
+      return out;
+    });
+    const obs = free.map(([r, c]) => {
+      let best = 'NO', bestd = Infinity;
+      for (const [name, dr, dc] of DIRS)
+        for (let d = 1; d <= M; d++)
+          if (isWall(r + dr * d, c + dc * d)) { if (d < bestd) { bestd = d; best = name; } break; }
+      return best;
+    });
+    model = { free, idx, N: free.length, succ, obs, isWall };
+  }
+
+  function predict(p) {
+    const q = new Float64Array(model.N);
+    for (let j = 0; j < model.N; j++) {
+      if (p[j] === 0) continue;
+      const s = model.succ[j], w = p[j] / s.length;
+      for (const i of s) q[i] += w;
+    }
+    return q;
+  }
+  function correct(p, y) {
+    const q = new Float64Array(model.N);
+    let Z = 0;
+    for (let i = 0; i < model.N; i++) if (model.obs[i] === y) { q[i] = p[i]; Z += p[i]; }
+    if (Z === 0) return null;
+    for (let i = 0; i < model.N; i++) q[i] /= Z;
+    return q;
+  }
+
+  function newRun() {
+    buildModel();
+    if (model.N === 0) { belief = null; truth = -1; return; }
+    truth = Math.floor(Math.random() * model.N);
+    k = 0;
+    belief = new Float64Array(model.N).fill(1 / model.N);
+    lastY = model.obs[truth];
+    belief = correct(belief, lastY);
+  }
+
+  function step() {
+    if (!model || model.N === 0) return;
+    const s = model.succ[truth];
+    truth = s[Math.floor(Math.random() * s.length)];
+    k++;
+    belief = predict(belief);
+    lastY = model.obs[truth];
+    belief = correct(belief, lastY);
+  }
+
+  // dark navy -> cyan -> yellow, echoing the MATLAB videos above
+  function heat(t) {
+    t = Math.max(0, Math.min(1, t));
+    const stops = [[18, 24, 90], [32, 160, 190], [245, 225, 60]];
+    const i = t < 0.5 ? 0 : 1, u = t < 0.5 ? t / 0.5 : (t - 0.5) / 0.5;
+    const a = stops[i], b = stops[i + 1];
+    return 'rgb(' + Math.round(a[0] + u * (b[0] - a[0])) + ',' +
+                    Math.round(a[1] + u * (b[1] - a[1])) + ',' +
+                    Math.round(a[2] + u * (b[2] - a[2])) + ')';
+  }
+
+  const wrapL = document.getElementById('gw-left'), wrapR = document.getElementById('gw-right');
+  const statusEl = document.getElementById('gw-status');
+  function mkCanvas(wrap) {
+    const cv = document.createElement('canvas');
+    cv.width = COLS * CELL + 1; cv.height = ROWS * CELL + 1;
+    cv.style.border = '1px solid #999'; cv.style.cursor = 'pointer';
+    cv.style.maxWidth = '100%';
+    wrap.appendChild(cv);
+    return cv;
+  }
+  const cvL = mkCanvas(wrapL), cvR = mkCanvas(wrapR);
+  const ctxL = cvL.getContext('2d'), ctxR = cvR.getContext('2d');
+
+  function gridlines(ctx) {
+    ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1;
+    for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r * CELL + 0.5); ctx.lineTo(COLS * CELL, r * CELL + 0.5); ctx.stroke(); }
+    for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c * CELL + 0.5, 0); ctx.lineTo(c * CELL + 0.5, ROWS * CELL); ctx.stroke(); }
+  }
+
+  function draw() {
+    // left: environment + true position
+    ctxL.clearRect(0, 0, cvL.width, cvL.height);
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      ctxL.fillStyle = obstacles.has(key(r, c)) ? '#2c3e50' : '#ffffff';
+      ctxL.fillRect(c * CELL + 1, r * CELL + 1, CELL - 1, CELL - 1);
+    }
+    gridlines(ctxL);
+    if (model && truth >= 0 && truth < model.N) {
+      const [r, c] = model.free[truth];
+      const cx = c * CELL + CELL / 2, cy = r * CELL + CELL / 2;
+      ctxL.fillStyle = '#27ae60';
+      ctxL.beginPath(); ctxL.arc(cx, cy, CELL / 2 - 3, 0, 2 * Math.PI); ctxL.fill();
+      if (lastY && lastY !== 'NO') {           // arrow towards the detected wall
+        const d = DIRS.find(x => x[0] === lastY);
+        ctxL.strokeStyle = '#c0392b'; ctxL.lineWidth = 2.5;
+        ctxL.beginPath();
+        ctxL.moveTo(cx, cy);
+        ctxL.lineTo(cx + d[2] * CELL * 0.9, cy + d[1] * CELL * 0.9);
+        ctxL.stroke();
+      }
+    }
+    // right: belief
+    ctxR.clearRect(0, 0, cvR.width, cvR.height);
+    let mx = 0;
+    if (belief) for (let i = 0; i < model.N; i++) if (belief[i] > mx) mx = belief[i];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      let fill = '#2c3e50';
+      if (!obstacles.has(key(r, c))) {
+        const i = model ? model.idx.get(key(r, c)) : undefined;
+        fill = (belief && i !== undefined && mx > 0) ? heat(belief[i] / mx) : '#121858';
+      }
+      ctxR.fillStyle = fill;
+      ctxR.fillRect(c * CELL + 1, r * CELL + 1, CELL - 1, CELL - 1);
+    }
+    gridlines(ctxR);
+    if (model && truth >= 0 && truth < model.N) {
+      const [r, c] = model.free[truth];
+      ctxR.strokeStyle = '#e74c3c'; ctxR.lineWidth = 2;
+      ctxR.strokeRect(c * CELL + 2, r * CELL + 2, CELL - 3, CELL - 3);
+    }
+    // status
+    if (!model || model.N === 0) { statusEl.textContent = 'Every cell is a wall -- click some cells to open the environment up.'; return; }
+    let support = 0;
+    if (belief) for (let i = 0; i < model.N; i++) if (belief[i] > 1e-12) support++;
+    const [tr, tc] = model.free[truth];
+    statusEl.innerHTML = 'k = <b>' + k + '</b> &nbsp;|&nbsp; measurement y = <b>' + lastY +
+      '</b> &nbsp;|&nbsp; cells still possible: <b>' + support + '</b> of ' + model.N +
+      ' &nbsp;|&nbsp; belief at the true cell (' + tr + ',' + tc + '): <b>' +
+      (belief ? (100 * belief[truth]).toFixed(1) : '0') + '%</b>';
+  }
+
+  function onClick(ev, cv) {
+    if (playing) return;
+    const rect = cv.getBoundingClientRect();
+    const sx = cv.width / rect.width, sy = cv.height / rect.height;
+    const c = Math.floor((ev.clientX - rect.left) * sx / CELL);
+    const r = Math.floor((ev.clientY - rect.top) * sy / CELL);
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+    const kk = key(r, c);
+    if (obstacles.has(kk)) obstacles.delete(kk); else obstacles.add(kk);
+    newRun();
+    draw();
+  }
+  cvL.addEventListener('click', e => onClick(e, cvL));
+  cvR.addEventListener('click', e => onClick(e, cvR));
+
+  const stepBtn = document.getElementById('gw-step');
+  const playBtn = document.getElementById('gw-play');
+  const runBtn = document.getElementById('gw-newrun');
+  const resetBtn = document.getElementById('gw-reset');
+  const rangeSel = document.getElementById('gw-range');
+
+  function stopPlaying() { playing = false; if (timer) { clearInterval(timer); timer = null; } playBtn.textContent = 'Play'; }
+  stepBtn.addEventListener('click', function () { if (playing) return; step(); draw(); });
+  playBtn.addEventListener('click', function () {
+    if (playing) { stopPlaying(); return; }
+    playing = true; playBtn.textContent = 'Pause';
+    timer = setInterval(function () { step(); draw(); }, 450);
+  });
+  runBtn.addEventListener('click', function () { stopPlaying(); newRun(); draw(); });
+  resetBtn.addEventListener('click', function () { stopPlaying(); obstacles = defaultObstacles(); newRun(); draw(); });
+  rangeSel.addEventListener('change', function () { stopPlaying(); M = parseInt(rangeSel.value, 10); newRun(); draw(); });
+
+  newRun();
+  draw();
+})();
+</script>
+</div>
+</div>
+</div>
+</section>
+<section id="gps-denied-navigation-in-a-tunnel" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="gps-denied-navigation-in-a-tunnel"><span class="header-section-number">3.2</span> GPS-denied navigation in a tunnel</h3>
+<p>A second application is estimating the position of a car travelling through a GPS-denied tunnel (<a href="#fig-gpstunnel" class="quarto-xref">Fig.&nbsp;14</a>): GPS gives an accurate absolute position outside the tunnel, but is unavailable inside it, where dead-reckoning from the wheel odometry alone would accumulate drift over time – exactly the kind of situation where a Bayes filter, fusing whatever measurements remain available with a motion model, is valuable.</p>
+<div style="text-align: center;">
+<div id="fig-gpstunnel" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-gpstunnel-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg26-gpstunnel.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:95.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-gpstunnel-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;14: Outside the tunnel, accurate GPS positioning is available; inside, GPS is denied and dead-reckoning odometry alone accumulates error over time.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>In this model, position is discretized into cells along the lane, <span class="math inline">\(q_k\in\{1,\dots,n\}\)</span> (<a href="#fig-cells" class="quarto-xref">Fig.&nbsp;15</a>), and velocity into cell-jump units, <span class="math inline">\(v_k\in\{0,1,\dots,m\}\)</span>. An internal velocimeter provides a noisy velocity measurement <span class="math inline">\(\tilde v_k=v_k-w_k\)</span>, with disturbance <span class="math inline">\(w_k\in\{-n_w,\dots,-1,0,1,\dots,n_w\}\)</span>, so that the dynamics are <span class="math inline">\(q_{k+1}=q_k+\tilde v_k+w_k\)</span> (the true velocity <span class="math inline">\(v_k\)</span> being the quantity actually driving the motion). Where available, GPS measurements are <span class="math inline">\(y_k=q_k+n_k\)</span>, with noise <span class="math inline">\(n_k\in\{-n_v,\dots,-1,0,1,\dots,n_v\}\)</span>. The Bayes filter for this model is set up exactly as in the previous examples, so the details are omitted here.</p>
+<div style="text-align: center;">
+<div id="fig-cells" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cells-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg27-cells.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:55.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cells-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;15: Position discretized into cells <span class="math inline">\(q_k\in\{1,\dots,n\}\)</span> along the lane.
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled" title="Interactive example: watching the belief spread inside the tunnel">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-14-contents" aria-controls="callout-14" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Interactive example: watching the belief spread inside the tunnel
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-14" class="callout-14-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The demo below runs exactly this filter. The car drives left to right along the lane; the shaded span in the middle is the tunnel, where GPS is unavailable. The top strip shows the true cell <span class="math inline">\(q_k\)</span> (red) and, when GPS is available, the reading <span class="math inline">\(y_k\)</span> (orange tick above the lane). The bar chart underneath is the belief <span class="math inline">\(P_{q_k\mid I_k}\)</span> over the cells, with the true position marked by the red line.</p>
+<p>Both noise sources are discretized Gaussians, <span class="math inline">\(\text{Prob}[d]\propto
+e^{-d^2/2\sigma^2}\)</span> truncated at <span class="math inline">\(\pm3\sigma\)</span> and renormalized, and the two standard deviations are yours to set: <span class="math inline">\(\sigma_w\)</span> for the velocimeter disturbance <span class="math inline">\(w_k\)</span>, and <span class="math inline">\(\sigma_n\)</span> for the GPS noise <span class="math inline">\(n_k\)</span> (the measurement noise, written <span class="math inline">\(v_k\)</span> in some texts). Changing either starts a fresh run.</p>
+<p>The two have quite different jobs, and the demo is worth running a few times to see it. Inside the tunnel there is no correction step at all, so the belief is only ever propagated through the motion model and its spread grows steadily – this is dead-reckoning drift, and <span class="math inline">\(\sigma_w\)</span> sets how fast it accumulates. The moment the car leaves the tunnel a single GPS reading collapses the belief again, and <span class="math inline">\(\sigma_n\)</span> sets how sharply. With <span class="math inline">\(\sigma_w\)</span> large and <span class="math inline">\(\sigma_n\)</span> small you get the most dramatic version: a belief that fans out across a dozen cells in the tunnel and snaps back to near-certainty in one step on the way out.</p>
+<div id="gps-wrap" style="margin:1em 0; text-align:center;">
+  <div id="gps-canvas"></div>
+  <div id="gps-status" style="font-size:0.88em; margin:0.6em 0; min-height:1.4em;"></div>
+  <div style="margin-bottom:0.5em; font-size:0.9em;">
+    <label>σ<sub>w</sub> (velocimeter)
+      <input id="gps-sw" type="number" value="1" min="0.25" max="4" step="0.25" style="width:4.5em;">
+    </label>
+    <label style="margin-left:0.8em;">σ<sub>n</sub> (GPS)
+      <input id="gps-sv" type="number" value="1" min="0.25" max="4" step="0.25" style="width:4.5em;">
+    </label>
+    <button id="gps-step" style="padding:4px 12px; margin-left:0.8em;">Step</button>
+    <button id="gps-play" style="padding:4px 12px; margin-left:0.4em;">Play</button>
+    <button id="gps-newrun" style="padding:4px 12px; margin-left:0.4em;">New run</button>
+  </div>
+  <div style="font-size:0.8em; color:#555; line-height:1.6;">
+    <span style="display:inline-block; width:12px; height:12px; background:#c0392b; border-radius:2px; vertical-align:middle;"></span> true position
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:12px; height:12px; background:#e67e22; border-radius:2px; vertical-align:middle;"></span> GPS reading
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:12px; height:12px; background:#9aa7b0; border-radius:2px; vertical-align:middle;"></span> tunnel (GPS denied)
+    &nbsp;&nbsp;
+    <span style="display:inline-block; width:12px; height:12px; background:#1565c0; border-radius:2px; vertical-align:middle;"></span> belief
+  </div>
+</div>
+<script>
+(function () {
+  const N = 70, TUN_A = 26, TUN_B = 48, VTILDE = 2;
+  const CELLW = 9, PADL = 16, PADR = 16;
+  const LANE_Y = 8, LANE_H = 30, BAR_Y = 54, BAR_H = 132;
+  const W = PADL + N * CELLW + PADR, H = BAR_Y + BAR_H + 26;
+
+  let sigmaW = 1.0, sigmaV = 1.0;
+  let Pw = null, Pv = null;
+  let q = 1, p = null, k = 0, lastY = null, lastVt = VTILDE, finished = false;
+  let playing = false, timer = null;
+
+  const halfFor = s => Math.max(1, Math.min(8, Math.ceil(3 * s)));
+  const inTunnel = x => x >= TUN_A && x <= TUN_B;
+
+  function discGauss(sigma) {
+    const half = halfFor(sigma), vals = [], probs = [];
+    for (let d = -half; d <= half; d++) { vals.push(d); probs.push(Math.exp(-(d * d) / (2 * sigma * sigma))); }
+    const Z = probs.reduce((a, b) => a + b, 0);
+    return { vals, probs: probs.map(x => x / Z) };
+  }
+  function drawFrom(d) {
+    let r = Math.random(), c = 0;
+    for (let t = 0; t < d.vals.length; t++) { c += d.probs[t]; if (r <= c) return d.vals[t]; }
+    return d.vals[d.vals.length - 1];
+  }
+
+  // q_{k+1} = q_k + vtilde + w, with the velocimeter reading vtilde known to the filter
+  function predict(pp) {
+    const out = new Float64Array(N + 1);
+    for (let i = 1; i <= N; i++) {
+      if (pp[i] === 0) continue;
+      for (let t = 0; t < Pw.vals.length; t++) {
+        let j = i + VTILDE + Pw.vals[t];
+        if (j < 1) j = 1; if (j > N) j = N;
+        out[j] += pp[i] * Pw.probs[t];
+      }
+    }
+    return out;
+  }
+  // GPS: y = q + n, available only outside the tunnel
+  function correct(pp, y) {
+    const out = new Float64Array(N + 1); let Z = 0;
+    const lut = new Map(); Pv.vals.forEach((d, t) => lut.set(d, Pv.probs[t]));
+    for (let i = 1; i <= N; i++) {
+      const wgt = lut.get(y - i);
+      if (wgt) { out[i] = pp[i] * wgt; Z += out[i]; }
+    }
+    if (Z === 0) return null;
+    for (let i = 1; i <= N; i++) out[i] /= Z;
+    return out;
+  }
+
+  function newRun() {
+    Pw = discGauss(sigmaW); Pv = discGauss(sigmaV);
+    q = 3; k = 0; finished = false; lastVt = VTILDE;
+    p = new Float64Array(N + 1); for (let i = 1; i <= N; i++) p[i] = 1 / N;
+    lastY = inTunnel(q) ? null : q + drawFrom(Pv);
+    if (lastY !== null) { const np = correct(p, lastY); if (np) p = np; }
+  }
+
+  function step() {
+    if (finished) return;
+    const w = drawFrom(Pw);
+    q = Math.min(N, Math.max(1, q + VTILDE + w));
+    k++;
+    p = predict(p);
+    if (inTunnel(q)) { lastY = null; }
+    else { lastY = q + drawFrom(Pv); const np = correct(p, lastY); if (np) p = np; }
+    if (q >= N) finished = true;
+  }
+
+  function stats() {
+    let mean = 0; for (let i = 1; i <= N; i++) mean += i * p[i];
+    let v = 0; for (let i = 1; i <= N; i++) v += (i - mean) * (i - mean) * p[i];
+    return { mean, sd: Math.sqrt(v) };
+  }
+
+  const wrap = document.getElementById('gps-canvas');
+  const statusEl = document.getElementById('gps-status');
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  canvas.style.border = '1px solid #999'; canvas.style.maxWidth = '100%';
+  wrap.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  const X = i => PADL + (i - 1) * CELLW;
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // --- lane strip ---
+    ctx.fillStyle = '#eceff1'; ctx.fillRect(PADL, LANE_Y, N * CELLW, LANE_H);
+    ctx.fillStyle = '#9aa7b0'; ctx.fillRect(X(TUN_A), LANE_Y, (TUN_B - TUN_A + 1) * CELLW, LANE_H);
+    ctx.strokeStyle = '#b0bec5'; ctx.lineWidth = 1;
+    for (let i = 1; i <= N + 1; i++) { ctx.beginPath(); ctx.moveTo(X(i) + 0.5, LANE_Y); ctx.lineTo(X(i) + 0.5, LANE_Y + LANE_H); ctx.stroke(); }
+    ctx.fillStyle = '#37474f'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('TUNNEL (no GPS)', X((TUN_A + TUN_B) / 2), LANE_Y + LANE_H / 2 + 3);
+    // GPS reading marker
+    if (lastY !== null && lastY >= 1 && lastY <= N) {
+      ctx.fillStyle = '#e67e22';
+      ctx.fillRect(X(lastY), LANE_Y - 5, CELLW, 4);
+    }
+    // true car
+    ctx.fillStyle = '#c0392b';
+    ctx.fillRect(X(q), LANE_Y + 4, CELLW, LANE_H - 8);
+    // --- belief bars ---
+    let mx = 0; for (let i = 1; i <= N; i++) if (p[i] > mx) mx = p[i];
+    ctx.strokeStyle = '#cfd8dc'; ctx.beginPath();
+    ctx.moveTo(PADL, BAR_Y + BAR_H + 0.5); ctx.lineTo(PADL + N * CELLW, BAR_Y + BAR_H + 0.5); ctx.stroke();
+    for (let i = 1; i <= N; i++) {
+      if (p[i] <= 0) continue;
+      const h = mx > 0 ? (p[i] / mx) * BAR_H : 0;
+      ctx.fillStyle = inTunnel(i) ? '#5c6bc0' : '#1565c0';
+      ctx.fillRect(X(i) + 1, BAR_Y + BAR_H - h, CELLW - 2, h);
+    }
+    // true position line through the bar chart
+    ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(X(q) + CELLW / 2, BAR_Y); ctx.lineTo(X(q) + CELLW / 2, BAR_Y + BAR_H); ctx.stroke();
+    // tunnel span under the bars
+    ctx.fillStyle = 'rgba(120,135,150,0.18)';
+    ctx.fillRect(X(TUN_A), BAR_Y, (TUN_B - TUN_A + 1) * CELLW, BAR_H);
+    ctx.fillStyle = '#546e7a'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('belief  P[q_k | I_k]', PADL, BAR_Y + BAR_H + 15);
+    ctx.textAlign = 'right';
+    ctx.fillText('cell 1 .. ' + N, PADL + N * CELLW, BAR_Y + BAR_H + 15);
+
+    const st = stats();
+    statusEl.innerHTML =
+      'k = <b>' + k + '</b> &nbsp;|&nbsp; true cell q<sub>k</sub> = <b>' + q + '</b>' +
+      ' &nbsp;|&nbsp; velocimeter reading &#7765; = <b>' + lastVt + '</b>' +
+      ' &nbsp;|&nbsp; GPS: <b>' + (lastY === null ? 'denied (in tunnel)' : 'y = ' + lastY) + '</b>' +
+      ' &nbsp;|&nbsp; belief std. dev. = <b>' + st.sd.toFixed(2) + '</b> cells' +
+      (finished ? ' &nbsp;&mdash; <b>end of the lane; press New run.</b>' : '');
+  }
+
+  const stepBtn = document.getElementById('gps-step');
+  const playBtn = document.getElementById('gps-play');
+  const runBtn = document.getElementById('gps-newrun');
+  const swIn = document.getElementById('gps-sw');
+  const svIn = document.getElementById('gps-sv');
+
+  function stopPlaying() { playing = false; if (timer) { clearInterval(timer); timer = null; } playBtn.textContent = 'Play'; }
+  function readParams() {
+    const a = parseFloat(swIn.value), b = parseFloat(svIn.value);
+    sigmaW = (isFinite(a) && a >= 0.25) ? Math.min(a, 4) : 1;
+    sigmaV = (isFinite(b) && b >= 0.25) ? Math.min(b, 4) : 1;
+  }
+  stepBtn.addEventListener('click', function () { if (playing) return; step(); draw(); });
+  playBtn.addEventListener('click', function () {
+    if (playing) { stopPlaying(); return; }
+    if (finished) return;
+    playing = true; playBtn.textContent = 'Pause';
+    timer = setInterval(function () { step(); draw(); if (finished) stopPlaying(); }, 420);
+  });
+  runBtn.addEventListener('click', function () { stopPlaying(); readParams(); newRun(); draw(); });
+  swIn.addEventListener('change', function () { stopPlaying(); readParams(); newRun(); draw(); });
+  svIn.addEventListener('change', function () { stopPlaying(); readParams(); newRun(); draw(); });
+
+  readParams(); newRun(); draw();
+})();
+</script>
+</div>
+</div>
+</div>
+</section>
+<section id="estimating-plant-attributes-in-precision-farming" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="estimating-plant-attributes-in-precision-farming"><span class="header-section-number">3.3</span> Estimating plant attributes in precision farming</h3>
+<p>The Bayes filter is often used more broadly to keep track of an entire <em>world model</em>, not just a single robot’s position. An example is the MSc thesis <em>Semantic SLAM for Autonomous Robots in Precision Farming Using Bayesian Inference</em> (Sander Doodman, TU/e, 2024), where it is used to keep track of the attributes of individual plants in an agricultural field, based on camera measurements gathered by a robot dog walking through the field (<a href="#fig-plants" class="quarto-xref">Fig.&nbsp;16</a>).</p>
+<div style="text-align: center;">
+<div id="fig-plants" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-plants-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg28-plants.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-plants-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;16: A robot dog equipped with a RealSense L515 camera (left) used to gather measurements of individual plants for semantic mapping in precision farming (right); image from Sander Doodman’s 2024 MSc thesis.
+</figcaption>
+</figure>
+</div>
+</div>
+</section>
+</section>
+<section id="solving-pomdps" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="solving-pomdps"><span class="header-section-number">4</span> Solving POMDPs</h2>
+<section id="optimal-policy-structure" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="optimal-policy-structure"><span class="header-section-number">4.1</span> Optimal policy structure</h3>
+<p>Returning to the general POMDP formulation, a general result (proved in the callout below) is that the optimal cost-to-go and policy can always be written in terms of a finite collection of <span class="math inline">\(n\)</span>-dimensional vectors <span class="math inline">\(\alpha_k^1,\alpha_k^2,\dots,\alpha_k^{a_k}\)</span>, as</p>
+<p><span class="math display">\[
+J_k(p_k) = \min\{\alpha_k^{1\top}p_k,\ \alpha_k^{2\top}p_k,\ \dots,\ \alpha_k^{a_k\top}p_k\}, \qquad
+J_h(p_h) = \alpha_h^{1\top}p_h,
+\]</span></p>
+<p><span class="math display">\[
+\mu_k(p_k) = \arg\min_{u_k}\ \mathbb{E}[g_k(x_k,u_k)+J_{k+1}(p_{k+1})].
+\]</span></p>
+<p>That is, the optimal cost-to-go, as a function of the belief <span class="math inline">\(p_k\)</span>, is always a <em>piecewise affine, concave</em> function – the pointwise minimum of finitely many linear functions of <span class="math inline">\(p_k\)</span> – and the optimal policy partitions the belief simplex into regions, one per linear piece, within each of which a single decision is optimal.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Justification: the cost-to-go is piecewise affine in the belief">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-15-contents" aria-controls="callout-15" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Justification: the cost-to-go is piecewise affine in the belief
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-15" class="callout-15-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>For simplicity, assume the running cost <span class="math inline">\(g(x_k,u_k)\)</span> does not depend on time or on the disturbance, and that state, input and output live in fixed sets <span class="math inline">\(x_k\in\{1,\dots,n\}\)</span>, <span class="math inline">\(u_k\in\{1,\dots,m\}\)</span>, <span class="math inline">\(y_k\in\{1,\dots,q\}\)</span> over time. The claim is proved by backward induction on <span class="math inline">\(k\)</span>.</p>
+<p><em>Base case.</em> At the terminal stage, defining <span class="math inline">\(\alpha_h^1=\begin{bmatrix}g_h(1)&amp;g_h(2)&amp;\dots&amp;g_h(n)\end{bmatrix}^\top\)</span>, <span class="math display">\[
+J_h(p_h) = \mathbb{E}[g_h(x_h)\mid I_h] = \sum_{i=1}^n g_h(i)\underbrace{\text{Prob}[x_h=i\mid I_h]}_{p_{h,i}} = \alpha_h^{1\top}p_h,
+\]</span> a single affine (indeed linear) function of <span class="math inline">\(p_h\)</span>, as claimed.</p>
+<p><em>Inductive step.</em> Suppose the claim holds at stage <span class="math inline">\(k+1\)</span>. Writing <span class="math inline">\(\bar\alpha(u_k)=\begin{bmatrix}g(1,u_k)&amp;\dots&amp;g(n,u_k)\end{bmatrix}^\top\)</span>, <span class="math display">\[
+J_k(p_k) = \min_{u_k}\ \mathbb{E}[g(x_k,u_k)+J_{k+1}(p_{k+1})\mid I_k]
+= \min_{u_k}\ \bar\alpha(u_k)^\top p_k + \sum_{\ell=1}^q \mathbb{E}[J_{k+1}(p_{k+1})\mid I_k,y_{k+1}=\ell]\,\text{Prob}[y_{k+1}=\ell\mid I_k],
+\]</span> conditioning on the next measurement <span class="math inline">\(y_{k+1}\)</span>. From the Bayes filter, <span class="math inline">\(p_{k+1} = q_{k+1}/\text{Prob}[y_{k+1}=\ell\mid I_k]\)</span> with <span class="math inline">\(q_{k+1}=D(\ell)P_k(u_k)p_k\)</span>, and by the inductive hypothesis <span class="math inline">\(J_{k+1}(p_{k+1})=\min\{\alpha_{k+1}^{1\top}p_{k+1},\dots,\alpha_{k+1}^{a_{k+1}\top}p_{k+1}\}\)</span>. Substituting and using that the normalizing factor <span class="math inline">\(\text{Prob}[y_{k+1}=\ell\mid I_k]\)</span> cancels against the division inside <span class="math inline">\(p_{k+1}\)</span>, <span class="math display">\[
+J_k(p_k) = \min_{u_k\in\{1,\dots,m\}}\ \bar\alpha(u_k)^\top p_k
++ \sum_{\ell=1}^q \Big\{\alpha_{k+1}^{1\top}D(\ell)P_k(u_k)p_k,\ \dots,\ \alpha_{k+1}^{a_{k+1}\top}D(\ell)P_k(u_k)p_k\Big\},
+\]</span> where the inner braces denote that each of the <span class="math inline">\(a_{k+1}\)</span> choices can be selected independently for each <span class="math inline">\(\ell\)</span>, before finally minimizing over <span class="math inline">\(u_k\)</span>. Every term inside is linear in <span class="math inline">\(p_k\)</span>, and minima and sums of linear functions combine into a new, larger finite collection of linear functions of <span class="math inline">\(p_k\)</span>; hence <span class="math display">\[
+J_k(p_k) = \min\{\alpha_k^{1\top}p_k,\ \alpha_k^{2\top}p_k,\ \dots,\ \alpha_k^{a_k\top}p_k\}
+\]</span> for some vectors <span class="math inline">\(\alpha_k^1,\dots,\alpha_k^{a_k}\)</span>, completing the induction.</p>
+</div>
+</div>
+</div>
+<p>In practice, however, the number of linear pieces <span class="math inline">\(a_k\)</span> typically grows exponentially with the number of remaining stages, so this exact solution is mostly of theoretical interest, and heuristics are used to approximate POMDPs in applications. Solving a POMDP exactly, when feasible, proceeds in three steps:</p>
+<ol type="1">
+<li>Offline, determine the vectors <span class="math inline">\(\alpha_k^1,\dots,\alpha_k^{a_k}\)</span> for every stage <span class="math inline">\(k\)</span> from the recursion above. These define linear functions on the <span class="math inline">\(n\)</span>-dimensional probability simplex; using the parameterization <span class="math inline">\(p=(q,1-\mathbb{1}^\top q)\)</span>, dropping the redundant last coordinate, these can be visualized directly as affine functions of <span class="math inline">\(q\)</span>, as in <a href="#fig-alphaviz" class="quarto-xref">Fig.&nbsp;17</a>.</li>
+<li>Online, based on the measurements gathered up to time <span class="math inline">\(k\)</span>, compute the current belief <span class="math inline">\(p_k\)</span> with the Bayes filter.</li>
+<li>Online, take the decision <span class="math inline">\(\mu_k(p_k)=\arg\min_{u_k}\mathbb{E}[g_k(x_k,u_k)+J_{k+1}(p_{k+1})]\)</span>, using <span class="math inline">\(J_k(p_k)=\min\{\alpha_k^{1\top}p_k,\dots,\alpha_k^{a_k\top}p_k\}\)</span> precomputed in step 1.</li>
+</ol>
+<div style="text-align: center;">
+<div id="fig-alphaviz" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-alphaviz-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg31-alphaviz.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-alphaviz-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;17: The cost-to-go as the pointwise minimum of finitely many affine functions of the belief: one state-dimension left over after the simplex parameterization (<span class="math inline">\(n=1\)</span>, left) and two (<span class="math inline">\(n=2\)</span>, right).
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Two worked examples of this procedure follow: a small, purely illustrative one (the Monty Hall problem) and a slightly larger one from Bertsekas’ book (a machine-repair problem), both using the <em>first</em> approach discussed earlier in this unit – reformulating the problem with the information set as state – since for such small examples this is actually about as convenient as the belief-based approach, and arguably more transparent.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Worked example: the Monty Hall problem">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-16-contents" aria-controls="callout-16" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Worked example: the Monty Hall problem
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-16" class="callout-16-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<blockquote class="blockquote">
+<p>Suppose you’re on a game show, and you’re given the choice of three doors: behind one door is a car; behind the others, goats. You pick a door, say No.&nbsp;1, and the host, who knows what’s behind the doors, opens another door, say No.&nbsp;3, which has a goat. He then says to you, “Do you want to pick door No.&nbsp;2?” Is it to your advantage to switch your choice?</p>
+<p>– Whitaker, Craig F. (9 September 1990, <em>Parade Magazine</em>: 16, via Wikipedia)</p>
+</blockquote>
+<div style="text-align: center;">
+<div id="fig-montyhall" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-montyhall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg37-montyhall.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:78.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-montyhall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;18: The Monty Hall problem: three doors hide a car and two goats; after an initial pick, the host reveals a goat behind one of the other two doors.
+</figcaption>
+</figure>
+</div>
+</div>
+<p><strong>Formulation.</strong> There are two decision stages, <span class="math inline">\(k\in\{0,1\}\)</span> (equivalently <span class="math inline">\(k\in\{0,1,2\}\)</span> counting the terminal stage), with decisions <span class="math inline">\(u_0,u_1\in\{1,2,3\}\)</span> (doors selected). The state has two “components”: <span class="math inline">\(\bar x_{k+1}=\bar x_k\)</span>, the door hiding the car, constant over time and unknown a priori (equally likely to be any of the three doors), and <span class="math inline">\(\tilde x_{k+1}=u_k\)</span>, which simply keeps track of the previous decision. Formally, the overall state <span class="math inline">\(x_k=(\bar x_k,\tilde x_k)\)</span> takes one of <span class="math inline">\(9\)</span> values, though <span class="math inline">\(\tilde x_k\)</span> and <span class="math inline">\(\bar x_k\)</span> can always be read off from <span class="math inline">\(x_k\)</span> and vice versa. The cost is <span class="math inline">\(g_0(x_0,u_0)=0\)</span>, <span class="math inline">\(g_1(x_1,u_1)=1\)</span> if <span class="math inline">\(\bar x_1=u_1\)</span> and <span class="math inline">\(0\)</span> otherwise (we want to <em>maximize</em> the probability of picking the car, so this cost is later negated), and <span class="math inline">\(g_2(x_2)=0\)</span>. There is no measurement at stage <span class="math inline">\(0\)</span> (<span class="math inline">\(y_0=\emptyset\)</span>), and at stage <span class="math inline">\(1\)</span> the host reveals a door <span class="math inline">\(y_1=h_1(x_1,n_1)\in\{1,2,3\}\setminus\{\bar x_1,\tilde x_1\}\)</span> if <span class="math inline">\(\bar x_1\neq\tilde x_1\)</span> (the host must avoid both the car and the player’s own pick), or a uniformly random door in <span class="math inline">\(\{1,2,3\}\setminus\{\bar x_1,n_1\}\)</span> if <span class="math inline">\(\bar x_1=\tilde x_1\)</span> (the player already picked the car, so the host picks freely between the two remaining doors, represented by the auxiliary random variable <span class="math inline">\(n_1\)</span>), so that <span class="math inline">\(I_1=(y_1,u_0)\)</span>.</p>
+<p><strong>Computing the belief.</strong> To apply dynamic programming, start at stage <span class="math inline">\(1\)</span> and compute <span class="math inline">\(P_{\bar x_1\mid I_1}\)</span> for every possible <span class="math inline">\(I_1=(y_1,u_0)\)</span> (given <span class="math inline">\(I_1\)</span>, <span class="math inline">\(\tilde x_1=u_0\)</span> is immediate, so only <span class="math inline">\(\bar x_1\)</span> needs to be estimated). Take, for concreteness, <span class="math inline">\((y_1,u_0)=(3,1)\)</span>: since the host never opens the door hiding the car, <span class="math inline">\(\text{Prob}[\bar x_1=3\mid y_1=3,u_0=1]=0\)</span> trivially. For the other two doors, Bayes’ rule gives <span class="math display">\[
+\text{Prob}[\bar x_1=2\mid y_1=3,u_0=1] = \alpha\cdot\text{Prob}[y_1=3\mid\bar x_1=2,u_0=1]\cdot\tfrac13 = \alpha\cdot1\times\tfrac13 = \tfrac23,
+\]</span> <span class="math display">\[
+\text{Prob}[\bar x_1=1\mid y_1=3,u_0=1] = \alpha\cdot\text{Prob}[y_1=3\mid\bar x_1=1,u_0=1]\cdot\tfrac13 = \alpha\cdot\tfrac12\times\tfrac13 = \tfrac13,
+\]</span> with <span class="math inline">\(\alpha = 1/\text{Prob}[y_1=3\mid u_0=1] = 1/(\tfrac12\times\tfrac12+1\times\tfrac13)=2\)</span> (<a href="#fig-montystem" class="quarto-xref">Fig.&nbsp;19</a>). The same computation, repeated for every one of the six combinations of <span class="math inline">\(y_1\)</span> and <span class="math inline">\(u_0\)</span>, always assigns probability <span class="math inline">\(\tfrac23\)</span> to whichever door was <em>not</em> picked initially and was <em>not</em> opened by the host (<a href="#fig-montypolicyplots" class="quarto-xref">Fig.&nbsp;22</a> below).</p>
+<div style="text-align: center;">
+<div id="fig-montystem" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-montystem-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg41-stemplot.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:30.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-montystem-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;19: The belief <span class="math inline">\(P_{\bar x_1\mid I_1}\)</span> after observing <span class="math inline">\((y_1,u_0)=(3,1)\)</span>: probability <span class="math inline">\(\tfrac13\)</span> that the car is behind door <span class="math inline">\(1\)</span> (the player’s original pick) and <span class="math inline">\(\tfrac23\)</span> that it is behind door <span class="math inline">\(2\)</span> (the only unopened, unpicked door).
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-montytree" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-montytree-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg42-decisiontree.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:55.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-montytree-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;20: The decision tree at stage <span class="math inline">\(0\)</span>: whichever door is initially picked, the host’s reveal leads to two possible continuations, and the belief in each is the one computed above.
+</figcaption>
+</figure>
+</div>
+</div>
+<p><strong>Optimal decision and policy.</strong> At stage <span class="math inline">\(1\)</span>, the optimal decision minimizes <span class="math inline">\(\mathbb{E}[g_1(x_1,u_1)]=-\text{Prob}[\bar x_1=u_1]\)</span> (the negative sign turns the cost into a reward, since <span class="math inline">\(g_1=1\)</span> exactly when the guess is correct), which is minimized by picking the door with probability <span class="math inline">\(\tfrac23\)</span> – i.e., by <em>switching</em> away from the original pick. Since this reasoning holds regardless of which door was picked initially and which was revealed, the optimal policy is simply: pick any door at stage <span class="math inline">\(0\)</span>, and always switch at stage <span class="math inline">\(1\)</span> (<a href="#fig-montypolicytree" class="quarto-xref">Fig.&nbsp;21</a>). This wins the car with probability <span class="math inline">\(\tfrac23\)</span>, against only <span class="math inline">\(\tfrac13\)</span> for never switching (<a href="#fig-montypolicyplots" class="quarto-xref">Fig.&nbsp;22</a>).</p>
+<div style="text-align: center;">
+<div id="fig-montypolicytree" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-montypolicytree-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg43-policytree.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:95.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-montypolicytree-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;21: The full policy tree: from every stage-<span class="math inline">\(0\)</span> pick and every possible reveal, switching (following the arrows to the un-opened, un-picked door) achieves cost-to-go <span class="math inline">\(-\tfrac23\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-montypolicyplots" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-montypolicyplots-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg43-policyplots.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:65.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-montypolicyplots-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;22: The belief <span class="math inline">\(P_{\bar x_1\mid I_1}\)</span> for all six combinations of the initial pick <span class="math inline">\(u_0\)</span> and the host’s reveal <span class="math inline">\(y_1\)</span>: in every case, <span class="math inline">\(\tfrac23\)</span> probability is on the unopened, unpicked door.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Worked example: machine repair (Bertsekas, Section 5.1)">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-17-contents" aria-controls="callout-17" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Worked example: machine repair (Bertsekas, Section 5.1)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-17" class="callout-17-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>A machine can be in one of two states, <span class="math inline">\(P\)</span> (proper condition) or <span class="math inline">\(\bar P\)</span> (improper condition) (<a href="#fig-machinerepair" class="quarto-xref">Fig.&nbsp;23</a>). In each period, a machine starting in <span class="math inline">\(\bar P\)</span> stays in <span class="math inline">\(\bar P\)</span>; one starting in <span class="math inline">\(P\)</span> stays in <span class="math inline">\(P\)</span> with probability <span class="math inline">\(\tfrac23\)</span> and moves to <span class="math inline">\(\bar P\)</span> with probability <span class="math inline">\(\tfrac13\)</span>. The machine operates over <span class="math inline">\(3\)</span> periods, starting in state <span class="math inline">\(P\)</span>. At the end of the first and second periods there is an inspection, with outcome “good” <span class="math inline">\(G\)</span> or “bad” <span class="math inline">\(B\)</span>, <span class="math inline">\(\text{Prob}[G\mid P]=\text{Prob}[B\mid\bar P]=\tfrac34\)</span>, <span class="math inline">\(\text{Prob}[B\mid P]=\text{Prob}[G\mid\bar P]=\tfrac14\)</span>. After each inspection, the two possible actions are to continue operation, <span class="math inline">\(C\)</span> (cost <span class="math inline">\(0\)</span>, state unchanged), or to stop and repair, <span class="math inline">\(S\)</span> (cost <span class="math inline">\(1\)</span>, returns the state to <span class="math inline">\(P\)</span> if it was <span class="math inline">\(\bar P\)</span>); additionally, each period spent in <span class="math inline">\(\bar P\)</span> incurs a cost of <span class="math inline">\(2\)</span>, regardless of the action.</p>
+<div style="text-align: center;">
+<div id="fig-machinerepair" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-machinerepair-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg44-machinerepair.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-machinerepair-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;23: The machine’s state trajectory over two inspections, with the two possible actions – repair (dotted) or do not repair (solid) – shown at each decision point.
+</figcaption>
+</figure>
+</div>
+</div>
+<p><strong>Formulation.</strong> With <span class="math inline">\(x_{k+1}=w_k\)</span>, <span class="math inline">\(k\in\{0,1\}\)</span>, <span class="math inline">\(x_k\in\{P,\bar P\}\)</span>, <span class="math inline">\(u_k\in\{C,S\}\)</span>: <span class="math inline">\(\text{Prob}[x_0=P]=\tfrac23\)</span>, <span class="math inline">\(\text{Prob}[x_0=\bar P]=\tfrac13\)</span>; <span class="math inline">\(\text{Prob}[w_k=P\mid x_k=P,u_k=C]=\tfrac23\)</span>, <span class="math inline">\(\text{Prob}[w_k=P\mid x_k=\bar P,u_k=C]=0\)</span>; <span class="math inline">\(\text{Prob}[w_k=P\mid x_k=P,u_k=S]=\text{Prob}[w_k=P\mid x_k=\bar P,u_k=S]=\tfrac23\)</span> (repair always resets the transition probabilities as if starting from <span class="math inline">\(P\)</span>); measurements <span class="math inline">\(y_k=v_k\)</span> with <span class="math inline">\(\text{Prob}[v_k=G\mid x_k=P]=\tfrac34\)</span>, <span class="math inline">\(\text{Prob}[v_k=G\mid x_k=\bar P]=\tfrac14\)</span>; cost <span class="math inline">\(g(P,C)=0\)</span>, <span class="math inline">\(g(P,S)=1\)</span>, <span class="math inline">\(g(\bar P,C)=2\)</span>, <span class="math inline">\(g(\bar P,S)=1\)</span>; information sets <span class="math inline">\(I_0=(y_0)\)</span>, <span class="math inline">\(I_1=(y_0,y_1,u_0)\)</span>. The goal is to choose <span class="math inline">\(\mu_0(I_0),\mu_1(I_1)\)</span> minimizing <span class="math inline">\(\mathbb{E}[g(x_0,\mu_0(I_0))+g(x_1,\mu_1(I_1))]\)</span>.</p>
+<p><strong>Stage <span class="math inline">\(1\)</span>.</strong> Suppose the belief <span class="math inline">\(p_1=\text{Prob}[x_1=\bar P\mid I_1]\)</span> is known (so <span class="math inline">\(\text{Prob}[x_1=P\mid I_1]=1-p_1\)</span>). Action <span class="math inline">\(S\)</span> has cost-to-go <span class="math inline">\(1\)</span> regardless of <span class="math inline">\(p_1\)</span>, since <span class="math inline">\(g(P,S)=g(\bar P,S)=1\)</span>; action <span class="math inline">\(C\)</span> has expected cost <span class="math inline">\(2p_1\)</span> (only the <span class="math inline">\(\bar P\)</span> branch costs anything, weighted by its probability <span class="math inline">\(p_1\)</span>). Hence <span class="math display">\[
+\mu_1(p_1) = \begin{cases}S,&amp; p_1&gt;\tfrac12\\C,&amp; p_1\leq\tfrac12\end{cases}
+\qquad
+J_1(p_1) = \min(2p_1,\,1),
+\]</span> already visibly piecewise affine in <span class="math inline">\(p_1\)</span>, as the general theory predicts.</p>
+<p><strong>Stage <span class="math inline">\(0\)</span>.</strong> Suppose <span class="math inline">\(p_0=\text{Prob}[x_0=\bar P\mid I_0]\)</span> is known. The decision <span class="math inline">\(u_0\)</span> influences the cost-to-go only through how it shapes the distribution of <span class="math inline">\(p_1\)</span>, once the next measurement <span class="math inline">\(y_1\)</span> is also taken into account: there are four combinations of <span class="math inline">\(u_0\in\{C,S\}\)</span> and <span class="math inline">\(y_1\in\{G,B\}\)</span>, each producing a different <span class="math inline">\(p_1=\phi_1(p_0,u_0,y_1)\)</span> via Bayes’ rule (exactly as in the earlier robot examples): <span class="math display">\[
+p_1 = \phi_1(p_0,u_0,y_1) = \begin{cases}
+\tfrac17 &amp; u_0=S,\ y_1=G\\[2pt]
+\tfrac35 &amp; u_0=S,\ y_1=B\\[2pt]
+\dfrac{1+2p_0}{7-4p_0} &amp; u_0=C,\ y_1=G\\[2pt]
+\dfrac{3+6p_0}{5+4p_0} &amp; u_0=C,\ y_1=B
+\end{cases}
+\]</span> together with <span class="math display">\[
+\text{Prob}[y_1=G\mid p_0,u_0=C] = \frac{7-4p_0}{12}, \quad
+\text{Prob}[y_1=B\mid p_0,u_0=C] = \frac{5+4p_0}{12}, \quad
+\text{Prob}[y_1=G\mid p_0,u_0=S] = \frac{7}{12}, \quad
+\text{Prob}[y_1=B\mid p_0,u_0=S] = \frac{5}{12}.
+\]</span> The cost-to-go at stage <span class="math inline">\(0\)</span> is then <span class="math display">\[
+J_0(p_0) = \min\Big[\,2p_0 + \tfrac{7-4p_0}{12}J_1\big(\tfrac{1+2p_0}{7-4p_0}\big) + \tfrac{5+4p_0}{12}J_1\big(\tfrac{3+6p_0}{5+4p_0}\big),
+\ \ 1 + \tfrac{7}{12}J_1(\tfrac17) + \tfrac{5}{12}J_1(\tfrac35)\,\Big],
+\]</span> the first branch for <span class="math inline">\(u_0=C\)</span> and the second for <span class="math inline">\(u_0=S\)</span>, which simplifies (substituting <span class="math inline">\(J_1(p_1)=\min(2p_1,1)\)</span> and working through the case boundaries) to <span class="math display">\[
+J_0(p_0) = \begin{cases}\tfrac{19}{12}, &amp; \tfrac38\leq p_0\leq1\\[4pt] \tfrac{7}{12}+4p_0, &amp; 0\leq p_0\leq\tfrac38\end{cases}
+\qquad
+\mu_0(p_0) = \begin{cases}C, &amp; p_0\leq\tfrac38\\S, &amp; p_0&gt;\tfrac38\end{cases}
+\quad\text{(optimal policy)}.
+\]</span> Again <span class="math inline">\(J_0\)</span> is piecewise affine in <span class="math inline">\(p_0\)</span>, with two linear pieces – consistent with the general theory, and illustrating concretely how quickly the number of pieces can grow with the number of remaining stages even in a tiny, two-stage example.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="historical-note" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="historical-note"><span class="header-section-number">4.2</span> Historical note</h3>
+<div id="fig-bayes-portrait" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bayes-portrait-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture4/pg32-bayesportrait.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:30.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bayes-portrait-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;24: Thomas Bayes (1701-1761). (The only surviving portrait commonly said to be of Bayes, though its authenticity has been questioned; source: Wikipedia.)
+</figcaption>
+</figure>
+</div>
+<p>Thomas Bayes was an English statistician, philosopher and Presbyterian minister, known for having formulated a specific case of the theorem that now bears his name. Bayes never published what would eventually become his most famous accomplishment; his notes on the subject were edited and published only after his death.</p>
+</section>
+</section>
+<section id="summary" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="summary"><span class="header-section-number">5</span> Summary</h2>
+<p>This unit introduced Partially Observable Markov Decision Processes, where the decision-maker only has access to a noisy, partial output of the state rather than the state itself, through an information set that grows with time. We saw that the optimal policy always decomposes into a state estimator, computing the belief <span class="math inline">\(P_{x_k\mid I_k}\)</span>, and an actuator mapping this belief to a decision – and that the state estimator is exactly the Bayes filter, an alternating prediction/correction recursion built on the ordinary Bayes’ rule. Most of the unit was devoted to this filter and its applications: tracking a robot from noisy measurements in a grid world, estimating position in a GPS-denied tunnel, and building a semantic world model in precision farming. We closed by showing that POMDPs can, in principle, always be solved exactly, since the optimal cost-to-go is a piecewise affine function of the belief – worked out concretely for the Monty Hall problem and a machine-repair example – though in practice the number of pieces grows exponentially with the number of stages, so this exact solution is mostly of theoretical interest and heuristics are used in applications.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

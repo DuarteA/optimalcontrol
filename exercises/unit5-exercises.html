@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>Unit 5 Exercises</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="unit5-exercises_files/libs/clipboard/clipboard.min.js"></script>
+<script src="unit5-exercises_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="unit5-exercises_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="unit5-exercises_files/libs/quarto-html/popper.min.js"></script>
+<script src="unit5-exercises_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="unit5-exercises_files/libs/quarto-html/anchor.min.js"></script>
+<link href="unit5-exercises_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="unit5-exercises_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="unit5-exercises_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="unit5-exercises_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="unit5-exercises_files/libs/bootstrap/bootstrap-5f5514ab72c605193d28bd5ace4a0252.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      argmin: ["\\operatorname*{argmin}_{#1}", 1],
+      argmax: ["\\operatorname*{argmax}_{#1}", 1],
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#core-exercises" id="toc-core-exercises" class="nav-link active" data-scroll-target="#core-exercises"><span class="header-section-number">1</span> Core exercises</a></li>
+  <li><a href="#additional-exercises" id="toc-additional-exercises" class="nav-link" data-scroll-target="#additional-exercises"><span class="header-section-number">2</span> Additional exercises</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="unit5-exercises.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Unit 5 Exercises</h1>
+<p class="subtitle lead">4SC000 Optimal Control and Reinforcement Learning</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Source: Solved Exercises/2/PS2.tex (problems) and
+Solved Exercises/2/SolutionsPS2.tex (solutions), section 1 "Linear
+quadratic control" -- originally Problems 1.1-1.7 (an 8th problem, on
+stochastic/average-cost LQ control with disturbances, is moved to the
+Unit 6 exercises instead, since its content -- E[...], w_k -- matches
+Lecture 6's opening section rather than anything in Lecture 5; see the
+header note there). Renumbered 5.1-5.7 in Core/Additional order: Core =
+5.1 (scalar system, finite and infinite horizon, by-hand Riccati
+recursion -- originally 1.1), 5.2 (3-state numeric example, finite- and
+infinite-horizon gains via the Riccati iteration -- originally 1.5,
+directly mirrors the double-integrator worked example in the lecture).
+Additional = 5.3 (DC motor: state-space derivation, discretization, LQR
+design -- originally 1.2), 5.4 (Lyapunov equation and its connection to
+the Riccati equation -- originally 1.3), 5.5 (deadbeat control /
+controllability -- originally 1.4), 5.6 (examples where the algebraic
+Riccati equation has no positive-definite solution -- originally 1.6),
+5.7 (R need not be positive definite -- originally 1.7).
+
+Two problem sections in PS2.tex ("Discretization" and "Static
+optimization formulation of optimal control problems") are not included
+here: both are useful prerequisite/refresher material (discretizing a
+continuous-time model; unconstrained quadratic minimization and Lagrange
+multipliers, which underlie the Riccati derivation), but neither maps
+cleanly onto Lecture 5's own content the way Problems 1.1-1.7 do, so
+rather than force a mapping I've left them out -- flag if you'd like a
+"methods refresher" exercise set built from them separately.
+-->
+<p>A runnable Python companion to these exercises – Riccati recursion (both finite- and infinite-horizon) plus the double-integrator and DC-motor examples – is available in <code>code/unit5/</code> (see its <code>README.md</code>).</p>
+<section id="core-exercises" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="core-exercises"><span class="header-section-number">1</span> Core exercises</h2>
+<p><strong>Problem 5.1</strong> Consider a first order discrete-time linear system</p>
+<p><span class="math display">\[x_{k+1} = \alpha x_k+u_k, \ \ k\in \mathbb{N}_0,\]</span></p>
+<p>and the cost</p>
+<p><span class="math display">\[\sum_{k=0}^q x_k^2+\gamma u_k^2.\]</span></p>
+<ol type="a">
+<li>Considering <span class="math inline">\(\alpha=1\)</span>, <span class="math inline">\(\gamma=1\)</span> and <span class="math inline">\(q=2\)</span>, determine the policy for <span class="math inline">\(u_0\)</span>, <span class="math inline">\(u_1\)</span>, and <span class="math inline">\(u_2\)</span> that minimizes the cost.</li>
+<li>Considering <span class="math inline">\(\alpha=1\)</span>, <span class="math inline">\(\gamma=1\)</span> and <span class="math inline">\(q=\infty\)</span>, determine the policy for <span class="math inline">\(\{u_k, k\in\mathbb{N}_0\}\)</span> that minimizes the cost.</li>
+<li>Suppose now that <span class="math inline">\(|\alpha|&lt;1\)</span> and <span class="math inline">\(q=\infty\)</span>. Provide and interpret the policy that minimizes the cost when <span class="math inline">\(\gamma\to\infty\)</span>.</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(a)</strong> For <span class="math inline">\(\alpha=1\)</span>, <span class="math inline">\(\gamma=1\)</span>, <span class="math inline">\(q=2\)</span>, we have <span class="math inline">\(x_{k+1}=x_k+u_k\)</span> and <span class="math inline">\(\sum_{k=0}^2 \underbrace{x_k^2+u_k^2}_{g(x_k,u_k)} + \underbrace{0}_{J_3(x_3)}\)</span>, a standard stage decision problem. Applying DP:</p>
+<p><strong>Step 1.</strong> <span class="math inline">\(J_2(x_2) = \min_{u_2} x_2^2+u_2^2 = x_2^2\)</span>, where <span class="math inline">\(u_2=\mu(x_2)=0\ \forall x_2\)</span>.</p>
+<p><strong>Step 2.</strong> <span class="math inline">\(J_1(x_1) = \min_{u_1} x_1^2+u_1^2+(x_1+u_1)^2 = \min_{u_1} 2x_1^2+2u_1^2+2x_1u_1\)</span>. Differentiating and equating to zero: <span class="math inline">\(4u_1+2x_1=0\)</span>, so <span class="math inline">\(u_1=-\frac{1}{2}x_1\)</span> and <span class="math inline">\(J_1(x_1)=\frac{3}{2}x_1^2\)</span>.</p>
+<p><strong>Step 3.</strong> <span class="math inline">\(J_0(x_0) = \min_{u_0} x_0^2+u_0^2+\frac{3}{2}(x_0+u_0)^2 = \min_{u_0} \frac{5}{2}x_0^2+\frac{5}{2}u_0^2+3x_0u_0\)</span>. Differentiating and equating to zero: <span class="math inline">\(5u_0+3x_0=0\)</span>, so <span class="math inline">\(u_0=-\frac{3}{5}x_0\)</span> and <span class="math inline">\(J_0(x_0)=1.6x_0^2\)</span>.</p>
+<p>Alternatively, iterate the (scalar) Riccati equation <span class="math inline">\(p_k=p_{k+1}+1-\frac{p_{k+1}^2}{1+p_{k+1}}\)</span> for <span class="math inline">\(k\in\{2,1,0\}\)</span>, <span class="math inline">\(p_3=0\)</span>, with gains <span class="math inline">\(K_k=-\frac{p_{k+1}}{1+p_{k+1}}\)</span> (costs-to-go <span class="math inline">\(x_k^2p_k\)</span>). This gives <span class="math inline">\(p_2=1\)</span>, <span class="math inline">\(K_2=0\)</span>; <span class="math inline">\(p_1=\frac{3}{2}\)</span>, <span class="math inline">\(K_1=-\frac{1}{2}\)</span>; <span class="math inline">\(p_0=1.6\)</span>, <span class="math inline">\(K_0=-\frac{3}{5}\)</span> – matching the by-hand recursion.</p>
+<p><strong>(b)</strong> Since the model is controllable and the cost matrix is positive definite, the backward iteration converges to a limit <span class="math inline">\(p\)</span> satisfying the algebraic Riccati equation <span class="math inline">\(p=p+1-\frac{p^2}{1+p}\)</span>, i.e.&nbsp;<span class="math inline">\(p^2-p-1=0\)</span>, with roots <span class="math inline">\(p=\frac{1\pm\sqrt5}{2}\)</span>. Taking the positive-definite root, <span class="math inline">\(p=\frac{1+\sqrt5}{2}=1.618\)</span>, so the optimal cost is <span class="math inline">\(x_0^2p\)</span> and the optimal policy is <span class="math inline">\(u_k=Kx_k\)</span>, <span class="math inline">\(k\in\mathbb{N}_0\)</span>, where <span class="math inline">\(K=-\frac{p}{1+p}=-\frac{1+\sqrt5}{3+\sqrt5}=-0.618\)</span>.</p>
+<p><strong>(c)</strong> <span class="math inline">\(P(\gamma)\)</span> satisfies <span class="math inline">\(p=\alpha^2p+1-p^2\alpha^2/(\gamma+p)\)</span> and converges to <span class="math inline">\(\frac{1}{1-\alpha^2}\)</span> as <span class="math inline">\(\gamma\to\infty\)</span>. Thus <span class="math inline">\(K(\gamma)=-\frac{\alpha^2P(\gamma)^2}{\gamma+P(\gamma)}\)</span> converges to zero, so the optimal policy is <span class="math inline">\(u_k=0\)</span> for every <span class="math inline">\(k\)</span>. Interpretation: if control is expensive and the system is already stable (<span class="math inline">\(\alpha&lt;1\)</span>), it is optimal to just let it run open loop. The resulting cost is obtained from iterating <span class="math inline">\(x_{k+1}=\alpha x_k\)</span>: <span class="math inline">\(\sum_{k=0}^\infty x_k^2 = \sum_{k=0}^\infty (\alpha^2)^kx_0^2 = \frac{1}{1-\alpha^2}x_0^2\)</span>.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 5.2</strong> Consider the standard linear quadratic problem</p>
+<p><span class="math display">\[\min \sum_{k=0}^{h-1} x_k^\intercal Qx_k+u_k^\intercal Ru_k+2x_k^\intercal Su_k+g_h(x_h) \qquad x_{k+1}=Ax_k+Bu_k\]</span></p>
+<p>for</p>
+<p><span class="math display">\[Q=\begin{bmatrix}5&amp;0&amp;0\\0&amp;1&amp;0\\0&amp;0&amp;3\end{bmatrix} \quad S=\begin{bmatrix}0.1&amp;0\\0&amp;0\\0&amp;0\end{bmatrix} \quad R=\begin{bmatrix}1&amp;0\\0&amp;2\end{bmatrix} \quad A=\begin{bmatrix}0&amp;1&amp;0\\-3&amp;4&amp;1\\0&amp;0&amp;3\end{bmatrix} \quad B=\begin{bmatrix}0&amp;0\\1&amp;0\\0&amp;2\end{bmatrix}\]</span></p>
+<p>and <span class="math inline">\(g_h(x_h)=x_h^\intercal Q_hx_h\)</span>, <span class="math inline">\(Q_h=\begin{bmatrix}1&amp;0&amp;0\\0&amp;2&amp;0\\0&amp;0&amp;0\end{bmatrix}\)</span>.</p>
+<ol type="i">
+<li>Provide the gains <span class="math inline">\(K_k\)</span> of the optimal policy <span class="math inline">\(u_k=K_kx_k\)</span>, <span class="math inline">\(k\in\{0,1,2,3,4\}\)</span>, when <span class="math inline">\(h=5\)</span>, by iterating the Riccati equations.</li>
+<li>Using the same recursion, obtain the optimal policy <span class="math inline">\(u_k=Kx_k\)</span> when <span class="math inline">\(g_h(x_h)=0\)</span> and <span class="math inline">\(h=\infty\)</span>.</li>
+<li>Confirm the results of (ii) using the algebraic Riccati equation directly (e.g.&nbsp;via <code>dlqr.m</code> in Matlab, or <code>scipy.linalg.solve_discrete_are</code> in Python).</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(i)</strong> Iterating the Riccati/gain equations backward from <span class="math inline">\(P_5=Q_5=Q_h\)</span> gives</p>
+<p><span class="math display">\[K_0=\begin{bmatrix}2.8560&amp;-3.3810&amp;-0.9790\\0.0263&amp;0.0605&amp;-1.4179\end{bmatrix} \qquad K_1=\begin{bmatrix}2.8494&amp;-3.3649&amp;-0.9777\\0.0271&amp;0.0589&amp;-1.4180\end{bmatrix} \qquad K_2=\begin{bmatrix}2.8191&amp;-3.2769&amp;-0.9749\\0.0344&amp;0.0450&amp;-1.4161\end{bmatrix}\]</span></p>
+<p><span class="math display">\[K_3=\begin{bmatrix}2.7408&amp;-3.0849&amp;-0.9967\\0.0829&amp;-0.0448&amp;-1.3211\end{bmatrix} \qquad K_4=\begin{bmatrix}1.9667&amp;-2.6667&amp;-0.6667\\0&amp;0&amp;0\end{bmatrix}\]</span></p>
+<p>The optimal policy is <span class="math inline">\(u_k=K_kx_k\)</span>, <span class="math inline">\(k\in\{0,1,2,3,4\}\)</span>.</p>
+<p><strong>(ii)</strong> Iterating with a large horizon (e.g.&nbsp;<span class="math inline">\(h=20\)</span>) the gains converge, <span class="math inline">\(\bar K=K_0=\begin{bmatrix}2.8570&amp;-3.3830&amp;-0.9792\\0.0262&amp;0.0607&amp;-1.4179\end{bmatrix}\)</span>. The optimal policy is <span class="math inline">\(u_k=\bar Kx_k\)</span>.</p>
+<p><strong>(iii)</strong> Solving the algebraic Riccati equation directly reproduces the same gains as in (ii).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="additional-exercises" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="additional-exercises"><span class="header-section-number">2</span> Additional exercises</h2>
+<p><strong>Problem 5.3</strong> A schematic model of a DC motor is depicted below. The torque generated by the motor is assumed proportional to the armature current, <span class="math inline">\(T=K_ti\)</span>, and the back emf <span class="math inline">\(e\)</span> is assumed proportional to the angular velocity of the shaft, <span class="math inline">\(e=K_e\dot\theta\)</span>. Newton’s law and Kirchhoff’s voltage law give</p>
+<p><span class="math display">\[J\ddot\theta+b\dot\theta = K_ti \qquad L\frac{di}{dt}+Ri = V-K_e\dot\theta\]</span></p>
+<p>Assuming the inductance is very small, <span class="math inline">\(L\approx 0\)</span>, this reduces to <span class="math inline">\(J\ddot\theta+\big(b+\frac{K_tK_e}{R}\big)\dot\theta = \frac{K_t}{R}V\)</span>. Parameters: <span class="math inline">\(J=0.01\)</span>, <span class="math inline">\(b=0.1\)</span>, <span class="math inline">\(K_e=0.01\)</span>, <span class="math inline">\(K_t=0.01\)</span>, <span class="math inline">\(R=1\)</span>, <span class="math inline">\(L=0\)</span>.</p>
+<ol type="i">
+<li>Find a state-space representation for <span class="math inline">\(x(t) := [\theta(t)\ \ \dot\theta(t)]^\intercal\)</span>.</li>
+<li>Discretize this model for <span class="math inline">\(\tau=0.1\)</span>, giving <span class="math inline">\(x_{k+1}=A_dx_k+B_du_k\)</span> with <span class="math inline">\(x_k:=x(\tau k)\)</span>.</li>
+<li>Suppose we want to regulate the state to zero while minimizing <span class="math inline">\(J=\sum_{k=0}^\infty x_k^\intercal Qx_k+u_k^\intercal Ru_k\)</span>, <span class="math inline">\(Q=\begin{bmatrix}2&amp;0\\0&amp;5\end{bmatrix}\)</span>, <span class="math inline">\(R=0.1\)</span>. &nbsp;&nbsp;&nbsp;(a) Compute the LQR gain <span class="math inline">\(K^*\)</span> (<span class="math inline">\(u_k=K^*x_k\)</span>) and the cost matrix <span class="math inline">\(P^*\)</span> (<span class="math inline">\(x_0^\intercal P^*x_0\)</span>). &nbsp;&nbsp;&nbsp;(b) Compute the control that regulates the state to zero in the minimum number of steps (deadbeat, cf.&nbsp;Problem 5.5), as a function of <span class="math inline">\(x_0\)</span>; show the resulting cost is <span class="math inline">\(x_0^\intercal P_fx_0\)</span> for some <span class="math inline">\(P_f\)</span>. &nbsp;&nbsp;&nbsp;(c) Compare the costs obtained in (a) and (b).</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(i)</strong> <span class="math inline">\(\dot x = \begin{bmatrix}0&amp;1\\0&amp;-\alpha\end{bmatrix}x+\begin{bmatrix}0\\\beta\end{bmatrix}V\)</span>, where <span class="math inline">\(\alpha=\frac{b+K_tK_e/R}{J}=10.01\)</span> and <span class="math inline">\(\beta=\frac{K_t}{RJ}=1\)</span>.</p>
+<p><strong>(ii)</strong> With <span class="math inline">\(A=\begin{bmatrix}0&amp;1\\0&amp;-\alpha\end{bmatrix}\)</span>, <span class="math inline">\(B=\begin{bmatrix}0\\\beta\end{bmatrix}\)</span>: <span class="math inline">\(A_d=e^{A\tau}=\begin{bmatrix}1.0000&amp;0.0632\\0&amp;0.3675\end{bmatrix}\)</span>, <span class="math inline">\(B_d=\int_0^\tau e^{As}ds\,B = \begin{bmatrix}0.0037\\0.0632\end{bmatrix}\)</span>.</p>
+<p><strong>(iii)(a)</strong> <span class="math inline">\(K = -\begin{bmatrix}3.9698&amp;1.3993\end{bmatrix}\)</span>, <span class="math inline">\(P=\begin{bmatrix}57.4811&amp;4.6278\\4.6278&amp;6.0073\end{bmatrix}\)</span>.</p>
+<p><strong>(iii)(b)</strong> From the controllability-matrix formula of Problem 5.5, <span class="math inline">\(\begin{bmatrix}K_0\\K_1\end{bmatrix}=\begin{bmatrix}A_dB_d &amp; B_d\end{bmatrix}^{-1}(-A_d^2)\)</span>, which leads to <span class="math inline">\(x_1=(A_d+B_dK_0)x_0\)</span> and <span class="math inline">\(x_2=0\)</span>. The cost is <span class="math inline">\(x_0^\intercal Qx_0+x_0^\intercal K_0^\intercal RK_0x_0+x_0^\intercal(A_d+B_dK_0)^\intercal Q(A_d+B_dK_0)x_0+x_0^\intercal K_1^\intercal RK_1x_0 = x_0^\intercal P_fx_0\)</span>, where <span class="math inline">\(P_f=Q+K_0^\intercal RK_0+(A_d+B_dK_0)^\intercal Q(A_d+B_dK_0)+K_1^\intercal RK_1\)</span>. Numerically, <span class="math inline">\(K_0=\begin{bmatrix}-158.2638&amp;-12.4309\end{bmatrix}\)</span>, <span class="math inline">\(K_1=\begin{bmatrix}58.1638&amp;2.4309\end{bmatrix}\)</span>, <span class="math inline">\(P_f=\begin{bmatrix}3345.4&amp;231.78\\231.78&amp;21.92\end{bmatrix}\)</span>.</p>
+<p><strong>(iii)(c)</strong> <span class="math inline">\(x_0^\intercal P^*x_0 \leq x_0^\intercal P_fx_0\)</span> for every <span class="math inline">\(x_0\)</span>, since <span class="math inline">\(P_f-P^*\)</span> is positive definite – driving the state to zero as fast as possible (deadbeat) is never cheaper than the LQR-optimal trade-off.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 5.4</strong> In this problem we wish to prove that the cost <span class="math inline">\(\sum_{k=0}^\infty x_k^\intercal Qx_k\)</span>, <span class="math inline">\(Q=Q^\intercal\)</span>, for an asymptotically stable discrete-time system <span class="math inline">\(x_{k+1}=Ax_k\)</span>, is given by <span class="math inline">\(x_0^\intercal Px_0\)</span>, where <span class="math inline">\(P\)</span> solves the Lyapunov equation <span class="math inline">\(A^\intercal PA-P=-Q\)</span>.</p>
+<ol type="a">
+<li>Prove that <span class="math inline">\(\sum_{k=0}^T a^k=\frac{1-a^{T+1}}{1-a}\)</span> for <span class="math inline">\(a\in(-1,1)\)</span>, by multiplying the left-hand side by <span class="math inline">\(\frac{1-a}{1-a}\)</span>.</li>
+<li>Use (a) to prove the desired result for <span class="math inline">\(A\in\mathbb{R}\)</span>, <span class="math inline">\(|A|&lt;1\)</span>.</li>
+<li>Generalize (a)-(b) to <span class="math inline">\(A\in\mathbb{R}^{n\times n}\)</span> with eigenvalues inside the unit circle.</li>
+<li>Confirm that if <span class="math inline">\(A\)</span> and <span class="math inline">\(Q\)</span> are replaced by <span class="math inline">\((A+BK)\)</span> and <span class="math inline">\(Q+K^\intercal RK\)</span>, for <span class="math inline">\(K=-(B^\intercal PB+R)^{-1}B^\intercal PA\)</span>, the Lyapunov equation coincides with the Riccati equation <span class="math inline">\(P=A^\intercal PA+Q-A^\intercal PB(B^\intercal PB+R)^{-1}B^\intercal PA\)</span>. Explain why.</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(a)</strong> <span class="math inline">\(\sum_{k=0}^T a^k = \frac{1-a}{1-a}\sum_{k=0}^T a^k = \frac{1}{1-a}\sum_{k=0}^T(a^k-a^{k+1}) = \frac{1}{1-a}(1-a^{T+1})\)</span> (telescoping sum).</p>
+<p><strong>(b)</strong> <span class="math inline">\(J=\sum_{k=0}^T x_k^\intercal Qx_k = x_0^\intercal\big[\sum_{k=0}^T (A^k)^\intercal QA^k\big]x_0\)</span>. For scalar <span class="math inline">\(A\)</span>, this is <span class="math inline">\(x_0^2Q\sum_{k=0}^T(A^2)^k\)</span>. As <span class="math inline">\(T\to\infty\)</span>, using (a) with <span class="math inline">\(a=A^2\)</span>, <span class="math inline">\(\sum_{k=0}^\infty(A^2)^k=\frac{1}{1-A^2}\)</span>, so <span class="math inline">\(J=x_0^2Q\frac{1}{1-A^2}\)</span>. The Lyapunov equation <span class="math inline">\(A^\intercal PA-P=-Q\)</span> gives <span class="math inline">\(Q=P(1-A^2)\)</span>, hence <span class="math inline">\(J=x_0^2P\)</span>.</p>
+<p><strong>(c)</strong> <span class="math inline">\(J=x_0^\intercal\big[\sum_{k=0}^T(A^k)^\intercal QA^k\big]x_0\)</span>; substituting <span class="math inline">\(Q=P-A^\intercal PA\)</span> (from the Lyapunov equation) telescopes the sum so that only the <span class="math inline">\(k=0\)</span> and <span class="math inline">\(k=T+1\)</span> terms survive: <span class="math inline">\(J=x_0^\intercal\big[P-(A^{T+1})^\intercal PA^{T+1}\big]x_0\)</span>, and the last term vanishes as <span class="math inline">\(T\to\infty\)</span> since <span class="math inline">\(A\)</span> is asymptotically stable.</p>
+<p><strong>(d)</strong> Direct substitution. If we apply the LQR policy <span class="math inline">\(u_k=Kx_k\)</span> to <span class="math inline">\(\min\sum_{k=0}^\infty x_k^\intercal Qx_k+u_k^\intercal Ru_k\)</span> for <span class="math inline">\(x_{k+1}=Ax_k+Bu_k\)</span>, we get the cost <span class="math inline">\(\sum_{k=0}^\infty x_k^\intercal\underbrace{(Q+K^\intercal RK)}_{\bar Q}x_k\)</span> for the closed loop <span class="math inline">\(x_{k+1}=\underbrace{(A+BK)}_{\bar A}x_k\)</span> – i.e.&nbsp;the Riccati equation is exactly the Lyapunov equation for the closed-loop cost, confirming (via (a)-(c)) that <span class="math inline">\(x_0^\intercal Px_0\)</span> is indeed the LQR optimal cost.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 5.5</strong> Consider the discrete-time linear time-invariant system <span class="math inline">\(x_{k+1}=Ax_k+Bu_k\)</span>, <span class="math inline">\(x_k\in\mathbb{R}^n\)</span>, <span class="math inline">\(u_k\in\mathbb{R}\)</span>, <span class="math inline">\(k\in\mathbb{N}_0\)</span>, with arbitrary initial condition <span class="math inline">\(x_0\)</span>. Suppose we wish to drive the state to a desired final value <span class="math inline">\(\bar x\)</span>. Show that the control values</p>
+<p><span class="math display">\[\begin{bmatrix}u_0\\u_1\\\vdots\\u_{n-1}\end{bmatrix} = \begin{bmatrix}A^{n-1}B &amp; A^{n-2}B &amp; \cdots &amp; B\end{bmatrix}^{-1}(\bar x-A^nx_0)\]</span></p>
+<p>result in <span class="math inline">\(x_n=\bar x\)</span>, provided the matrix on the right-hand side is invertible (in which case the system is said to be controllable).</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>From <span class="math inline">\(x_{k+1}=Ax_k+Bu_k\)</span> we conclude that <span class="math inline">\(x_n = A^nx_0+\begin{bmatrix}A^{n-1}B &amp; A^{n-2}B &amp; \cdots &amp; B\end{bmatrix}\begin{bmatrix}u_0\\u_1\\\vdots\\u_{n-1}\end{bmatrix}\)</span>. Setting <span class="math inline">\(x_n=\bar x\)</span> and solving for the control vector (assuming invertibility) gives exactly the stated formula.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 5.6</strong> The goal of this exercise is to provide examples of linear quadratic regulation problems <span class="math inline">\(\sum_{k=0}^\infty x_k^\intercal Qx_k+u_k^\intercal Ru_k\)</span>, <span class="math inline">\(x_{k+1}=Ax_k+Bu_k\)</span>, for which the optimal control policy cannot be obtained by solving the algebraic Riccati equation <span class="math inline">\(P=A^\intercal PA+Q-(A^\intercal PB)(B^\intercal PB+R)^{-1}(B^\intercal PA)\)</span>.</p>
+<ol type="i">
+<li>Provide an example of a pair <span class="math inline">\((A,B)\)</span> for which there does not exist a positive definite solution to the algebraic Riccati equation for any <span class="math inline">\(Q\)</span> and <span class="math inline">\(R\)</span>.</li>
+<li>Provide an example of a pair <span class="math inline">\((A,Q)\)</span> for which there does not exist a positive definite solution for any <span class="math inline">\(B\)</span> and <span class="math inline">\(R\)</span>.</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(i)</strong> Take <span class="math inline">\(B=0\)</span> and <span class="math inline">\(A\)</span> not Hurwitz (e.g.&nbsp;<span class="math inline">\(A=2\)</span>, a scalar). The model reduces to <span class="math inline">\(x_{k+1}=Ax_k\)</span>, whose trajectories blow up for any nonzero initial condition (<span class="math inline">\((A,B)\)</span> is not controllable/stabilizable). The algebraic Riccati equation becomes <span class="math inline">\(P=4P+Q\)</span>, whose unique solution <span class="math inline">\(P=-Q/3\)</span> is not positive definite for any positive semi-definite <span class="math inline">\(Q\)</span>.</p>
+<p><strong>(ii)</strong> Take <span class="math inline">\(Q=0\)</span>, <span class="math inline">\(A=0\)</span>: the algebraic Riccati equation becomes <span class="math inline">\(P=0\)</span>, whose solution is not positive definite (the pair <span class="math inline">\((A,N)\)</span> with <span class="math inline">\(Q=NN^\intercal\)</span> fails observability/detectability).</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 5.7</strong> The goal of this exercise is to show that we do not need <span class="math inline">\(R\)</span> to be positive definite to obtain the optimal policy for the standard linear regulator problem with the algebraic Riccati equation. Consider the setting of Problem 5.2 with</p>
+<p><span class="math display">\[A=\begin{bmatrix}1/2&amp;1\\1&amp;3\end{bmatrix} \qquad B=\begin{bmatrix}0\\1\end{bmatrix} \qquad R=0 \qquad S=0 \qquad Q=I \qquad Q_h=I\]</span></p>
+<ol type="i">
+<li>Provide the gains <span class="math inline">\(K_k\)</span> of the optimal policy <span class="math inline">\(u_k=K_kx_k\)</span>, <span class="math inline">\(k\in\{0,1,2,3,4\}\)</span>, when <span class="math inline">\(h=5\)</span>, by iterating the Riccati equations.</li>
+<li>Using the same recursion, obtain the optimal policy <span class="math inline">\(u_k=Kx_k\)</span> for <span class="math inline">\(h=\infty\)</span>.</li>
+<li>Try to solve the algebraic Riccati equation directly with a solver that requires <span class="math inline">\(R&gt;0\)</span> (e.g.&nbsp;<code>dlqr.m</code>) and see that it does not work.</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(i)</strong> Iterating the Riccati recursion with these parameters gives</p>
+<p><span class="math display">\[K_0=\begin{bmatrix}-1.1328&amp;-3.2656\end{bmatrix} \quad K_1=\begin{bmatrix}-1.1328&amp;-3.2655\end{bmatrix} \quad K_2=\begin{bmatrix}-1.1324&amp;-3.2647\end{bmatrix} \quad K_3=\begin{bmatrix}-1.1250&amp;-3.2500\end{bmatrix} \quad K_4=\begin{bmatrix}-1&amp;-3\end{bmatrix}\]</span></p>
+<p>The optimal policy is <span class="math inline">\(u_k=K_kx_k\)</span>, <span class="math inline">\(k\in\{0,1,2,3,4\}\)</span>.</p>
+<p><strong>(ii)</strong> For a large horizon (e.g.&nbsp;<span class="math inline">\(h=20\)</span>) the gains converge to <span class="math inline">\(\bar K=K_0=\begin{bmatrix}-1.1328&amp;-3.2656\end{bmatrix}\)</span>. The optimal policy is <span class="math inline">\(u_k=\bar Kx_k\)</span>.</p>
+<p><strong>(iii)</strong> A solver requiring <span class="math inline">\(R\)</span> positive definite (like <code>dlqr.m</code>) fails here, but (ii) shows this is not actually needed for the algebraic Riccati equation itself to admit a solution and define the optimal policy – the requirement <span class="math inline">\(R&gt;0\)</span> is a sufficient condition used by some solvers/proofs, not a necessary one.</p>
+</div>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

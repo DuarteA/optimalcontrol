@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="lecture02-stochastic-dp_files/libs/clipboard/clipboard.min.js"></script>
+<script src="lecture02-stochastic-dp_files/libs/quarto-html/tabby.min.js"></script>
+<script src="lecture02-stochastic-dp_files/libs/quarto-html/popper.min.js"></script>
+<script src="lecture02-stochastic-dp_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="lecture02-stochastic-dp_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="lecture02-stochastic-dp_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="lecture02-stochastic-dp_files/libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
+
+  <meta name="author" content="Duarte Antunes">
+  <title>lecture02-stochastic-dp</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="lecture02-stochastic-dp_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="lecture02-stochastic-dp_files/libs/revealjs/dist/reveal.css">
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="lecture02-stochastic-dp_files/libs/revealjs/dist/theme/quarto-dbdae09e3717e6ee293fc537af762018.css">
+  <link href="lecture02-stochastic-dp_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="lecture02-stochastic-dp_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="lecture02-stochastic-dp_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="lecture02-stochastic-dp_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+  <!--
+  MathJax needs its own macro definitions -- LaTeX's \newcommand in
+  macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+  SAME macro names available when rendering to revealjs/html, so a macro like
+  \costtogo looks identical whether you're viewing slides in the browser or a
+  PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+  -->
+  <script>
+  window.MathJax = {
+    tex: {
+      macros: {
+        E: "\\mathbb{E}",
+        Prob: "\\text{Prob}",
+        R: "\\mathbb{R}",
+        N: "\\mathbb{N}",
+        argmin: ["\\operatorname*{argmin}_{#1}", 1],
+        argmax: ["\\operatorname*{argmax}_{#1}", 1],
+        policy: "\\mu",
+        costtogo: "J",
+        state: "x",
+        action: "u"
+      }
+    }
+  };
+  </script>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+
+<section id="unit-2" class="slide level2 center" style="text-align: center;">
+<h2>Unit 2</h2>
+<!--
+Converted from Lecture2.key (exported to PDF, 52 slides) on 2026-08-09,
+following the exact conventions finalized on Lecture 1:
+- Standard title-slide block reused verbatim from Lecture 1 (only "Unit N"
+  and the subtitle change).
+- Plain x_k/u_k/J/mu notation used throughout (NOT the \state/\action/
+  \costtogo/\policy macros) -- Lecture 1 ended up converting almost every
+  occurrence of those macros to plain notation per your explicit requests,
+  so this lecture starts directly in the notation you settled on.
+- Slides that are mostly text/bullets/equations are rewritten natively.
+  Slides built around a hand-drawn diagram, grid, tree, table-as-image, or
+  photo are kept as an embedded image of the original slide region (title
+  and stray Keynote page-number cropped out) rather than redrawn, for the
+  same reason as Lecture 1: redrawing ~25 dense diagrams accurately without
+  verifying them against you first risked introducing errors. Figures live
+  in figures/lecture2/, currently named pgNN.png (matching the original PDF
+  page number) -- happy to rename to descriptive slugs during review, same
+  as we ended up doing for Lecture 1's figures/lecture1v3/ set.
+- Decorative clipart icons (ostrich/engineer/scientist cartoons on the
+  "Coping with disturbances" / open-loop / closed-loop slides) were left out
+  of the native-text slides since they're flourish, not content -- say the
+  word if you'd like them added as small images.
+- Added a reusable `.dp-box` style to styles/tue.scss for the boxed DP
+  equation (rounded-rectangle border), matching the hand-drawn box in the
+  original "Stochastic Dynamic Prog. algorithm" slide.
+
+FIRST-PASS CAVEAT: given the size of this deck (52 slides, much more
+figure/table/matrix-dense than Lecture 1), this pass prioritizes getting
+every slide's title, structure, and text/equation content correct, with
+faithful image crops for diagrams -- rather than pixel-perfect cropping of
+every figure (no stray-page-number cleanup or caption-duplication pass yet).
+Expect the same kind of slide-by-slide refinement round we did for Lecture 1.
+-->
+<h3 style="text-align: center;" id="stochastic-dynamic-programming-and-applications">Stochastic Dynamic Programming and Applications</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/shared/tue-logo.png" class="quarto-figure quarto-figure-center" style="width:15.0%"></p>
+</figure>
+</div>
+<div class="title-slide-meta">
+<p>4SC000, Q2 2026-2027</p>
+<p>Duarte Antunes</p>
+</div>
+</section>
+<section id="outline" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li><u>Stochastic dynamic programming</u></li>
+<li>Applications</li>
+</ul>
+</section>
+<section id="discussion" class="slide level2">
+<h2>Discussion</h2>
+<ul>
+<li>We can use the policy provided by the dynamic programming algorithm <strong>assuming no disturbances</strong> to cope with disturbances.</li>
+<li>Is this procedure optimal in any sense? In general, no.</li>
+<li>In fact, as we show next, in the presence of disturbances it may not even be possible to define optimal decisions, since these would depend on future realizations of disturbances.</li>
+</ul>
+</section>
+<section id="example" class="slide level2">
+<h2>Example</h2>
+<p>Move a robot from an initial stage <span class="math inline">\(0\)</span> to a final stage <span class="math inline">\(h\)</span> in minimum time</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg04-grid.png" class="quarto-figure quarto-figure-center" style="width:65.0%"></p>
+</figure>
+</div>
+<p>Deterministic formulation first and then introduce disturbances</p>
+<ul>
+<li>If the robot is <strong>not</strong> stuck in an obstacle or in a wall it can go up, straight or down. Otherwise, there is only one option (see figs). It takes 1 time unit to move horizontally from stage <span class="math inline">\(i\)</span> to stage <span class="math inline">\(i+1\)</span> and <span class="math inline">\(\sqrt{2}\)</span> to move diagonally. <span class="math inline">\(c\)</span> time units are paid every time an obstacle or a wall is hit.</li>
+</ul>
+<img data-src="figures/lecture2/pg04-icons.png" class="r-stretch">
+</section>
+<section id="modeling" class="slide level2">
+<h2>Modeling</h2>
+<p>This problem can be written in the DP framework for a transition diagram obtained from the rules of the problem.</p>
+<img data-src="figures/lecture2/pg05-diagram.png" class="r-stretch">
+</section>
+<section id="dp-equation" class="slide level2">
+<h2>DP equation</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg06-grid.png" class="quarto-figure quarto-figure-center" style="width:45.0%"></p>
+</figure>
+</div>
+<p><span class="math display">\[J_h(i) = 0 \quad i \in \{1,\dots,n\}\]</span></p>
+<p>For <span class="math inline">\(k \in \{h-1, h-2, \dots, 1, 0\}\)</span>:</p>
+<p><span class="math display">\[J_k(1) = \sqrt{2} + c + J_{k+1}(2)\]</span></p>
+<p><span class="math display">\[J_k(n) = \sqrt{2} + c + J_{k+1}(n-1)\]</span></p>
+<p><span class="math display">\[J_k(i) = \min\{1+J_{k+1}(i), \sqrt{2}+J_{k+1}(i+1), \sqrt{2}+J_{k+1}(i-1)\} \quad \text{not an obstacle node}\]</span></p>
+<p><span class="math display">\[J_k(i) = 1 + c + J_{k+1}(i) \qquad i \in \{2,\dots,n-1\} \quad \text{obstacle node}\]</span></p>
+</section>
+<section id="numerical-example" class="slide level2">
+<h2>Numerical example</h2>
+<p><span class="math display">\[J_k(n) = \sqrt{2}+c+J_{k+1}(n-1) \qquad J_h(i) = 0\]</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg07-tables.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+<p><span class="math display">\[J_k(1) = \sqrt{2}+c+J_{k+1}(2) \qquad\qquad c=4\]</span></p>
+<p><span class="math display">\[J_k(i) = \min\{1+J_{k+1}(i), \sqrt{2}+J_{k+1}(i+1), \sqrt{2}+J_{k+1}(i-1)\} \quad \text{not an obstacle node}\]</span></p>
+<p><span class="math display">\[J_k(i) = 1+c+J_{k+1}(i) \qquad \text{obstacle node}\]</span></p>
+</section>
+<section id="introducing-disturbances" class="slide level2">
+<h2>Introducing disturbances</h2>
+<p>Consider that at position A there <strong>might</strong> be a disturbance making the robot move down one extra position.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg08-grid.png" class="quarto-figure quarto-figure-center" style="width:42.0%"></p>
+</figure>
+</div>
+<p><strong>Possible outcomes</strong> (<span style="color:#1a4fa0;">no disturbance</span>/ <span style="color:#4a7a1e;">disturbance</span>)</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg08-outcomes.png" class="quarto-figure quarto-figure-center" style="width:92.0%"></p>
+</figure>
+</div>
+</section>
+<section id="example-1" class="slide level2">
+<h2>Example</h2>
+<table class="caption-top">
+<caption><em>cost-to-go at position A</em></caption>
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: center;">no disturbance</th>
+<th style="text-align: center;">disturbance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>decision: ‘up’</td>
+<td style="text-align: center;"><span class="math inline">\(11.4+\sqrt{2}\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(7.83+1\)</span></td>
+</tr>
+<tr class="even">
+<td>decision: ‘straight’</td>
+<td style="text-align: center;"><span class="math inline">\(7.83+1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(12.2+\sqrt{2}\)</span></td>
+</tr>
+<tr class="odd">
+<td>decision: ‘down’</td>
+<td style="text-align: center;"><span class="math inline">\(12.2+\sqrt{2}\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(11.8+\sqrt{5}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>If we knew the future disturbance value, we would pick ‘up’ if ‘disturbance’, ‘straight’ if ‘no disturbance’.</p>
+<p>Thus, if we assume nothing about the disturbances there is <strong>no optimal decision</strong> at position A.</p>
+</section>
+<section id="assumptions-on-disturbances" class="slide level2">
+<h2>Assumptions on disturbances</h2>
+<p>There are two assumptions that make optimal decisions well-defined</p>
+<ul>
+<li><strong>Stochastic disturbances.</strong> If we have a stochastic characterization of disturbances we can define optimal policies as the ones that minimize the expected cost. The dynamic programming framework can be extended to provide this policy.</li>
+<li><strong>Worst-case disturbances.</strong> Optimal control problems with worst-case disturbances can be tackled in the framework of <u>game theory</u> and will not be addressed in the course.</li>
+</ul>
+</section>
+<section id="stochastic-disturbances" class="slide level2">
+<h2>Stochastic disturbances</h2>
+<p>For the toy robot problem consider the stochastic characterization: <span class="math inline">\(\text{Prob}[\text{disturbance}]=0.2\)</span>, <span class="math inline">\(\text{Prob}[\text{no disturbance}]=0.8\)</span></p>
+<table class="caption-top">
+<caption><em>cost-to-go at position A</em></caption>
+<colgroup>
+<col style="width: 16%">
+<col style="width: 27%">
+<col style="width: 27%">
+<col style="width: 27%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: center;">no disturbance</th>
+<th style="text-align: center;">disturbance</th>
+<th style="text-align: center;">Expected cost</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>decision: ‘up’</td>
+<td style="text-align: center;"><span class="math inline">\(11.4+\sqrt{2}\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(7.83+1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\((11.4+\sqrt{2})0.8+(7.83+1)0.2=12.0174\)</span></td>
+</tr>
+<tr class="even">
+<td>decision: ‘straight’</td>
+<td style="text-align: center;"><span class="math inline">\(7.83+1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(12.2+\sqrt{2}\)</span></td>
+<td style="text-align: center;"><span class="math inline">\((7.83+1)0.8+(12.2+\sqrt{2})0.2=9.79\)</span></td>
+</tr>
+<tr class="odd">
+<td>decision: ‘down’</td>
+<td style="text-align: center;"><span class="math inline">\(12.2+\sqrt{2}\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(11.8+\sqrt{5}\)</span></td>
+<td style="text-align: center;"><span class="math inline">\((12.2+\sqrt{2})0.8+(11.8+\sqrt{5})0.2=13.69\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Optimal decision is now well-defined: pick ‘straight’.</p>
+</section>
+<section id="worst-case-disturbances" class="slide level2">
+<h2>Worst-case disturbances</h2>
+<table class="caption-top">
+<caption><em>cost-to-go at position A</em></caption>
+<colgroup>
+<col style="width: 16%">
+<col style="width: 27%">
+<col style="width: 27%">
+<col style="width: 27%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: center;">no disturbance</th>
+<th style="text-align: center;">disturbance</th>
+<th style="text-align: center;">Worst-case cost</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>decision: ‘up’</td>
+<td style="text-align: center;"><span class="math inline">\(11.4+\sqrt{2}\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(7.83+1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(11.4+\sqrt{2}\)</span></td>
+</tr>
+<tr class="even">
+<td>decision: ‘straight’</td>
+<td style="text-align: center;"><span class="math inline">\(7.83+1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(12.2+\sqrt{2}\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(12.2+\sqrt{2}\)</span></td>
+</tr>
+<tr class="odd">
+<td>decision: ‘down’</td>
+<td style="text-align: center;"><span class="math inline">\(12.2+\sqrt{2}\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(11.8+\sqrt{5}\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(11.8+\sqrt{5}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Optimal decision is now well-defined: pick ‘up’.</p>
+<p>Safe policy (at least we get <span class="math inline">\(11.4+\sqrt{2}\)</span>).</p>
+</section>
+<section id="stochastic-formulation" class="slide level2">
+<h2>Stochastic formulation</h2>
+<p>The dynamic model and the cost take now the form</p>
+<p><span class="math display">\[x_{k+1} = f_k(x_k, u_k, w_k)\]</span></p>
+<p><span class="math display">\[\sum_{k=0}^{h-1} g_k(x_k, u_k, w_k) + g_h(x_h)\]</span></p>
+<p>where the state and input live in the same finite spaces defined before (slide 3), and disturbances belong to a finite set <span class="math inline">\(w_k \in W_k(i,j) := \{1,\dots,\omega_{i,j,k}\}\)</span> when <span class="math inline">\(x_k=i\)</span>, <span class="math inline">\(u_k=j\)</span> and are characterised by</p>
+<p><span class="math display">\[p_\ell^{k,i,j} := \text{Prob}[w_k = \ell \mid x_k=i, u_k=j], \quad \ell \in W_k(i,j).\]</span></p>
+<p>Note that both the state and cost are now random variables. This model is often referred to as a <u>Markov Decision Process (MDP)</u>.</p>
+</section>
+<section id="stochastic-formulation-1" class="slide level2">
+<h2>Stochastic formulation</h2>
+<p>Given a policy <span class="math inline">\(\pi = \{\mu_0,\dots,\mu_{h-1}\}\)</span>, <span class="math inline">\(u_k = \mu_k(x_k)\)</span>, leading to,</p>
+<p><span class="math display">\[x_{k+1} = f_k(x_k, \mu_k(x_k), w_k),\]</span></p>
+<p>define the <u>expected</u> cost</p>
+<p><span class="math display">\[J_\pi(x_0) = \mathbb{E}\Big[\sum_{k=0}^{h-1} g_k(x_k, \mu_k(x_k), w_k) + g_h(x_h)\Big],\]</span></p>
+<p>where <span class="math inline">\(J_\pi(x_0)\)</span> is a real number for each initial condition.</p>
+<p>The goal is to find a policy that minimizes the cost <span class="math inline">\(J_\pi\)</span>.</p>
+</section>
+<section id="stochastic-dynamic-prog.-algorithm" class="slide level2">
+<h2>Stochastic Dynamic Prog. algorithm</h2>
+<div class="dp-box">
+<p>Start with <span class="math inline">\(J_h(i) = g_h(i)\)</span> for every <span class="math inline">\(i \in X_k\)</span> and for each decision stage, starting from the last and moving backwards, <span class="math inline">\(k \in \{h-1,h-2,\dots,0\}\)</span> compute <span class="math inline">\(\mu_k\)</span> and <span class="math inline">\(J_k\)</span> as</p>
+<p><span class="math display">\[J_k(i) = \min_{j \in U_k(i)} \sum_{\ell \in W_k(i,j)} p_\ell^{k,i,j} \big(g_k(i,j,\ell) + J_{k+1}(f_k(i,j,\ell))\big) \quad \text{(DP eq.)}\]</span></p>
+<p>and</p>
+<p><span class="math display">\[\mu_k(i) = j,\]</span></p>
+<p>where <span class="math inline">\(j\)</span> is a minimizer in the DP equation. Then <span class="math inline">\(\{\mu_0,\dots,\mu_{h-1}\}\)</span> is an optimal policy.</p>
+</div>
+<ul>
+<li>Equivalently, we can write the DP equation as <span class="math display">\[J_k(x_k) = \min_{u_k \in U_k(x_k)} \; \mathbb{E}_{w_k}\big[g_k(x_k,u_k,w_k) + J_{k+1}(f_k(x_k,u_k,w_k))\big]\]</span></li>
+<li>Each function <span class="math inline">\(J_\ell(i)\)</span> is now the <u>expected</u> cost-to-go when <span class="math inline">\(x_\ell = i\)</span> <span class="math display">\[J_\ell(i) = \mathbb{E}\Big[\sum_{k=\ell}^{h-1} g_k(x_k,\mu_k(x_k),w_k) + g_h(x_h)\Big]\]</span></li>
+<li>In particular <span class="math inline">\(J_0(i)\)</span> is the expected cost for a given initial condition <span class="math inline">\(x_0=i\)</span>.</li>
+<li>The notation <span class="math inline">\(J_\ell(i) = \mathbb{E}[\sum_{k=\ell}^{h-1} g_k(x_k,\mu_k(x_k),w_k) + g_h(x_h) \mid x_\ell=i]\)</span> is often also used.</li>
+</ul>
+</section>
+<section id="discussion-1" class="slide level2">
+<h2>Discussion</h2>
+<ul>
+<li>The nomenclature ‘Markov decision processes’ comes from the fact that the dynamic model has the so-called Markov property.</li>
+<li>Intuitively the Markov property states that the probability that the process moves to a new state depends only on the current state and action; given the current state and action the next state is conditionally independent of all previous states and actions.</li>
+<li>Formally, the <u>Markov property</u> states that for any function <span class="math inline">\(f\)</span>, <span class="math display">\[\mathbb{E}[f(x_{k+1}) \mid x_k, u_k, x_{k-1}, u_{k-1}, \dots, x_0, u_0] = \mathbb{E}[f(x_{k+1}) \mid x_k, u_k]\]</span></li>
+<li>This property follows from the definition of the dynamic model.</li>
+</ul>
+</section>
+<section id="example-2" class="slide level2">
+<h2>Example</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg17-grid.png" class="quarto-figure quarto-figure-center" style="width:38.0%"></p>
+</figure>
+</div>
+<p>Consider the deterministic problem introduced before but now assume that for regular nodes (no obstacles) the evolution of the state is stochastic <u>for every stage and state</u>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg17-probs.png" class="quarto-figure quarto-figure-center" style="width:65.0%"></p>
+</figure>
+</div>
+</section>
+<section id="dynamic-programming-equation" class="slide level2">
+<h2>Dynamic Programming equation</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg18-grid.png" class="quarto-figure quarto-figure-center" style="width:40.0%"></p>
+</figure>
+</div>
+<p><span class="math display">\[J_k(1) = \sqrt{2}+c+J_{k+1}(2)\]</span></p>
+<p><span class="math display">\[J_k(n) = \sqrt{2}+c+J_{k+1}(n-1)\]</span></p>
+<p><span class="math display">\[J_h(i) = 0 \qquad i \in \{1,\dots,n\}\]</span></p>
+<p><span class="math display">\[J_k(i) = 1+c+J_{k+1}(i) \qquad \text{obstacle node}, \; i \in \{2,\dots,n-1\}\]</span></p>
+<p>Stochastic:</p>
+<p><span class="math display">\[J_k(i) = \min\{(1-2p)(1+J_{k+1}(i)) + p(\sqrt{2}+J_{k+1}(i+1)) + p(\sqrt{2}+J_{k+1}(i-1)),\]</span> <span class="math display">\[2p(1+J_{k+1}(i)) + (1-2p)(\sqrt{2}+J_{k+1}(i+1)),\]</span> <span class="math display">\[2p(1+J_{k+1}(i)) + (1-2p)(\sqrt{2}+J_{k+1}(i-1))\}, \quad i \in \{2,\dots,n-1\}\]</span></p>
+<p>Compare with deterministic (computed before):</p>
+<p><span class="math display">\[J_k(i) = \min\{1+J_{k+1}(i), \sqrt{2}+J_{k+1}(i+1), \sqrt{2}+J_{k+1}(i-1)\}\]</span></p>
+</section>
+<section id="numerical-example-1" class="slide level2">
+<h2>Numerical example</h2>
+<p><span class="math inline">\(p = 0.1\)</span>, <span class="math inline">\(c = 4\)</span></p>
+<p><img data-src="figures/lecture2/pg19-cost.png" class="quarto-figure quarto-figure-center" style="width:42.0%"> <img data-src="figures/lecture2/pg19-policy.png" class="quarto-figure quarto-figure-center" style="width:42.0%"></p>
+<p><span class="math display">\[J_k(i) = \min\{(1-2p)(1+J_{k+1}(i)) + p(\sqrt{2}+J_{k+1}(i+1)) + p(\sqrt{2}+J_{k+1}(i-1)),\]</span> <span class="math display">\[2p(1+J_{k+1}(i)) + (1-2p)(\sqrt{2}+J_{k+1}(i+1)),\]</span> <span class="math display">\[2p(1+J_{k+1}(i)) + (1-2p)(\sqrt{2}+J_{k+1}(i-1))\}\]</span></p>
+</section>
+<section id="comparison-with-deterministic" class="slide level2">
+<h2>Comparison with deterministic</h2>
+<p>The optimal policy coping with uncertainty is intuitive: go around the obstacles!</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg20-comparison.png" class="quarto-figure quarto-figure-center" style="width:90.0%"></p>
+</figure>
+</div>
+</section>
+<section id="coping-with-disturbances" class="slide level2">
+<h2>Coping with disturbances</h2>
+<ul>
+<li><strong>Open loop</strong> - apply control inputs of optimal path
+<ul>
+<li>May not make sense, leads to poor performance or instability.</li>
+</ul></li>
+<li><strong>Feedback policy obtained from the DP algorithm neglecting disturbances</strong>
+<ul>
+<li>Often followed in practice (specially in eng. contexts) due to the difficulty in obtaining a stochastic characterizing of disturbances.</li>
+<li>Later we will call this policy certainty equivalent control.</li>
+</ul></li>
+<li><strong>Feedback policy obtained from the DP algorithm for stochastic models</strong>
+<ul>
+<li>Important in operational research problems, games, etc., but limited use in practical control applications.</li>
+</ul></li>
+</ul>
+</section>
+<section id="open-loop" class="slide level2 scrollable">
+<h2>Open loop</h2>
+<ol type="1">
+<li>Compute optimal decisions for a given initial state assuming no disturbances
+<ul>
+<li>predicted cost 13.8</li>
+</ul></li>
+<li>Blindly apply these decisions
+<ul>
+<li>cost of perturbed path in the picture: 26.66</li>
+<li>average cost of 1000 perturbed paths: 22.04</li>
+</ul></li>
+</ol>
+<p><img data-src="figures/lecture2/pg22-policy.png" class="quarto-figure quarto-figure-center" style="width:34.0%"> <img data-src="figures/lecture2/pg22-path.png" class="quarto-figure quarto-figure-center" style="width:34.0%"></p>
+<p>(open-loop decisions applied only at regular nodes, at obstacle and wall nodes the options are unique)</p>
+</section>
+<section id="closed-loop-with-deterministic-dp" class="slide level2 scrollable">
+<h2>Closed loop with deterministic DP</h2>
+<ol type="1">
+<li>Compute optimal policy assuming no disturbances</li>
+<li>Re-decide online based on the policy
+<ul>
+<li>cost of perturbed path in the picture: 19.07</li>
+<li>average cost of 1000 perturbed paths: 17.51</li>
+</ul></li>
+</ol>
+<p><img data-src="figures/lecture2/pg23-policy.png" class="quarto-figure quarto-figure-center" style="width:34.0%"> <img data-src="figures/lecture2/pg23-path.png" class="quarto-figure quarto-figure-center" style="width:34.0%"></p>
+</section>
+<section id="closed-loop-with-stochastic-dp" class="slide level2 scrollable">
+<h2>Closed loop with stochastic DP</h2>
+<ol type="1">
+<li>Compute optimal policy coping with disturbances</li>
+<li>Re-decide online based on the policy
+<ul>
+<li>cost of perturbed path in the picture: 15.48</li>
+<li>average cost of 1000 perturbed paths: 15.96</li>
+</ul></li>
+</ol>
+<p><img data-src="figures/lecture2/pg24-policy.png" class="quarto-figure quarto-figure-center" style="width:34.0%"> <img data-src="figures/lecture2/pg24-path.png" class="quarto-figure quarto-figure-center" style="width:34.0%"></p>
+</section>
+<section id="equivalent-formulation" class="slide level2">
+<h2>Equivalent formulation</h2>
+<p>Often it is simpler to specify the model <span class="math inline">\(x_{k+1} = f_k(x_k, u_k, w_k)\)</span> in terms of matrices</p>
+<div class="dp-box">
+<p><span class="math display">\[[P_k(j)]_{ri} = \text{Prob}[x_{k+1} = r \mid x_k=i, u_k=j]\]</span></p>
+</div>
+<p>called the transition probabilities.</p>
+<p><strong>Example.</strong> Suppose that the dynamical model is</p>
+<p><span class="math display">\[x_{k+1} = \min\{\max\{x_k+u_k+w_k, 1\}, c_k\}\]</span></p>
+<p>with <span class="math inline">\(c_k = \begin{cases}2 &amp; \text{if } k \text{ is odd}\\3 &amp; \text{if } k \text{ is even}\end{cases}\)</span>, <span class="math inline">\(u_k \in \{1,2\}\)</span>, <span class="math inline">\(\text{Prob}[w_k=0]=2/3\)</span>, <span class="math inline">\(\text{Prob}[w_k=-1]=1/3\)</span></p>
+<p>Then</p>
+<p>For odd <span class="math inline">\(k\)</span>: <span class="math inline">\(P_k(1) = \begin{bmatrix}1/3 &amp; 1\\2/3 &amp; 0\end{bmatrix}\)</span>, <span class="math inline">\(P_k(2) = \begin{bmatrix}0 &amp; 0\\1 &amp; 1\end{bmatrix}\)</span>.</p>
+<p>For even <span class="math inline">\(k\)</span>: <span class="math inline">\(P_k(1) = \begin{bmatrix}1/3 &amp; 0 &amp; 0\\2/3 &amp; 1/3 &amp; 0\\0 &amp; 2/3 &amp; 1\end{bmatrix}\)</span>, <span class="math inline">\(P_k(2) = \begin{bmatrix}0 &amp; 0 &amp; 0\\1/3 &amp; 0 &amp; 0\\2/3 &amp; 1 &amp; 0\end{bmatrix}\)</span>.</p>
+</section>
+<section id="equivalent-formulation-1" class="slide level2">
+<h2>Equivalent formulation</h2>
+<p>Given the transition probabilities we can construct a trivial model that represents the system</p>
+<p><span class="math display">\[x_{k+1} = w_k\]</span></p>
+<p><span class="math display">\[\text{Prob}[w_k = j \mid x_k=i, u_k=\ell] = P_{ji}(\ell)\]</span></p>
+<p>The running cost remains the same if it only depends on state and inputs and if it also depends on disturbances it is adjusted to</p>
+<p><span class="math display">\[\sum_{k=0}^{h-1} \mathbb{E}[g_k(x_k,u_k,w_k) + g_h(x_h)] \longrightarrow \sum_{k=0}^{h-1} \mathbb{E}[\tilde{g}(x_k,u_k) + g_h(x_h)] \quad \tilde{g}(i,u) = \sum_j P_{ji}(u) g_k(i,u,j)\]</span></p>
+<p>The dynamic programming equations can be written in this formulation as</p>
+<p><span class="math display">\[J_k(i) = \min_u \tilde{g}(i,u) + \sum_j P_{ji}(u) J_{k+1}(j) \qquad J_h(i) = g_h(i)\]</span></p>
+<p>for every <span class="math inline">\(i\)</span>.</p>
+</section>
+<section id="outline-1" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Stochastic dynamic programming</li>
+<li><u>Applications</u></li>
+</ul>
+</section>
+<section id="discussion-2" class="slide level2">
+<h2>Discussion</h2>
+<ul>
+<li>Stochastic dynamic programming has a large number of applications in management, finance, games, operational research and other areas requiring decisions in the presence of uncertainty.</li>
+<li>Here we focus on:
+<ul>
+<li>One interesting class of problems are <u>optimal stopping problems</u> where at each stage one must decide either to stop or continue a given process (possibly at a given cost). This is one of the simplest applications.</li>
+<li>Planning in the presence of uncertainty: spending a day in Efteling.</li>
+</ul></li>
+</ul>
+</section>
+<section id="the-car-parking-problem" class="slide level2">
+<h2>The car parking problem</h2>
+<p>Juliet is taking her boyfriend Romeo to watch a movie in a crowded local cinema. They are late and need to find a parking place.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg29-parking.png" class="quarto-figure quarto-figure-center" style="width:75.0%"></p>
+</figure>
+</div>
+<ul>
+<li>If they park <span class="math inline">\(k \in \{1,\dots,h\}\)</span> places away from the cinema they loose <span class="math inline">\(ck\)</span> minutes of the movie.</li>
+<li>Each parking place is free with probability <span class="math inline">\(p_k = 1-\alpha^k\)</span>, <span class="math inline">\(0 &lt; \alpha &lt; 1\)</span></li>
+<li>If they reach the cinema without having parked they have to wait in the parking queue of the cinema, which typically takes about <span class="math inline">\(C\)</span> minutes.</li>
+</ul>
+<p>When should they park (stop searching) to minimize expected delay?</p>
+</section>
+<section id="dynamic-programming-formulation" class="slide level2">
+<h2>Dynamic programming formulation</h2>
+<ul>
+<li><span class="math inline">\(h\)</span> - # parking places, stage <span class="math inline">\(\ell \in \{0,1,\dots,h-1\}\)</span>, <span class="math inline">\(k = h-\ell\)</span>.</li>
+<li>State <span class="math inline">\(x_\ell \in \{F,S,O\}\)</span> parking spot <span class="math inline">\(\ell\)</span> free - <span class="math inline">\(F\)</span>, occupied - <span class="math inline">\(O\)</span>, car is already parked - <span class="math inline">\(S\)</span>.</li>
+<li>Terminal state <span class="math inline">\(x_h = E\)</span>.</li>
+<li>When <span class="math inline">\(x_\ell = F\)</span>, <span class="math inline">\(u \in \{P, DP\}\)</span>, park (<span class="math inline">\(P\)</span>) cost <span class="math inline">\(ck\)</span>, don’t park (<span class="math inline">\(DP\)</span>) cost <span class="math inline">\(0\)</span>; when <span class="math inline">\(x_\ell = O\)</span>, <span class="math inline">\(u_\ell = DP\)</span>.</li>
+<li>If <span class="math inline">\(u_\ell = DP\)</span>, <span class="math inline">\(x_{\ell+1} = F\)</span> with probability <span class="math inline">\(1-\alpha^{(h-(\ell+1))}\)</span> and <span class="math inline">\(x_{\ell+1}=O\)</span> with probability <span class="math inline">\(\alpha^{(h-(\ell+1))}\)</span></li>
+<li>If the decision is not to park at the final stage, the cost is <span class="math inline">\(C\)</span>.</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg30-dpgraph.png" class="quarto-figure quarto-figure-center" style="width:95.0%"></p>
+</figure>
+</div>
+</section>
+<section id="dynamic-programming-algorithm" class="slide level2">
+<h2>Dynamic programming algorithm</h2>
+<p><span class="math inline">\(p_k = 1-\alpha^k\)</span>, <span class="math inline">\(q_k = \alpha^k\)</span></p>
+<p>Stage <span class="math inline">\(h\)</span>: <span class="math inline">\(J_h(E) = 0\)</span>.</p>
+<p>Stage <span class="math inline">\(h-1\)</span>: <span class="math inline">\(J_{h-1}(O) = C\)</span>, <span class="math inline">\(J_{h-1}(F) = \min\{C, c\}\)</span></p>
+<p>Stage <span class="math inline">\(h-2\)</span>:</p>
+<p><span class="math display">\[J_{h-2}(O) = p_1 J_{h-1}(F) + q_1 J_{h-1}(O) = p_1 \min\{C,c\} + q_1 C,\]</span> <span class="math display">\[J_{h-2}(F) = \min\{p_1 J_{h-1}(F) + q_1 J_{h-1}(O), 2c\} = \min\{p_1\min\{C,c\}+q_1 C, 2c\}\]</span></p>
+<p><span class="math inline">\(\dots\)</span></p>
+<p>Stage <span class="math inline">\(h-(k+1)\)</span>:</p>
+<p><span class="math display">\[J_{h-(k+1)}(O) = p_k J_{h-k}(F) + q_k J_{h-k}(O)\]</span> <span class="math display">\[= p_k\min\{p_{k-1}J_{h-(k-1)}(F) + q_{k-1}J_{h-(k-1)}(O), ck\} + q_k(p_{k-1}J_{h-(k-1)}(F) + q_{k-1}J_{h-(k-1)}(O)),\]</span> <span class="math display">\[J_{h-(k+1)}(F) = \min\{p_k J_{h-k}(F) + q_k J_{h-k}(O), c(k+1)\}\]</span></p>
+</section>
+<section id="numerical-example-2" class="slide level2">
+<h2>Numerical example</h2>
+<p><span class="math inline">\(\alpha = 0.8\)</span>, <span class="math inline">\(h=4\)</span>, <span class="math inline">\(C=3\)</span>, <span class="math inline">\(c=1\)</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg32-numgraph.png" class="quarto-figure quarto-figure-center" style="width:90.0%"></p>
+</figure>
+</div>
+<p>Simple optimal rule: park if there are parking places at distance two or one away from the cinema, otherwise do not park.</p>
+</section>
+<section id="planning-with-uncertainty" class="slide level2">
+<h2>Planning with uncertainty</h2>
+<p>How to plan your afternoon in Efteling to maximize your additive rewards in your favourite attractions given (stochastic) models of waiting times in queues?</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg33-efteling.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+<div style="text-align: center; font-size: 0.7em;">
+<p>Visitors preferences</p>
+</div>
+</section>
+<section id="model" class="slide level2">
+<h2>Model</h2>
+<p>The time period is from 14h00 until 19h00 and is divided into <span class="math inline">\(T\)</span> time slots of 5 minutes from <span class="math inline">\(k=1\)</span> (14h00-14h05) until <span class="math inline">\(k=T=60\)</span> (18h55-19h00).</p>
+<p>Time to walk from one attraction to another (and to and from the entrance/exit) are deterministic and given in Figure 2. There are <span class="math inline">\(M=10\)</span> attractions plus the entrance/exit 11. Estimated times also include the time to travel to and from the entrance/exit.</p>
+<p>The visitor does not desire to visit each of the attractions more than once.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg34-walktimes.png" class="quarto-figure quarto-figure-center" style="width:55.0%"></p>
+</figure>
+</div>
+<div style="text-align: center; font-size: 0.7em;">
+<p>Walking time between attractions &amp; exit</p>
+</div>
+</section>
+<section id="goal" class="slide level2 scrollable">
+<h2>Goal</h2>
+<p>Suppose that we know the waiting distribution as a function of time.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg35-waitdist.png" class="quarto-figure quarto-figure-center" style="width:75.0%"></p>
+</figure>
+</div>
+<div style="text-align: center; font-size: 0.7em;">
+<p>Stochastic waiting time distribution as a function of time</p>
+</div>
+<p>Let the state be</p>
+<ol type="1">
+<li>a unique label representing the attractions visited so far <span class="math inline">\(a_M a_{M-1} \dots a_2 a_1\)</span>, <span class="math inline">\(a_i \in \{0,1\}\)</span></li>
+<li>time index</li>
+<li>Last visited attraction <span class="math inline">\(c \in \{1,\dots,M\}\)</span>, in particular <span class="math inline">\(a_c = 1\)</span></li>
+</ol>
+<p>Find a policy that for each state provides the next attraction to go to.</p>
+</section>
+<section id="stochastic-dynamic-programming" class="slide level2">
+<h2>Stochastic dynamic programming</h2>
+<p>Consider a very large number of possible iteration <span class="math inline">\(T\)</span> and consider</p>
+<p><span class="math inline">\(g_T(x_T) = \infty\)</span> if terminal state is not feasible.</p>
+<p><span class="math inline">\(g_T(x_T) = 0\)</span> if terminal state is feasible.</p>
+<p>A feasible terminal state is such that given the last visited attraction and the current time one still has enough time to exit.</p>
+<p>Intuitively at the terminal stage <span class="math inline">\(T\)</span> we assume that one will exit the park even if one has time.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg36-states.png" class="quarto-figure quarto-figure-center" style="width:16.0%"></p>
+</figure>
+</div>
+</section>
+<section id="stochastic-dynamic-programming-1" class="slide level2">
+<h2>Stochastic dynamic programming</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg37-treediagram.png" class="quarto-figure quarto-figure-center" style="width:90.0%"></p>
+</figure>
+</div>
+<p><span class="math inline">\(c_i\)</span> - time to walk to attraction <span class="math inline">\(i\)</span> + random waiting time at attraction <span class="math inline">\(i\)</span></p>
+<p>Cost of each arrow are the reverse rewards of the coming attraction (visible in the state).</p>
+</section>
+<section id="optimal-policy" class="slide level2">
+<h2>Optimal policy</h2>
+<p>After setting up the problem one runs DP. If the horizon is long enough one can show that DP converges (both the costs-to-go and the policy) and we have an optimal policy (we will later justify this in the course).</p>
+<p>Example: if the state is <span class="math inline">\((1111100000, 25, 2)\)</span></p>
+<p>optimal policy might determine to move to attraction 10.</p>
+</section>
+<section id="other-applications" class="slide level2">
+<h2>Other applications</h2>
+<p>See internship theses of former TU/e students at the repository</p>
+<p><em>Autonomous Parking Spot Ranking</em>, Jeroen Vanhegelsom, 2022</p>
+<p>A thesis developed at company Lightyear, Eindhoven, using stochastic dynamic programming for planning dynamic parking strategies for solar panels powered cars to optimized sun exposition.</p>
+<p><em>Optimal planning strategies balancing sensing and acting under uncertainty and partial observability</em>, Femke Voogt, 2026</p>
+<p>A thesis developed at company VBTI, Eindhoven, using stochastic dynamic programming for planning leaf harvest.</p>
+</section>
+<section id="concluding-remarks" class="slide level2">
+<h2>Concluding remarks</h2>
+<h3 id="summary">Summary</h3>
+<ul>
+<li>We introduced a different but equivalent formalism with respect to transition diagrams.</li>
+<li>Stochastic DP: if one has a stochastic characterization of uncertainty one can use it to improve (in terms of expected cost) open-loop policies and even the closed-loop policy obtained with dynamic programming assuming deterministic behavior.</li>
+<li>We gave two examples: games and stopping times.</li>
+</ul>
+</section>
+<section id="appendix-a" class="slide level2 center" style="text-align: center;">
+<h2>Appendix A</h2>
+<h3 style="text-align: center;" id="stochastic-dynamic-programming-for-the-inventory-control-example">Stochastic dynamic programming for the inventory control example</h3>
+</section>
+<section id="inventory-control-example" class="slide level2">
+<h2>Inventory control example</h2>
+<p>Applying the dynamic programming algorithm to the inventory control example with uncertain demand at stage 2, <span class="math inline">\(\text{Prob}[d_2=0]=0.5\)</span>, <span class="math inline">\(\text{Prob}[d_2=1]=0.5\)</span> we obtain (see Lecture 1)</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg42-inventory.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+</section>
+<section id="computing-the-optimal-policy" class="slide level2">
+<h2>Computing the optimal policy</h2>
+<ul>
+<li>Notice that since there is only one disturbance at stage 2 the costs-to-go at stage 3 match the ones obtained before in the deterministic case.</li>
+<li>Decisions at stage 2 are the ones that minimize the expected cost-to-go. We have seen that for state 0 <span class="math inline">\(u_2=1\)</span> is better than <span class="math inline">\(u_2=2\)</span> and actually it is the optimal decision.</li>
+<li>Another example:</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg43-example.png" class="quarto-figure quarto-figure-center" style="width:80.0%"></p>
+</figure>
+</div>
+<ul>
+<li>For stage 0 and stages 1 there is no uncertainty. To obtain the respective costs-to-go one can apply the dynamic programming algorithm considering the expected costs-to-go at stage 2.</li>
+</ul>
+</section>
+<section id="appendix-b" class="slide level2 center" style="text-align: center;">
+<h2>Appendix B</h2>
+<h3 style="text-align: center;" id="another-stopping-time-problem-asset-selling">Another stopping time problem: asset selling</h3>
+</section>
+<section id="asset-selling" class="slide level2">
+<h2>Asset selling</h2>
+<p>When to accept an offer for an asset, e.g., a house, in other to maximize terminal expected revenue?</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg45-house.png" class="quarto-figure quarto-figure-center" style="width:42.0%"></p>
+</figure>
+</div>
+<p><strong>Assumptions:</strong></p>
+<ul>
+<li>Independent offers, denoted by <span class="math inline">\(w_0,w_1,\dots,w_{N-1}\)</span>, occur in <span class="math inline">\(N\)</span> periods of time.</li>
+<li>The offers take values in a finite set <span class="math inline">\(w_k \in \{a_1,a_2,\dots,a_M\}\)</span>, <span class="math inline">\(\text{Prob}[w_k=a_i]=p_i\)</span></li>
+<li><span class="math inline">\(w_k=0\)</span> models the case where there is no offer in period <span class="math inline">\(N\)</span>.</li>
+<li>If an offer is accepted, the money is invested at a rate <span class="math inline">\(r\)</span> until the <span class="math inline">\(N\)</span>th period.</li>
+<li>Offers rejected are not renewed, and the last offer <span class="math inline">\(w_{N-1}\)</span> must be accepted.</li>
+</ul>
+</section>
+<section id="asset-selling-1" class="slide level2">
+<h2>Asset selling</h2>
+<p>Let <span class="math inline">\(x_k\)</span>, for <span class="math inline">\(k \geq 1\)</span>, equal the most recent offer <span class="math inline">\(w_{k-1}\)</span> and pick a terminal state <span class="math inline">\(x_k = T\)</span> to denote that the house has already been sold. Let also <span class="math inline">\(u_k=1\)</span> for <span class="math inline">\(k \geq 1\)</span> if one decides to accept offer <span class="math inline">\(w_{k-1}\)</span> (sell) and <span class="math inline">\(x_0 := 0\)</span> (zero initial offer). Then:</p>
+<p><span class="math display">\[x_{k+1} = \begin{cases}T &amp; \text{if } x_k=T, \text{ or if } x_k \neq T \text{ and } u_k=1 \text{(sell)},\\w_k &amp; \text{otherwise.}\end{cases}\]</span></p>
+<p>and the expected selling price is</p>
+<p><span class="math display">\[\mathbb{E}_{w_k}\Big[g_N(x_N) + \sum_{k=0}^{N-1} g_k(x_k,u_k,w_k)\Big]\]</span></p>
+<p>where <span class="math inline">\(g_k(x_k,u_k,w_k) = \begin{cases}(1+r)^{N-k}x_k &amp; \text{if } x_k \neq T \text{ and } u_k=1\text{(sell)}\\0 &amp; \text{otherwise.}\end{cases}\)</span></p>
+<p><span class="math display">\[g_N(x_N) = \begin{cases}x_N &amp; \text{if } x_N \neq T,\\0 &amp; \text{if } x_N = T\end{cases}\]</span></p>
+</section>
+<section id="asset-selling-2" class="slide level2">
+<h2>Asset selling</h2>
+<p>Applying the dynamic programming algorithm we conclude that</p>
+<p><span class="math display">\[J_N(x_N) = \begin{cases}x_N &amp; \text{if } x_N \neq T,\\0 &amp; \text{if } x_N = T\end{cases}\]</span></p>
+<p><span class="math display">\[J_k(x_k) = \begin{cases}\max\big[(1+r)^{N-k}x_k,\; \mathbb{E}[J_{k+1}(w_k)]\big] &amp; \text{if } x_k \neq T\\0 &amp; \text{if } x_k = T\end{cases}\]</span></p>
+<p><strong>Policy</strong></p>
+<p>accept the offer <span class="math inline">\(x_k\)</span> if <span class="math inline">\(x_k &gt; \alpha_k\)</span></p>
+<p>reject the offer <span class="math inline">\(x_k\)</span> if <span class="math inline">\(x_k \leq \alpha_k\)</span></p>
+<p><span class="math display">\[\alpha_k = \mathbb{E}[J_{k+1}(w_k)] = \frac{\sum_{i=1}^M p_i J_{k+1}(a_i)}{(1+r)^{N-k}}\]</span></p>
+</section>
+<section id="appendix-c" class="slide level2 center" style="text-align: center;">
+<h2>Appendix C</h2>
+<h3 style="text-align: center;" id="a-simple-game">A simple game</h3>
+</section>
+<section id="a-simple-game-1" class="slide level2">
+<h2>A simple game</h2>
+<p>Two players (<span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span>), repetitively play two fair games:</p>
+<ul>
+<li>Player <span class="math inline">\(A\)</span> tosses a coin of <span class="math inline">\(1\)</span> money unit: if the outcome is ‘heads’ he/she gains <span class="math inline">\(1\)</span> point (Player <span class="math inline">\(B\)</span> looses <span class="math inline">\(1\)</span> point); otherwise he/she looses <span class="math inline">\(1\)</span> point (Player <span class="math inline">\(B\)</span> gains <span class="math inline">\(1\)</span> point).</li>
+<li>Player <span class="math inline">\(A\)</span> tosses a coin of <span class="math inline">\(2\)</span> money units: if the outcome is ‘heads’ he/she gains <span class="math inline">\(2\)</span> points (Player <span class="math inline">\(B\)</span> looses <span class="math inline">\(2\)</span> points), otherwise he/she looses <span class="math inline">\(2\)</span> points (Player <span class="math inline">\(B\)</span> gains <span class="math inline">\(2\)</span> points).</li>
+<li>The game ends if one of the players achieves <span class="math inline">\(L\)</span> or <span class="math inline">\(L+1\)</span> points in which case that player receives <span class="math inline">\(L\)</span> money units from the other player.</li>
+<li>If none of the players reaches <span class="math inline">\(L\)</span> points during <span class="math inline">\(h\)</span> stages the game stops and the players do not win or loose anything.</li>
+</ul>
+<p>Suppose <span class="math inline">\(h=2\)</span>, <span class="math inline">\(L=3\)</span> and both players have zero points at the initial stage.</p>
+<p>Can player <span class="math inline">\(A\)</span> gain money in expectation by deciding at each stage which coin to toss?</p>
+</section>
+<section id="dp-formulation" class="slide level2">
+<h2>DP formulation</h2>
+<p>Dynamic model <span class="math inline">\(\quad x_{k+1} = f(x_k,u_k,w_k)\)</span></p>
+<p><span class="math inline">\(x_k\)</span> - #points of player <span class="math inline">\(A\)</span></p>
+<p><span class="math inline">\(u_k \in \{1,2\}\)</span> - decision</p>
+<p><span class="math inline">\(w_k \in \{-1,1\}\)</span>, tails <span class="math inline">\(\to -1\)</span>, heads <span class="math inline">\(\to 1\)</span></p>
+<p><span class="math inline">\(k \in \{0,\dots,h-1\}\)</span></p>
+<p><span class="math display">\[f(x_k,u_k,w_k) = \begin{cases}x_k+1 &amp; \text{if } u_k=1 \text{ and } w_k=1\\x_k+2 &amp; \text{if } u_k=2 \text{ and } w_k=1\\x_k-1 &amp; \text{if } u_k=1 \text{ and } w_k=-1\\x_k-2 &amp; \text{if } u_k=2 \text{ and } w_k=-1\\x_k &amp; \text{if } x_k \in \{L, L+1, -L, -(L+1)\} \text{ (game has ended but wait for the last stage)}\end{cases}\]</span></p>
+<p>Cost <span class="math inline">\(\quad \min \sum_{k=0}^{h-1} g(x_k,u_k) + g_h(x_h)\)</span></p>
+<p><span class="math inline">\(g(x_k,u_k) = 0\)</span> for every <span class="math inline">\(x_k, u_k\)</span></p>
+<p><span class="math inline">\(g_h(x_h) = \begin{cases}-L &amp; \text{if } x_h = L \text{ or } x_h = L+1\\L &amp; \text{if } x_h=-L \text{ or } x_h=-(L+1)\\0 &amp; \text{otherwise}\end{cases}\)</span></p>
+<p>(note that profit = -cost)</p>
+</section>
+<section id="dp-algorithm" class="slide level2">
+<h2>DP algorithm</h2>
+<p>DP algorithm <span class="math inline">\(\quad J_h(x_h) = g_h(x_h)\)</span></p>
+<p><span class="math display">\[J_k(x_k) = \min_{u_k} \mathbb{E}[g(x_k,u_k) + J_{k+1}(x_{k+1}) \mid x_k] \quad k \in \{h-1,h-2,\dots,0\}\]</span></p>
+<p>Using the expression for <span class="math inline">\(f(x_k,u_k,w_k)\)</span> we obtain</p>
+<p><span class="math display">\[J_k(x_k) = \begin{cases}\min\Big\{\dfrac{J_{k+1}(x_k+1)+J_{k+1}(x_k-1)}{2}, \dfrac{J_{k+1}(x_k+2)+J_{k+1}(x_k-2)}{2}\Big\}, &amp; \text{otherwise}\\J_{k+1}(x_k), &amp; \text{if } x_k \in \{-(L+1),-L,L,(L+1)\}\end{cases}\]</span></p>
+<p><span class="math display">\[J_h(x_h) = \begin{cases}-L &amp; \text{if } x_h=L \text{ or } x_h=L+1\\L &amp; \text{if } x_h=-L \text{ or } x_h=-(L+1)\\0 &amp; \text{otherwise}\end{cases}\]</span></p>
+</section>
+<section id="optimal-policy-and-cost" class="slide level2">
+<h2>Optimal policy and cost</h2>
+<p>Iterating this equation we get the costs-to-go and optimal decisions indicated in the diagram</p>
+<p>(circles correspond to states and are labeled with the number of points at a given stage, cost-to-go on top and decision next to them).</p>
+<p>For the zero initial condition the average cost is <span class="math inline">\(-3/4\)</span> and so the profit is <span class="math inline">\(3/4\)</span>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture2/pg52-policytree.png" class="quarto-figure quarto-figure-center" style="width:32.0%"></p>
+</figure>
+</div>
+
+</section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+<p>4SC000 – Optimal Control and Reinforcement Learning</p>
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="lecture02-stochastic-dp_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="lecture02-stochastic-dp_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="lecture02-stochastic-dp_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="lecture02-stochastic-dp_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="lecture02-stochastic-dp_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="lecture02-stochastic-dp_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="lecture02-stochastic-dp_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="lecture02-stochastic-dp_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="lecture02-stochastic-dp_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="lecture02-stochastic-dp_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>

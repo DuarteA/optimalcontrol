@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="lecture09-numerical-methods_files/libs/clipboard/clipboard.min.js"></script>
+<script src="lecture09-numerical-methods_files/libs/quarto-html/tabby.min.js"></script>
+<script src="lecture09-numerical-methods_files/libs/quarto-html/popper.min.js"></script>
+<script src="lecture09-numerical-methods_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="lecture09-numerical-methods_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="lecture09-numerical-methods_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="lecture09-numerical-methods_files/libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
+
+  <meta name="author" content="Duarte Antunes">
+  <title>lecture09-numerical-methods</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="lecture09-numerical-methods_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="lecture09-numerical-methods_files/libs/revealjs/dist/reveal.css">
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="lecture09-numerical-methods_files/libs/revealjs/dist/theme/quarto-dbdae09e3717e6ee293fc537af762018.css">
+  <link href="lecture09-numerical-methods_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="lecture09-numerical-methods_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="lecture09-numerical-methods_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="lecture09-numerical-methods_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+  <!--
+  MathJax needs its own macro definitions -- LaTeX's \newcommand in
+  macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+  SAME macro names available when rendering to revealjs/html, so a macro like
+  \costtogo looks identical whether you're viewing slides in the browser or a
+  PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+  -->
+  <script>
+  window.MathJax = {
+    tex: {
+      macros: {
+        E: "\\mathbb{E}",
+        Prob: "\\text{Prob}",
+        R: "\\mathbb{R}",
+        N: "\\mathbb{N}",
+        argmin: ["\\operatorname*{argmin}_{#1}", 1],
+        argmax: ["\\operatorname*{argmax}_{#1}", 1],
+        policy: "\\mu",
+        costtogo: "J",
+        state: "x",
+        action: "u"
+      }
+    }
+  };
+  </script>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+
+<section id="unit-9" class="slide level2 center" style="text-align: center;">
+<h2>Unit 9</h2>
+<!--
+New unit, written from scratch on 2026-08-11 (unlike Units 1-8, there is
+no Lecture9.pdf/.key to convert -- Lecture9.key does not exist among the
+Keynote source files, and the "Lecture 9" label that appears internally in
+Lecture8.pdf is a leftover renumbering typo, not this unit; see
+lecture08's header comment). Built after an in-chat brainstorm + outline
+discussion with the user: overview of numerical methods in optimal
+control, then direct methods (shooting, collocation) in detail, then
+DDP/iLQR as an explicit bridge back to Unit 5 (Riccati), Unit 7 (static
+optimization = single shooting), Unit 8 (MPC/rollout), and forward to
+Unit 10 (reinforcement learning).
+
+Running numerical example throughout: minimum-effort swing-up of a
+torque-driven pendulum, solved by every method covered, all via the
+numpy-only companion code in code/unit9/ (shooting.py, collocation.py,
+ilqr.py -- see that folder's README.md). Every number quoted on these
+slides was produced by running those scripts directly, not hand-derived.
+Figures (figures/lecture9/):
+- conditioning.png: condition number of the shooting sensitivity Jacobian
+  vs. horizon length, single vs. multiple shooting.
+- trajectory_comparison.png: theta(t) and u(t) for all five solvers on
+  the same swing-up problem. Note iLQR converges to a different (higher-
+  cost, "dip back before swinging up") local optimum than the others --
+  this is discussed explicitly on its own slide, not hidden.
+- collocation_accuracy.png: optimal cost vs. number of intervals N,
+  trapezoidal vs. Hermite-Simpson.
+- ilqr_convergence.png: iLQR's cost per iteration (log scale), showing
+  its fast convergence relative to the shooting/collocation NLP solves.
+
+Conventions carried over from Units 1-8: no image captions, plain bullet
+lists (never numbered) on Outline slides, "**Step N.**" bold-label prose
+instead of native ordered lists for derivations, <u>...</u> for the
+current-section item on recurring Outline slides, Concluding remarks has
+no "After this lecture" / "Additional live scripts" blocks.
+
+FIRST-PASS CAVEAT: this is a first pass built directly from the agreed
+outline; expect a slide-by-slide refinement round, same as every other
+unit.
+-->
+<h3 style="text-align: center;" id="numerical-methods-in-optimal-control">Numerical Methods in Optimal Control</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/shared/tue-logo.png" class="quarto-figure quarto-figure-center" style="width:15.0%"></p>
+</figure>
+</div>
+<div class="title-slide-meta">
+<p>4SC000, Q2 2026-2027</p>
+<p>Duarte Antunes</p>
+</div>
+</section>
+<section id="outline" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Overview: direct vs.&nbsp;indirect, the numerical-methods landscape</li>
+<li>Direct methods: shooting</li>
+<li>Direct methods: collocation</li>
+<li>Differential dynamic programming / iLQR</li>
+</ul>
+</section>
+<section id="motivation" class="slide level2 smaller">
+<h2>Motivation</h2>
+<ul>
+<li>So far: exact solutions via DP over a discrete/discretized state space (Units 1-4), the exact Riccati recursion for the linear-quadratic case (Units 5-6), discretization and static optimization via gradient descent (Unit 7), MPC as a QP and approximate DP (Unit 8).</li>
+<li>All of this relied on either a small/discretizable state space, or on the dynamics being <strong>linear</strong> and the cost <strong>quadratic</strong>.</li>
+<li>Real systems are typically nonlinear, with general costs and path or state constraints: the Riccati recursion no longer gives an exact answer, and the state space is continuous and usually far too large to discretize (curse of dimensionality, Unit 7).</li>
+<li>This unit: numerical methods to compute optimal trajectories – and, via DDP/iLQR, local feedback policies – for general nonlinear optimal control problems.</li>
+</ul>
+</section>
+<section id="problem-setup" class="slide level2 smaller">
+<h2>Problem setup</h2>
+<ul>
+<li>Discrete-time nonlinear dynamic model <span class="math inline">\(x_{k+1}=f(x_k,u_k)\)</span>, <span class="math inline">\(k\in\{0,\dots,h-1\}\)</span>, <span class="math inline">\(x_0\)</span> given</li>
+<li>Cost function <span class="math inline">\(\displaystyle\sum_{k=0}^{h-1}g(x_k,u_k)+g_h(x_h)\)</span></li>
+<li>Possibly path constraints <span class="math inline">\(u_k\in U\)</span>, <span class="math inline">\(x_k\in X\)</span>, and/or a terminal constraint <span class="math inline">\(x_h=x_{\text{target}}\)</span></li>
+<li>Goal: compute <span class="math inline">\(u_0,\dots,u_{h-1}\)</span> (and, for DDP/iLQR, a local feedback policy around them) minimizing the cost</li>
+<li><strong>Running example for this whole lecture</strong>: swing-up of a torque-driven pendulum, <span class="math inline">\(x=[\theta,\dot\theta]\)</span>, <span class="math inline">\(\dot x=[\dot\theta,\ -\sin\theta+u]\)</span>, from hanging down <span class="math inline">\(x_0=[0,0]\)</span> to inverted <span class="math inline">\(x_h=[\pi,0]\)</span> over a fixed horizon <span class="math inline">\(T\)</span>, minimizing effort <span class="math inline">\(\sum_k \tau u_k^2\)</span></li>
+</ul>
+</section>
+<section id="two-philosophies" class="slide level2">
+<h2>Two philosophies</h2>
+<ul>
+<li><strong>Direct methods</strong>: discretize first, then optimize. Turn the optimal control problem into a finite-dimensional nonlinear program (NLP) and hand it to a general-purpose (or purpose-built) NLP solver.</li>
+<li><strong>Indirect methods</strong>: optimize first, then discretize. Apply Pontryagin’s Minimum Principle to derive necessary conditions – a two-point boundary value problem in states and costates – then solve that numerically.</li>
+<li>Indirect methods characterize the optimum more precisely (via the analytic necessary conditions), but are harder to set up and notoriously sensitive to the initial guess for the costates. Direct methods dominate in practice, and are the focus of this lecture.</li>
+</ul>
+</section>
+<section id="the-landscape" class="slide level2 smaller">
+<h2>The landscape</h2>
+<ul>
+<li><strong>Direct methods</strong>
+<ul>
+<li>Shooting: single shooting, multiple shooting</li>
+<li>Collocation: trapezoidal, Hermite-Simpson, pseudospectral</li>
+</ul></li>
+<li><strong>Indirect methods</strong>: Pontryagin’s Minimum Principle + a boundary-value problem, itself solved by shooting or collocation on the costate system</li>
+<li><strong>DP-based methods</strong>: differential dynamic programming (DDP), iterative LQR (iLQR) – exploit the sequential/DP structure directly, rather than treating the problem as a generic NLP</li>
+<li>Today: direct shooting, direct collocation, and DDP/iLQR</li>
+</ul>
+</section>
+<section id="where-this-fits" class="slide level2 smaller">
+<h2>Where this fits</h2>
+<ul>
+<li>Unit 5: the exact Riccati recursion – but only for <em>linear</em> dynamics and <em>quadratic</em> cost.</li>
+<li>Unit 7: the static optimization formulation – substitute the dynamics into the cost and minimize over the controls alone. We’ll see shortly that this is exactly <strong>single shooting</strong>, specialized to the linear case.</li>
+<li>Unit 8: MPC as a QP – still linear dynamics (or one re-linearized at every step, in nonlinear MPC).</li>
+<li>This unit: drop the linearity assumption entirely, and build the general-purpose machinery underneath all of the above.</li>
+</ul>
+</section>
+<section id="a-word-on-solvers" class="slide level2 smaller">
+<h2>A word on solvers</h2>
+<ul>
+<li>Once an OCP is transcribed into an NLP (direct methods) or a nonlinear root-finding problem (indirect shooting), it is solved by a general-purpose numerical optimization routine.</li>
+<li>Sequential Quadratic Programming (SQP) and interior-point methods are the two standard families – both, at their core, repeatedly build a local (quadratic, for SQP) model of the problem and take a Newton-type step, exactly like the Levenberg-Marquardt solver used throughout this lecture’s companion code.</li>
+<li>In practice you would use a mature package rather than write your own (see the Concluding remarks) – we roll our own here, <code>numpy</code>-only, purely to see exactly what is being solved.</li>
+</ul>
+</section>
+<section id="outline-1" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Overview</li>
+<li><u>Direct methods: shooting</u></li>
+<li>Direct methods: collocation</li>
+<li>Differential dynamic programming / iLQR</li>
+</ul>
+</section>
+<section id="setup" class="slide level2">
+<h2>Setup</h2>
+<ul>
+<li>Decision variables: the controls <span class="math inline">\(u_0,\dots,u_{h-1}\)</span> only.</li>
+<li>Given <span class="math inline">\(u\)</span>, the states are entirely determined by forward simulation: <span class="math inline">\(x_{k+1}=f(x_k,u_k)\)</span>, <span class="math inline">\(x_0\)</span> given.</li>
+<li>So <span class="math inline">\(x_k=\phi_k(u_0,\dots,u_{k-1})\)</span> for some (generally nonlinear) map <span class="math inline">\(\phi_k\)</span>, and the cost becomes a function of <span class="math inline">\(u\)</span> alone:</li>
+</ul>
+<p><span class="math display">\[J(u)=\sum_{k=0}^{h-1}g(\phi_k(u),u_k)+g_h(\phi_h(u))\]</span></p>
+<ul>
+<li>This is <strong>single shooting</strong>: “shoot” a trajectory from <span class="math inline">\(x_0\)</span> under a guessed <span class="math inline">\(u\)</span>, see where it lands, and adjust <span class="math inline">\(u\)</span>.</li>
+</ul>
+</section>
+<section id="you-already-did-this" class="slide level2 smaller">
+<h2>You already did this!</h2>
+<ul>
+<li>Recall Unit 7’s static optimization formulation: for the linear model <span class="math inline">\(x_{k+1}=Ax_k+Bu_k\)</span> and a quadratic cost, we substituted the dynamics into the cost to get an unconstrained problem in <span class="math inline">\(u\)</span> alone, and solved it by gradient descent (<code>gradient_method.py</code>).</li>
+<li>That is <em>exactly</em> single shooting, specialized to linear dynamics – there, <span class="math inline">\(\phi_k\)</span> is linear, so <span class="math inline">\(J(u)\)</span> is exactly quadratic and gradient descent converges nicely.</li>
+<li>Today: same idea, general nonlinear <span class="math inline">\(f\)</span>. Now <span class="math inline">\(\phi_k\)</span> is no longer linear, <span class="math inline">\(J(u)\)</span> is no longer quadratic, and even computing the gradient needs a bit more care.</li>
+</ul>
+</section>
+<section id="computing-the-gradient" class="slide level2 smaller">
+<h2>Computing the gradient</h2>
+<ul>
+<li>As in Unit 7, differentiate through the simulation via the chain rule. Let <span class="math inline">\(A_k=\dfrac{\partial f}{\partial x}(x_k,u_k)\)</span>, <span class="math inline">\(B_k=\dfrac{\partial f}{\partial u}(x_k,u_k)\)</span> – now state- and time-varying, since <span class="math inline">\(f\)</span> is nonlinear.</li>
+<li>Sensitivity recursion: <span class="math inline">\(\dfrac{\partial x_{k+1}}{\partial u}=A_k\dfrac{\partial x_k}{\partial u}+B_ke_k^\intercal\)</span> (where <span class="math inline">\(e_k\)</span> is the <span class="math inline">\(k\)</span>-th standard basis vector), starting from <span class="math inline">\(\dfrac{\partial x_0}{\partial u}=0\)</span>.</li>
+<li>Propagating this forward alongside the simulation gives <span class="math inline">\(\partial x_h/\partial u\)</span>, and hence <span class="math inline">\(\nabla J(u)\)</span> by the chain rule – the same idea as Unit 7’s <code>rollout_grad</code>, generalized to nonlinear, state-varying <span class="math inline">\(A_k,B_k\)</span>.</li>
+</ul>
+</section>
+<section id="solving-the-nlp" class="slide level2 smaller">
+<h2>Solving the NLP</h2>
+<ul>
+<li>With a terminal constraint <span class="math inline">\(x_h=x_{\text{target}}\)</span>, single shooting becomes a <em>constrained</em> problem in <span class="math inline">\(u\)</span>. Here we soften it to a penalty,</li>
+</ul>
+<p><span class="math display">\[J(u)+\rho\|x_h(u)-x_{\text{target}}\|^2,\]</span></p>
+<p>and solve it with a damped Gauss-Newton (Levenberg-Marquardt) step built directly from the sensitivity above.</p>
+<ul>
+<li>In practice, hard equality constraints would instead be handled by a proper constrained NLP solver (SQP or interior-point) – but the penalty view is enough to see the numerical issue we’re about to run into.</li>
+</ul>
+</section>
+<section id="example-pendulum-swing-up" class="slide level2">
+<h2>Example: pendulum swing-up</h2>
+<ul>
+<li>Torque-driven pendulum, <span class="math inline">\(x_0=[0,0]\to x_h=[\pi,0]\)</span>, <span class="math inline">\(T=6\)</span>s, minimizing effort.</li>
+<li>Single shooting (<code>shooting.py</code>, <code>single_shooting_solve</code>) reaches <span class="math inline">\(\theta_h=3.138\)</span> (target <span class="math inline">\(\pi=3.1416\)</span>), effort cost <span class="math inline">\(2.31\)</span>.</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture9/trajectory_comparison.png" class="quarto-figure quarto-figure-center" style="width:95.0%"></p>
+</figure>
+</div>
+</section>
+<section id="why-single-shooting-struggles" class="slide level2 smaller">
+<h2>Why single shooting struggles</h2>
+<ul>
+<li>The pendulum’s <em>upright</em> equilibrium is unstable: small perturbations grow. As the swing-up trajectory spends more of the horizon near the top, the sensitivity of the final state to the <em>early</em> controls grows – an early nudge gets amplified all the way to the end.</li>
+<li>Concretely, the condition number of <span class="math inline">\(\partial x_h/\partial u\)</span> grows sharply with the horizon length <span class="math inline">\(T\)</span>:</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture9/conditioning.png" class="quarto-figure quarto-figure-center" style="width:70.0%"></p>
+</figure>
+</div>
+<ul>
+<li>An ill-conditioned Jacobian makes Newton-type steps numerically fragile – exactly the failure mode multiple shooting is designed to avoid.</li>
+</ul>
+</section>
+<section id="multiple-shooting" class="slide level2 smaller">
+<h2>Multiple shooting</h2>
+<ul>
+<li>Idea: break the horizon into <span class="math inline">\(S\)</span> segments of <span class="math inline">\(m=h/S\)</span> steps each. Each segment gets its <strong>own</strong> free initial state <span class="math inline">\(z_i\)</span> (a new decision variable), simulated forward under its own controls.</li>
+<li>Decision variables: <span class="math inline">\(u_0,\dots,u_{h-1}\)</span> <strong>and</strong> <span class="math inline">\(z_1,\dots,z_{S-1}\)</span> (with <span class="math inline">\(z_0:=x_0\)</span> fixed).</li>
+<li>Continuity (“defect”) constraints tie the segments together: the simulated end of segment <span class="math inline">\(i\)</span> must equal <span class="math inline">\(z_{i+1}\)</span>.</li>
+<li>Terminal constraint on the last segment’s end state, same as before.</li>
+</ul>
+</section>
+<section id="why-its-better-conditioned" class="slide level2 smaller">
+<h2>Why it’s better conditioned</h2>
+<ul>
+<li>Sensitivities now only ever propagate <strong>within</strong> one segment (see <code>simulate_segment</code>): a control in segment 3 has no direct effect on segment 6’s defect, only an indirect one through the (now decision-variable, not simulated) states <span class="math inline">\(z_4,z_5,z_6\)</span>.</li>
+<li>Each segment is short, so its own sensitivity Jacobian stays well conditioned regardless of how long the overall horizon is (the flat curve in the conditioning figure two slides back).</li>
+<li>The price: more decision variables (the <span class="math inline">\(z_i\)</span>’s) and more constraints (the defects) – but the resulting NLP, while larger, is <em>sparse</em> and much better behaved numerically.</li>
+</ul>
+</section>
+<section id="example-continued" class="slide level2 smaller">
+<h2>Example, continued</h2>
+<ul>
+<li>Multiple shooting (<code>shooting.py</code>, <code>multiple_shooting_solve</code>, <span class="math inline">\(S=6\)</span> segments) on the same swing-up problem: <span class="math inline">\(\theta_h=3.140\)</span>, effort cost <span class="math inline">\(2.22\)</span> – matching single shooting’s answer (both are local solutions of the same nonconvex problem), but reached far more robustly as the horizon grows.</li>
+<li>Rule of thumb: single shooting is fine for short horizons and mildly nonlinear or stable dynamics; multiple shooting (or collocation, next) is the default choice otherwise.</li>
+</ul>
+</section>
+<section id="discussion" class="slide level2 smaller">
+<h2>Discussion</h2>
+<ul>
+<li>Shooting methods keep the NLP small (only controls, or controls plus a handful of segment states) – attractive when dynamics simulations are cheap and the decision-variable count should stay small.</li>
+<li>Both variants still require <em>simulating</em> the dynamics, which can itself be expensive or numerically delicate for stiff systems.</li>
+<li>Next: collocation, which avoids simulation altogether by making the states decision variables everywhere.</li>
+</ul>
+</section>
+<section id="outline-2" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Overview</li>
+<li>Direct methods: shooting</li>
+<li><u>Direct methods: collocation</u></li>
+<li>Differential dynamic programming / iLQR</li>
+</ul>
+</section>
+<section id="direct-transcription" class="slide level2 smaller">
+<h2>Direct transcription</h2>
+<ul>
+<li>Idea: parametrize <strong>both</strong> states and controls at every node of a time grid <span class="math inline">\(t_0,\dots,t_N\)</span> (<span class="math inline">\(N\)</span> intervals, step <span class="math inline">\(\tau\)</span>).</li>
+<li>The dynamics no longer determine the states by simulation – instead they appear as <strong>equality constraints</strong> (“defects”) tying consecutive nodes together, derived from a numerical quadrature of the ODE <span class="math inline">\(x(t+\tau)-x(t)=\int_t^{t+\tau}f(x,u)\,dt\)</span>.</li>
+<li>Everything is optimized <em>simultaneously</em>: this is why collocation NLPs are much larger than shooting NLPs, but also why they tend to be much better conditioned (no long simulation chains) and can directly enforce state/path constraints at every node.</li>
+</ul>
+</section>
+<section id="trapezoidal-collocation" class="slide level2 smaller">
+<h2>Trapezoidal collocation</h2>
+<ul>
+<li>Approximate the integral by the trapezoidal rule: <span class="math inline">\(x_{k+1}-x_k\approx \dfrac{\tau}{2}\big(f(x_k,u_k)+f(x_{k+1},u_{k+1})\big)\)</span>.</li>
+<li><strong>Defect constraint</strong>, for each <span class="math inline">\(k\in\{0,\dots,N-1\}\)</span>:</li>
+</ul>
+<p><span class="math display">\[x_{k+1}-x_k-\frac{\tau}{2}\big(f(x_k,u_k)+f(x_{k+1},u_{k+1})\big)=0\]</span></p>
+<ul>
+<li>Cost, by the same quadrature rule:</li>
+</ul>
+<p><span class="math display">\[J\approx \sum_{k=0}^{N-1}\frac{\tau}{2}\big(g(x_k,u_k)+g(x_{k+1},u_{k+1})\big)+g_h(x_N)\]</span></p>
+<ul>
+<li>2nd-order accurate, and simple enough to implement directly: the decision vector, the defects, and the cost all follow immediately from the two formulas above.</li>
+</ul>
+</section>
+<section id="hermite-simpson-collocation" class="slide level2 smaller">
+<h2>Hermite-Simpson collocation</h2>
+<ul>
+<li>Interpolate the state within each interval by the cubic Hermite polynomial matching <span class="math inline">\(x_k,f_k\)</span> at <span class="math inline">\(t_k\)</span> and <span class="math inline">\(x_{k+1},f_{k+1}\)</span> at <span class="math inline">\(t_{k+1}\)</span>; its midpoint value is</li>
+</ul>
+<p><span class="math display">\[x_{\text{mid}}=\frac{x_k+x_{k+1}}{2}+\frac{\tau}{8}\big(f(x_k,u_k)-f(x_{k+1},u_{k+1})\big), \qquad u_{\text{mid}}=\frac{u_k+u_{k+1}}{2}\]</span></p>
+<ul>
+<li>Collocate the dynamics at that midpoint and apply Simpson’s rule over the interval:</li>
+</ul>
+<p><span class="math display">\[x_{k+1}-x_k-\frac{\tau}{6}\big(f(x_k,u_k)+4f(x_{\text{mid}},u_{\text{mid}})+f(x_{k+1},u_{k+1})\big)=0\]</span></p>
+<ul>
+<li>4th-order accurate: two extra function evaluations per interval (at the midpoint) buy two extra orders of accuracy over trapezoidal.</li>
+</ul>
+</section>
+<section id="example-pendulum-swing-up-again" class="slide level2 smaller">
+<h2>Example: pendulum swing-up, again</h2>
+<ul>
+<li>Both schemes (<code>collocation.py</code>), <span class="math inline">\(N=30\)</span> intervals, same swing-up problem: trapezoidal reaches <span class="math inline">\(\theta_h=3.1405\)</span>, effort <span class="math inline">\(2.14\)</span>; Hermite-Simpson reaches <span class="math inline">\(\theta_h=3.1405\)</span>, effort <span class="math inline">\(2.14\)</span> – matching shooting’s answer (see the trajectory figure a few slides back: all four direct-method curves overlap almost exactly).</li>
+</ul>
+</section>
+<section id="accuracy-as-the-grid-is-refined" class="slide level2 smaller">
+<h2>Accuracy as the grid is refined</h2>
+<ul>
+<li>Both methods’ optimal cost should converge to the same value as <span class="math inline">\(N\to\infty\)</span>; Hermite-Simpson should need fewer intervals to reach a given accuracy, by construction (4th vs.&nbsp;2nd order).</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture9/collocation_accuracy.png" class="quarto-figure quarto-figure-center" style="width:70.0%"></p>
+</figure>
+</div>
+<ul>
+<li>For this particular (mild) example the two curves stay close at every <span class="math inline">\(N\)</span> shown – the accuracy gap is real but modest here; it becomes far more pronounced for stiffer dynamics or trajectories with rapid transients within a single interval.</li>
+</ul>
+</section>
+<section id="shooting-vs.-collocation" class="slide level2 smaller">
+<h2>Shooting vs.&nbsp;collocation</h2>
+<ul>
+<li>Shooting: few decision variables, dense Jacobian, but conditioning degrades with horizon length; simulation errors compound.</li>
+<li>Collocation: many decision variables, but the Jacobian is <strong>sparse and banded</strong> (each defect only touches its own two nodes) and stays well conditioned regardless of horizon length; state/path constraints are trivial to add at any node.</li>
+<li>In practice, general-purpose collocation solvers exploit that sparsity directly (interior-point or SQP with sparse linear algebra), making collocation the default choice in most modern trajectory-optimization software, even though the raw problem size is much larger than shooting’s.</li>
+</ul>
+</section>
+<section id="pseudospectral-collocation" class="slide level2 smaller">
+<h2>Pseudospectral collocation</h2>
+<ul>
+<li>Instead of a <em>local</em>, piecewise low-order polynomial per interval, use a single <strong>global</strong> polynomial (Legendre or Chebyshev basis) over the whole horizon, collocated at a special set of nodes (Gauss, Radau, or Lobatto points, clustered near the interval endpoints).</li>
+<li>For smooth problems this gives <strong>spectral convergence</strong>: error decreasing faster than any polynomial rate in the number of nodes, often reaching high accuracy with a handful of nodes where a local scheme would need hundreds.</li>
+<li>The basis for production aerospace trajectory-optimization tools (e.g.&nbsp;GPOPS-II). Not derived here – just worth knowing it exists and when to reach for it: smooth, well-behaved dynamics; a poor fit when the optimal trajectory itself has kinks (e.g.&nbsp;from active inequality constraints).</li>
+</ul>
+</section>
+<section id="discussion-1" class="slide level2 smaller">
+<h2>Discussion</h2>
+<ul>
+<li>Collocation is the most broadly used direct method in practice, precisely because of the sparsity/conditioning trade-off above.</li>
+<li>Trapezoidal is simple enough to code by hand (as we just did) and a reasonable default; Hermite-Simpson is the standard “next step up” in accuracy for similar implementation cost.</li>
+<li>Both, like shooting, only ever converge to a <strong>local</strong> optimum of what is generally a nonconvex NLP – the solution found depends on the initial guess.</li>
+</ul>
+</section>
+<section id="outline-3" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Overview</li>
+<li>Direct methods: shooting</li>
+<li>Direct methods: collocation</li>
+<li><u>Differential dynamic programming / iLQR</u></li>
+</ul>
+</section>
+<section id="motivation-1" class="slide level2 smaller">
+<h2>Motivation</h2>
+<ul>
+<li>Shooting and collocation both treat the OCP as a generic NLP, handed to a general-purpose solver that knows nothing about its sequential/DP structure.</li>
+<li>But we <em>do</em> know this structure, and already exploited it: Unit 5’s Riccati recursion solves the LQ problem <em>exactly</em> via a backward DP pass, in one shot, no iterative NLP solve needed.</li>
+<li>Can we get something like a Riccati recursion for the nonlinear case? Not exactly – there’s no closed form – but we can <em>iterate</em> it: linearize/quadratize around a nominal trajectory, solve that LQ problem exactly by Riccati, use the result to improve the nominal trajectory, repeat.</li>
+</ul>
+</section>
+<section id="the-ilqr-idea" class="slide level2 smaller">
+<h2>The iLQR idea</h2>
+<ul>
+<li>Start from a nominal trajectory <span class="math inline">\((\bar x_k,\bar u_k)\)</span> (e.g.&nbsp;all-zero controls, simulated forward).</li>
+<li>At each iteration:</li>
+</ul>
+<p><strong>Step 1.</strong> <strong>Linearize</strong> the dynamics, <span class="math inline">\(A_k=\partial f/\partial x\)</span>, <span class="math inline">\(B_k=\partial f/\partial u\)</span>, at <span class="math inline">\((\bar x_k,\bar u_k)\)</span>.</p>
+<p><strong>Step 2.</strong> <strong>Quadratize</strong> the cost around the same point.</p>
+<p><strong>Step 3.</strong> Solve the resulting time-varying LQ problem <em>exactly</em> by a backward Riccati-like pass, giving a local feedback policy <span class="math inline">\(\delta u_k=k_k+K_k(x_k-\bar x_k)\)</span>.</p>
+<p><strong>Step 4.</strong> <strong>Forward-simulate</strong> under this policy (with a line search on a step size <span class="math inline">\(\alpha\)</span>, for robustness) to get an improved nominal trajectory. Repeat.</p>
+<ul>
+<li>This is exactly <strong>DDP without the second-order dynamics terms</strong> (<span class="math inline">\(\partial^2f/\partial x^2\)</span>, etc.); full DDP keeps those terms for faster local convergence, at the cost of more derivatives.</li>
+</ul>
+</section>
+<section id="backward-pass" class="slide level2 smaller">
+<h2>Backward pass</h2>
+<ul>
+<li>Value function locally quadratic around <span class="math inline">\(\bar x_k\)</span>: <span class="math inline">\(V_k(\delta x)\approx V_k+V_{x,k}^\intercal \delta x+\tfrac12\delta x^\intercal V_{xx,k}\delta x\)</span>. Define, at each stage,</li>
+</ul>
+<p><span class="math display">\[Q_x=g_x+A_k^\intercal V_{x,k+1}, \quad Q_u=g_u+B_k^\intercal V_{x,k+1}\]</span> <span class="math display">\[Q_{xx}=g_{xx}+A_k^\intercal V_{xx,k+1}A_k, \quad Q_{uu}=g_{uu}+B_k^\intercal V_{xx,k+1}B_k, \quad Q_{ux}=g_{ux}+B_k^\intercal V_{xx,k+1}A_k\]</span></p>
+<ul>
+<li>Feedforward and feedback gains: <span class="math inline">\(k_k=-Q_{uu}^{-1}Q_u\)</span>, <span class="math inline">\(K_k=-Q_{uu}^{-1}Q_{ux}\)</span>.</li>
+<li>Value function update: <span class="math inline">\(V_{x,k}=Q_x-K_k^\intercal Q_{uu}k_k\)</span>, <span class="math inline">\(V_{xx,k}=Q_{xx}-K_k^\intercal Q_{uu}K_k\)</span>.</li>
+<li><strong>Compare to Unit 5’s Riccati recursion</strong>: exactly the same structure, with <span class="math inline">\(Q_{xx},Q_{uu},Q_{ux}\)</span> playing the role of <span class="math inline">\(Q,R\)</span> – now built from <em>local</em> linearizations, and re-derived from scratch every iteration rather than solved once for a globally linear system.</li>
+</ul>
+</section>
+<section id="forward-pass" class="slide level2 smaller">
+<h2>Forward pass</h2>
+<ul>
+<li>Simulate <span class="math inline">\(x_{k+1}=f(x_k,u_k)\)</span> from <span class="math inline">\(x_0\)</span>, with <span class="math inline">\(u_k=\bar u_k+\alpha k_k+K_k(x_k-\bar x_k)\)</span>.</li>
+<li>The feedback term <span class="math inline">\(K_k(x_k-\bar x_k)\)</span> keeps the new trajectory close to where the linearization is valid; the feedforward term <span class="math inline">\(\alpha k_k\)</span> is the actual update, scaled by a step size <span class="math inline">\(\alpha\in(0,1]\)</span>.</li>
+<li>Backtrack <span class="math inline">\(\alpha\)</span> (try <span class="math inline">\(1,\tfrac12,\tfrac14,\dots\)</span>) until the new trajectory’s cost is actually lower – the same idea as the line search inside Levenberg-Marquardt, now applied to a whole feedback policy instead of a single step.</li>
+</ul>
+</section>
+<section id="example-pendulum-swing-up-once-more" class="slide level2 smaller">
+<h2>Example: pendulum swing-up, once more</h2>
+<ul>
+<li>Same problem, <code>ilqr.py</code>: converges from an all-zero initial guess in about 4-5 iterations (of a full backward + forward pass) to <span class="math inline">\(\theta_h=3.138\)</span>.</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture9/ilqr_convergence.png" class="quarto-figure quarto-figure-center" style="width:65.0%"></p>
+</figure>
+</div>
+<ul>
+<li>Far fewer iterations than the shooting/collocation Levenberg-Marquardt solves needed – a direct benefit of exploiting the DP structure instead of treating the problem as a generic dense NLP.</li>
+</ul>
+</section>
+<section id="a-cautionary-note" class="slide level2 smaller">
+<h2>A cautionary note</h2>
+<ul>
+<li>Look again at the trajectory comparison: iLQR’s <span class="math inline">\(\theta(t)\)</span> <strong>dips backward</strong> before swinging up, unlike every other method here, which swings up directly.</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture9/trajectory_comparison.png" class="quarto-figure quarto-figure-center" style="width:95.0%"></p>
+</figure>
+</div>
+<ul>
+<li>Both are valid local optima of the same nonconvex problem (iLQR’s costs slightly more: effort <span class="math inline">\(2.31\)</span> vs.&nbsp;<span class="math inline">\(\sim2.14\)</span>) – iLQR simply found a <em>different</em> one, from its particular all-zero-control initial guess.</li>
+<li>This is the fundamental limitation shared by every method in this lecture: <strong>all of them only find local optima</strong>, and which one you get depends on where you start. Good initial guesses (e.g.&nbsp;from a coarse collocation solve) matter in practice.</li>
+</ul>
+</section>
+<section id="bridge-to-unit-8" class="slide level2 smaller">
+<h2>Bridge to Unit 8</h2>
+<ul>
+<li>Run iLQR’s forward pass for only <strong>one</strong> step, then re-linearize and repeat at the next time step, using the freshly measured state as the new <span class="math inline">\(x_0\)</span>: this is <strong>receding-horizon iLQR</strong>, and it is essentially nonlinear MPC.</li>
+<li>Unit 8’s MPC solved a single QP per step because the dynamics were linear; here the “QP” is itself the by-product of one iLQR backward pass around the current nominal trajectory.</li>
+<li>The backward pass is a <em>local, model-based</em> approximation of one Bellman recursion step – the same computation, in spirit, behind Unit 8’s rollout and approximate DP, just carried out analytically (via linearization) instead of by explicit enumeration over a grid or a lookahead horizon.</li>
+</ul>
+</section>
+<section id="bridge-to-unit-10" class="slide level2 smaller">
+<h2>Bridge to Unit 10</h2>
+<ul>
+<li>iLQR/DDP still need to <em>know</em> <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span>, <span class="math inline">\(g_h\)</span> exactly, and to differentiate them.</li>
+<li>What if the dynamics (or the cost) are unknown, and all we can do is interact with the system and observe outcomes? That is exactly the setting the course turns to next: <strong>reinforcement learning</strong>.</li>
+<li>Keep the backward-pass/Bellman-recursion parallel in mind: much of what follows can be read as “the same DP idea, but learned from data instead of computed from a known model”.</li>
+</ul>
+</section>
+<section id="discussion-2" class="slide level2 smaller">
+<h2>Discussion</h2>
+<ul>
+<li>iLQR/DDP: very fast local convergence (exploits structure), a natural bridge to both MPC and RL, gives a feedback policy “for free” (not just an open-loop trajectory) – but only locally convergent, and, in the simplified form shown here, does not natively handle hard inequality constraints the way collocation does.</li>
+<li>Collocation: robust, handles constraints natively, the default choice in most modern software.</li>
+<li>Shooting: simplest to implement, fine for short/well-behaved horizons, still a useful mental model – and, as we saw, exactly what Unit 7 was already doing.</li>
+</ul>
+</section>
+<section id="recap" class="slide level2 smaller">
+<h2>Recap</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Core idea</th>
+<th>Pros</th>
+<th>Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Single shooting</td>
+<td>Eliminate states by simulation, optimize over <span class="math inline">\(u\)</span></td>
+<td>Few variables, simple</td>
+<td>Ill-conditioned over long/unstable horizons</td>
+</tr>
+<tr class="even">
+<td>Multiple shooting</td>
+<td>Segment the horizon, free interior states</td>
+<td>Well conditioned, still moderate size</td>
+<td>More variables/constraints than single shooting</td>
+</tr>
+<tr class="odd">
+<td>Trapezoidal collocation</td>
+<td>States+controls at every node, trapezoidal defect</td>
+<td>Simple, sparse, handles constraints</td>
+<td>2nd-order accuracy</td>
+</tr>
+<tr class="even">
+<td>Hermite-Simpson collocation</td>
+<td>As above, cubic Hermite + Simpson defect</td>
+<td>4th-order accuracy</td>
+<td>Slightly more complex defects</td>
+</tr>
+<tr class="odd">
+<td>Pseudospectral</td>
+<td>Global polynomial + Gauss/Radau/Lobatto nodes</td>
+<td>Spectral convergence for smooth problems</td>
+<td>Poor fit for non-smooth optimal trajectories</td>
+</tr>
+<tr class="even">
+<td>DDP / iLQR</td>
+<td>Iterate local LQ approximations via a Riccati-like backward pass</td>
+<td>Fast convergence, feedback policy, bridges to MPC/RL</td>
+<td>Only local convergence, constraints less natural</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="software-landscape" class="slide level2 smaller">
+<h2>Software landscape</h2>
+<ul>
+<li><strong>CasADi</strong>: symbolic framework for building and differentiating OCPs, with direct interfaces to the solvers below – the most common starting point in research and teaching.</li>
+<li><strong>IPOPT</strong>, <strong>SNOPT</strong>: general-purpose interior-point / SQP NLP solvers, the workhorses behind most collocation and multiple-shooting implementations.</li>
+<li><strong>GPOPS-II</strong>: pseudospectral trajectory optimization, widely used in aerospace.</li>
+<li><strong>Drake</strong>: a full robotics/trajectory-optimization toolbox including collocation, iLQR/DDP, and more.</li>
+<li>Everything in this lecture was implemented from scratch in plain <code>numpy</code> (<code>code/unit9/</code>) precisely to make the mechanics behind these packages transparent – in practice, use the packages.</li>
+</ul>
+</section>
+<section id="concluding-remarks" class="slide level2 smaller">
+<h2>Concluding remarks</h2>
+<ul>
+<li>Numerical methods for optimal control fall into three families: <strong>direct</strong> (shooting, collocation – discretize then optimize), <strong>indirect</strong> (Pontryagin’s Minimum Principle + boundary value problem – optimize then discretize), and <strong>DP-based</strong> (DDP/iLQR – exploit the sequential structure directly).</li>
+<li>Direct collocation is the most broadly used in practice; shooting is the simplest mental model and, in its single-shooting form, is exactly what Unit 7’s static optimization was already doing.</li>
+<li>DDP/iLQR bridges directly back to Unit 5’s Riccati recursion and Unit 8’s MPC/rollout, and forward to the reinforcement-learning units next: same Bellman-recursion idea, computed locally from a known model here, learned from data there.</li>
+<li>All of these methods, without exception, only find <em>local</em> optima of a generally nonconvex problem – a good initial guess is not a technicality, it is often the deciding factor in which solution (and whether a good one at all) you get.</li>
+</ul>
+
+</section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+<p>4SC000 – Optimal Control and Reinforcement Learning</p>
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="lecture09-numerical-methods_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="lecture09-numerical-methods_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="lecture09-numerical-methods_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="lecture09-numerical-methods_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="lecture09-numerical-methods_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="lecture09-numerical-methods_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="lecture09-numerical-methods_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="lecture09-numerical-methods_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="lecture09-numerical-methods_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="lecture09-numerical-methods_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>

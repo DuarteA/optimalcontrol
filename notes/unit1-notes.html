@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>Unit 1 – Introduction to Optimal Control and the Dynamic Programming Algorithm</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="unit1-notes_files/libs/clipboard/clipboard.min.js"></script>
+<script src="unit1-notes_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="unit1-notes_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="unit1-notes_files/libs/quarto-html/popper.min.js"></script>
+<script src="unit1-notes_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="unit1-notes_files/libs/quarto-html/anchor.min.js"></script>
+<link href="unit1-notes_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="unit1-notes_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="unit1-notes_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="unit1-notes_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="unit1-notes_files/libs/bootstrap/bootstrap-5f5514ab72c605193d28bd5ace4a0252.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      argmin: ["\\operatorname*{argmin}_{#1}", 1],
+      argmax: ["\\operatorname*{argmax}_{#1}", 1],
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#optimal-control" id="toc-optimal-control" class="nav-link active" data-scroll-target="#optimal-control"><span class="header-section-number">1</span> Optimal control</a>
+  <ul class="collapse">
+  <li><a href="#formulating-an-optimal-control-problem" id="toc-formulating-an-optimal-control-problem" class="nav-link" data-scroll-target="#formulating-an-optimal-control-problem"><span class="header-section-number">1.1</span> Formulating an optimal control problem</a></li>
+  <li><a href="#classes-of-optimal-control-problems-and-applications" id="toc-classes-of-optimal-control-problems-and-applications" class="nav-link" data-scroll-target="#classes-of-optimal-control-problems-and-applications"><span class="header-section-number">1.2</span> Classes of optimal control problems and applications</a></li>
+  </ul></li>
+  <li><a href="#the-dynamic-programming-algorithm" id="toc-the-dynamic-programming-algorithm" class="nav-link" data-scroll-target="#the-dynamic-programming-algorithm"><span class="header-section-number">2</span> The dynamic programming algorithm</a>
+  <ul class="collapse">
+  <li><a href="#the-principle-of-optimality" id="toc-the-principle-of-optimality" class="nav-link" data-scroll-target="#the-principle-of-optimality"><span class="header-section-number">2.1</span> The principle of optimality</a></li>
+  <li><a href="#the-algorithm" id="toc-the-algorithm" class="nav-link" data-scroll-target="#the-algorithm"><span class="header-section-number">2.2</span> The algorithm</a></li>
+  <li><a href="#a-worked-example" id="toc-a-worked-example" class="nav-link" data-scroll-target="#a-worked-example"><span class="header-section-number">2.3</span> A worked example</a></li>
+  <li><a href="#non-uniqueness" id="toc-non-uniqueness" class="nav-link" data-scroll-target="#non-uniqueness"><span class="header-section-number">2.4</span> Non-uniqueness</a></li>
+  <li><a href="#inventory-control-revisited" id="toc-inventory-control-revisited" class="nav-link" data-scroll-target="#inventory-control-revisited"><span class="header-section-number">2.5</span> Inventory control, revisited</a></li>
+  <li><a href="#sec-coping-uncertainty" id="toc-sec-coping-uncertainty" class="nav-link" data-scroll-target="#sec-coping-uncertainty"><span class="header-section-number">2.6</span> Coping with uncertainty</a></li>
+  </ul></li>
+  <li><a href="#dynamic-programming-equations" id="toc-dynamic-programming-equations" class="nav-link" data-scroll-target="#dynamic-programming-equations"><span class="header-section-number">3</span> Dynamic programming equations</a>
+  <ul class="collapse">
+  <li><a href="#a-more-general-formalism" id="toc-a-more-general-formalism" class="nav-link" data-scroll-target="#a-more-general-formalism"><span class="header-section-number">3.1</span> A more general formalism</a></li>
+  <li><a href="#the-dynamic-programming-equations" id="toc-the-dynamic-programming-equations" class="nav-link" data-scroll-target="#the-dynamic-programming-equations"><span class="header-section-number">3.2</span> The dynamic programming equations</a></li>
+  <li><a href="#historical-note" id="toc-historical-note" class="nav-link" data-scroll-target="#historical-note"><span class="header-section-number">3.3</span> Historical note</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">4</span> Summary</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="unit1-notes.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Unit 1 – Introduction to Optimal Control and the Dynamic Programming Algorithm</h1>
+<p class="subtitle lead">4SC000 Optimal Control and Reinforcement Learning</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Textbook-prose companion to lectures/lecture01-introduction-and-dp.qmd,
+intended as a booklet chapter for readers who did not attend the lecture.
+Same content and figures as the slides, but written as connected prose
+rather than bullet points, so it can stand on its own. Figures are the
+same ones already cropped/verified for the slide deck, referenced from
+../lectures/figures/lecture1v3/ rather than duplicated.
+-->
+<p><a href="../lectures/lecture01-introduction-and-dp.html">Slides</a> · <a href="../exercises/unit1-exercises.html">Exercises</a> · <a href="../code/unit1/notebooks.html">Jupyter notebooks</a></p>
+<section id="optimal-control" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="optimal-control"><span class="header-section-number">1</span> Optimal control</h2>
+<p>Optimality is a useful design principle in many engineering contexts: we size a refrigerator to minimize its energy use, tune an engine to minimize a car’s fuel consumption, shape an aircraft wing to minimize drag, and schedule elevators in a building to minimize passenger waiting time. It is also a principle nature itself seems to follow – many physical laws can be derived from optimality arguments – and, arguably, a principle we apply informally every day whenever we weigh a decision.</p>
+<p><em>Optimal control</em> gives this idea a precise mathematical form for a broad class of problems. These are problems in which optimal decisions, or control actions, are chosen over a period of time so as to minimize a cost that reflects a final objective and, often, intermediate objectives along the way. Optimal control problems arise in the control of physical systems – mechanical, electrical, biological – but also in economics, computer science, game theory, and many other fields. <a href="#fig-domains" class="quarto-xref">Fig.&nbsp;1</a> gives a sense of this breadth, from robotics to logistics to biology.</p>
+<div style="text-align: center;">
+<div id="fig-domains" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center" data-fig-pos="b">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-domains-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/optimal-control-photo-montage.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:97.0%" data-fig-pos="b">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-domains-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;1: Optimal control appears across a wide range of application domains. (Photo credits, Wikimedia Commons: motorcycle racing, “Stepro”, CC BY-SA 4.0 – Hubble Space Telescope in orbit, ESA/Hubble, CC BY 2.0.)
+</figcaption>
+</figure>
+</div>
+</div>
+<p>It is worth contrasting optimal control with the more familiar setting of <em>static optimization</em>, which asks for a single optimal decision – for instance, the price of a product, or the slope of a line that best fits a data set. Optimal control differs from static optimization in two important respects. First, it asks for several optimal decisions, made sequentially over time. Second, because the system’s future state cannot be predicted with certainty, a good decision at each point in time should be allowed to depend on the state actually observed at that point, rather than being fixed in advance; that is, the decisions form a <em>control law</em> that can react to disturbances. Given the current state, previous decisions are irrelevant to determining future decisions. This gives optimal control problems a special structure, which the solution methods developed later in the course exploit. Driving a car around a race track, positioning the tip of a robot arm despite external disturbances, or playing chess are all optimal control problems in this sense: not a single choice, but a sequence of choices, each informed by how the situation has evolved.</p>
+<section id="formulating-an-optimal-control-problem" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="formulating-an-optimal-control-problem"><span class="header-section-number">1.1</span> Formulating an optimal control problem</h3>
+<p>Every optimal control problem in this course is built from two ingredients: a <em>dynamic model</em> and a <em>cost function</em>.</p>
+<p>The dynamic model specifies the rules of the problem, or the governing equations of the physical system under control. Central to it is the notion of <em>state</em>: a summary of all the information relevant to making future decisions. <em>Control actions</em> are the decisions available to the controller at each point in time; they influence how the state evolves. That evolution may be deterministic, or it may be stochastic, driven by disturbances outside the controller’s influence.</p>
+<p>The cost function encapsulates the goals of the problem. It is typically additive over time – a sum of costs incurred at each decision stage – and, by convention, the objective is to minimize it (a reward to be maximized can always be recast as a cost to be minimized by negating it).</p>
+<p>The goal of the problem is then to find a <em>control policy</em> minimizing the cost: a policy being a set of functions, one per time instant, mapping the current state to an action. A closely related, and often easier, question is to compute a single <em>optimal path</em> – a sequence of optimal decisions over time – for one specific, given initial condition, rather than a policy valid for every possible initial condition. (In continuous-state settings, introduced shortly, the same idea is usually called an <em>optimal trajectory</em> instead.)</p>
+</section>
+<section id="classes-of-optimal-control-problems-and-applications" class="level3" data-number="1.2">
+<h3 data-number="1.2" class="anchored" data-anchor-id="classes-of-optimal-control-problems-and-applications"><span class="header-section-number">1.2</span> Classes of optimal control problems and applications</h3>
+<p>The course begins with problems where the state and action spaces belong to <em>discrete</em> spaces (e.g.&nbsp;<span class="math inline">\(\{1,2,\dots,n\}\)</span>), and later moves to <em>continuous</em> spaces (<span class="math inline">\(\mathbb{R}^n\)</span>). Time, throughout the course, is always taken to be discrete; continuous-time decision problems will appear occasionally, but whenever they do, we will convert them into stage-decision or discrete optimization problems rather than treating continuous time directly.</p>
+<p>When a discrete- or continuous-state problem is additionally subject to stochastic disturbances, it is called a <em>Markov Decision Process</em> (MDP). This gives four broad classes of problems that recur throughout the course:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th>State space</th>
+<th>Stochastic disturbances</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Discrete decision problems</td>
+<td>Discrete</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td>Discrete MDPs</td>
+<td>Discrete</td>
+<td>Yes</td>
+</tr>
+<tr class="odd">
+<td>Continuous decision/control problems</td>
+<td>Continuous</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td>Continuous MDPs</td>
+<td>Continuous</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table>
+<p>The sections that follow make several of these problems concrete, since they will recur as running examples through the course – including settings where uncertainty is explicitly present.</p>
+<section id="discrete-decision-problems" class="level4" data-number="1.2.1">
+<h4 data-number="1.2.1" class="anchored" data-anchor-id="discrete-decision-problems"><span class="header-section-number">1.2.1</span> Discrete decision problems</h4>
+<p>Discrete decision problems and discrete MDPs arise naturally in operational research, management, and finance, where optimal control ideas govern inventory control, the control of a queue, or the control of data and traffic networks. In computer science, closely related problems include finding shortest paths in graphs, scheduling, games, and selection problems, among other applications.</p>
+<p>A discrete decision problem is naturally specified by a <em>transition diagram</em> with <span class="math inline">\(h-1\)</span> decision stages: circles represent the possible states at each stage, arrows represent the actions that lead from a state at one stage to a state at the next, and each arrow carries a cost <span class="math inline">\(c^k_{i,j}\)</span>, the cost of taking action <span class="math inline">\(j\)</span> from state <span class="math inline">\(i\)</span> at stage <span class="math inline">\(k\)</span>; at the terminal stage <span class="math inline">\(h\)</span>, each state <span class="math inline">\(i\)</span> carries a terminal cost <span class="math inline">\(c^h_i\)</span>.</p>
+<div id="fig-transition-diagram" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-transition-diagram-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/transition-diagram.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:85.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-transition-diagram-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;2: A transition diagram: circles are states at each stage, arrows are actions leading to the next stage, and each arrow is labeled with its cost.
+</figcaption>
+</figure>
+</div>
+<p>Working with such diagrams typically raises two challenges, illustrated below with the small example of <a href="#fig-transition-challenges" class="quarto-xref">Fig.&nbsp;3</a> (a): (i) determining an optimal path for a given initial state, minimizing the sum of costs incurred at every stage, including the terminal stage (b); and (ii) determining an optimal policy that specifies, for every state, the first decision of the optimal path from that state to the terminal stage (c). Together, these motivate the need for a systematic algorithm, rather than exhaustive enumeration of every path.</p>
+<div id="fig-transition-challenges" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-transition-challenges-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/transition-diagram-challenges-diagram-v3.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-transition-challenges-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;3: Two characteristic challenges in discrete decision problems: (a) a small example transition diagram; (b) optimal paths for two different initial states; (c) the corresponding optimal policy.
+</figcaption>
+</figure>
+</div>
+<p>A first running example throughout the course is <em>inventory control</em>: how should a shop manage the supply of a product over time? Overstocking is costly – it ties up physical space and risks technological obsolescence – while understocking undermines sales; the optimal policy must balance the two (<a href="#fig-applications-examples" class="quarto-xref">Fig.&nbsp;5</a> (a), below).</p>
+<p>A second is <em>shortest paths in graphs</em>: given a road network, what is the shortest route from one city to another – for instance, from Bucharest to Lugoj in the map below?</p>
+<div class="callout callout-style-default callout-important callout-titled" title="Teaser: Can you find an optimal path planning algorithm in 20 minutes?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Teaser: Can you find an optimal path planning algorithm in 20 minutes?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Can you find the optimal path from Bucharest to Lugoj yourself? Can you devise an algorithm that would always find optimal paths in graphs, efficiently? As we will see in Unit 3, Dijkstra came up with such an algorithm in just 20 minutes.</p>
+</div>
+</div>
+</div>
+<div id="fig-romania-map" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-romania-map-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/romania-map.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-romania-map-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;4: Road map of Romania (Source: <em>Artificial Intelligence: A Modern Approach</em>, Russell &amp; Norvig, 3rd ed., 2016), used as a running shortest-path example.
+</figcaption>
+</figure>
+</div>
+<p>A closely related problem is <em>robot path planning</em>: finding the shortest path for a robot moving through a grid from a starting point to a target (<a href="#fig-applications-examples" class="quarto-xref">Fig.&nbsp;5</a> (b)). Discrete decision problems with uncertainty appear naturally in <em>games</em> such as blackjack, where the goal is to play so as to make a profit in expectation (<a href="#fig-applications-examples" class="quarto-xref">Fig.&nbsp;5</a> (c)); and in planning a day at an amusement park, where a visitor uses stochastic models of queueing times at each attraction to decide how to maximize time spent at their favorite attractions (<a href="#fig-applications-examples" class="quarto-xref">Fig.&nbsp;5</a> (d)).</p>
+<div id="fig-applications-examples" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-applications-examples-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/discrete-applications-composite.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-applications-examples-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;5: Four further examples of discrete decision problems: (a) managing the supply of a product in a shop, a natural inventory control problem; (b) shortest-path planning for a robot moving through a grid; (c) games such as blackjack, modeled as a discrete decision problem under uncertainty; (d) planning a day at Efteling under uncertain waiting times.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: robot path planning as a road map problem">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: robot path planning as a road map problem
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Can you formulate the robot planning problem in a grid world, as shown in <a href="#fig-applications-examples" class="quarto-xref">Fig.&nbsp;5</a> (b), where cells are either free or obstacles, as a road-map problem? Assume the distance between two horizontally or vertically adjacent cells is <span class="math inline">\(1\)</span>, and the distance between two diagonally adjacent cells is <span class="math inline">\(\sqrt{2}\)</span>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>View each free cell as a city in a large road map. For two horizontally or vertically adjacent free cells, the distance between them is simply <span class="math inline">\(1\)</span>; for two diagonally adjacent free cells, it is <span class="math inline">\(\sqrt{2}\)</span>. There are no roads from free cells to obstacle cells, nor between obstacle cells (some “cities” are then isolated and can eventually be removed from the road map).</p>
+</div>
+</div>
+</div>
+</section>
+<section id="continuous-decision-problems" class="level4" data-number="1.2.2">
+<h4 data-number="1.2.2" class="anchored" data-anchor-id="continuous-decision-problems"><span class="header-section-number">1.2.2</span> Continuous decision problems</h4>
+<p>The discrete framework generalizes naturally to problems with a general state and input space, such as <span class="math inline">\(\mathbb{R}^n\)</span>. A continuous decision problem is described by a dynamic model <span class="math display">\[x_{k+1} = f_k(x_k,u_k), \qquad k\in\{0,\dots,h-1\},\]</span> where <span class="math inline">\(x_k\)</span> is the state and <span class="math inline">\(u_k\)</span> the control input at time <span class="math inline">\(k\)</span>, together with a cost function <span class="math display">\[\sum_{k=0}^{h-1} g_k(x_k,u_k) + g_h(x_h).\]</span> As before, there are two related goals: (i) find a policy <span class="math inline">\(\pi=\{\mu_0,\dots,\mu_{h-1}\}\)</span>, with <span class="math inline">\(u_k=\mu_k(x_k)\)</span>, that achieves the minimum cost for <em>every</em> initial condition, or (ii) find a single <em>trajectory</em> <span class="math inline">\(\{(x_0,u_0),(x_1,u_1),\dots,(x_{h-1},u_{h-1})\}\)</span> achieving the minimum cost for a <em>given</em> initial condition.</p>
+<div id="fig-continuous-stage" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-continuous-stage-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/continuous-stage-diagram-v2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-continuous-stage-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;6: The continuous decision problem generalizes the discrete transition diagram to a general state and input space.
+</figcaption>
+</figure>
+</div>
+<p>The most prominent application of this framework is <em>digital control</em>: how should one design a digital controller for a physical system, complete with digital-to-analog and analog-to-digital converters, sensors, and actuators? Variants of this problem include cases where the full state is measured versus only a partial output, and cases with or without external disturbances.</p>
+<div id="fig-digital-control" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-digital-control-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/digital-control-block-diagram.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:85.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-digital-control-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;7: A physical system controlled digitally, with D/A and A/D converters, sensors, and actuators; several variants are possible depending on what is measured and whether disturbances are present.
+</figcaption>
+</figure>
+</div>
+<p>Several concrete case studies illustrate the range of this framework. Mixing two fluids in minimum time can be posed as a digital control problem in which a camera observes the mixture and an actuator applies one of four possible rotations once every <span class="math inline">\(h\)</span> seconds.</p>
+<div id="fig-mixing" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-mixing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/mixing-diagram-v2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mixing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;8: Mixing two fluids using camera feedback and a digitally-actuated mixer.
+</figcaption>
+</figure>
+</div>
+<p>Digitally controlling a unicycle robot – subject to constraints on its speed and rotation rate – to complete a maneuver in minimum time is another instance (<a href="#fig-continuous-examples" class="quarto-xref">Fig.&nbsp;9</a> (a), below). So is flying a quadcopter while taking wind-preview information into account (<a href="#fig-continuous-examples" class="quarto-xref">Fig.&nbsp;9</a> (b)); moving a satellite between orbits with minimum energy or fuel expenditure – an important concern given the limited fuel satellites carry (<a href="#fig-continuous-examples" class="quarto-xref">Fig.&nbsp;9</a> (c)); and moving the tip of a robot arm from one configuration to another in minimum time (<a href="#fig-continuous-examples" class="quarto-xref">Fig.&nbsp;9</a> (d)).</p>
+<div id="fig-continuous-examples" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-continuous-examples-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/continuous-control-examples-composite.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-continuous-examples-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;9: Four further case studies within the digital control framework: (a) a race car cornering, illustrating a vehicle maneuvering under speed and turning-rate constraints in the same spirit as a digitally-controlled unicycle robot (photo: “FIA F1 Austria 2021 Nr. 4 Norris (corner),” Steffen Prößdorf (“Stepro”), CC BY-SA 4.0, Wikimedia Commons); (b) quadcopter control that takes wind-preview information into account; (c) minimum-energy orbital transfer for a satellite (photo: Hubble Space Telescope in orbit, ESA/Hubble, CC BY 2.0, Wikimedia Commons); (d) a robotic arm performing a task, similar in spirit to minimum-time robot-arm control (photo: “KUKA Industrial Robot Writer,” Mirko Tobias Schäfer, CC BY 2.0, Wikimedia Commons).
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="continuous-time-optimal-control-problems" class="level4" data-number="1.2.3">
+<h4 data-number="1.2.3" class="anchored" data-anchor-id="continuous-time-optimal-control-problems"><span class="header-section-number">1.2.3</span> Continuous-time optimal control problems</h4>
+<p>Occasionally the underlying physical system is more naturally described in continuous time, via a dynamic model <span class="math display">\[\dot{x}(t) = f(t,x(t),u(t)), \qquad x(0)=x_0, \quad t\in[0,h],\]</span> and a cost function <span class="math display">\[\int_0^h g(t,x(t),u(t))\,dt + g_h(x(h)),\]</span> with the same two goals as before: find a feedback policy minimizing the cost for every initial condition, or find a single control input minimizing the cost.</p>
+<div id="fig-continuous-time" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-continuous-time-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/continuous-time-diagram.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-continuous-time-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;10: A continuous-time optimal control problem.
+</figcaption>
+</figure>
+</div>
+<p>Most control-systems applications are naturally posed this way: in traditional process control, they arise in stabilizing and regulating systems such as an inverted pendulum, a mass-spring damper, a double integrator, or a quadcopter; in aerospace, a canonical problem is the minimum-fuel launch of a satellite. As noted above, whenever such problems arise in this course we will approximate them as discrete-time decision or optimal control problems, which is the setting the dynamic programming algorithm developed below is built for.</p>
+<div class="callout callout-style-default callout-important callout-titled" title="Teaser: Find a useful optimal control problem for you!">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Teaser: Find a useful optimal control problem for you!
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Some of the problems above – such as finding an optimal policy to visit attractions at Efteling, or taking wind-preview information into account in drone control – were originally proposed by students. Can you creatively think of a problem you would like to solve or work on, that you believe can be cast as an optimal control problem? A couple of suggestions to get you started: how would you schedule your tasks throughout the week, given estimated completion times and estimated rewards for accomplishing each one? Or, what is the optimal driving policy for a solar-powered car trying to drive as far as possible, given estimates of near-future cloud-shadow patterns?</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-reinforcement-learning-setting" class="level4" data-number="1.2.4">
+<h4 data-number="1.2.4" class="anchored" data-anchor-id="the-reinforcement-learning-setting"><span class="header-section-number">1.2.4</span> The reinforcement learning setting</h4>
+<p>A final, important variation on this theme arises when no dynamic model is available at all – only the real system itself, or a simulator that can be run, is accessible. This is the <em>reinforcement learning</em> (RL) setting.</p>
+<div id="fig-rl-block" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rl-block-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/rl-block-diagram.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:85.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rl-block-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;11: The reinforcement learning setting: an agent interacts with an environment or simulator, without access to an explicit dynamic model.
+</figcaption>
+</figure>
+</div>
+<p>Even though no explicit dynamic model is given, a model of the form described above is still implicitly present for analysis purposes; the difference is that it is unknown to the decision-maker. A reward or cost function still encapsulates the goals of the problem, but it is now obtained through the agent’s interaction with the environment rather than computed from a known model. This is, in fact, the key distinguishing feature of reinforcement learning relative to the classical dynamic programming setting introduced above: the transition dynamics are unknown and must be <em>learned</em> from interaction, rather than given. The goal becomes to find a control policy – again, a function from states to actions – that minimizes cost based on data gathered through trial and error.</p>
+<p>Two examples illustrate this setting. Learning the optimal policy for a ghost chasing Pacman – deciding, at each step, whether to move up, down, left, or right so as to catch Pacman in minimum time – is a natural discrete RL problem.</p>
+<div id="fig-pacman" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pacman-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/pacman-v3.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:55.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pacman-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;12: Learning an optimal chasing policy in a Pacman-style game.
+</figcaption>
+</figure>
+</div>
+<p>Learning to control a robot arm to perform a ball-balancing task is a continuous analogue.</p>
+<div id="fig-ball-balancing" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ball-balancing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/robot-arm-ball-balancing-v3.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:45.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ball-balancing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;13: Learning to control a robot arm for a ball-balancing task. (Figure: MATLAB Reinforcement Learning Toolbox, MathWorks.)
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-important callout-titled" title="Teaser: play against the ghost">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Teaser: play against the ghost
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>You can run away from the ghost using the left, right, up, and down arrow keys on your keyboard (click the game board first so that it can receive your key presses). The ghost is following a smart policy, with a model of the environment – can you guess what it is? What if the ghost did not have a model?</p>
+<div id="pacman-teaser-wrap" style="text-align:center; margin: 1em 0;">
+  <canvas id="pacman-teaser-canvas" width="546" height="378" style="border:2px solid #333; background:#000; max-width:100%; touch-action:none; outline:none;"></canvas>
+  <div style="margin-top:0.5em; font-size:0.9em;">
+    <button id="pacman-teaser-reset" style="padding:4px 14px; font-size:0.9em;">Reset</button>
+    <span id="pacman-teaser-status" style="margin-left:1em;"></span>
+  </div>
+  <div style="margin-top:0.5em; display:flex; flex-direction:column; align-items:center; gap:2px;">
+    <button id="pacman-teaser-up" aria-label="up" style="width:2.4em;">↑</button>
+    <div style="display:flex; gap:2px;">
+      <button id="pacman-teaser-left" aria-label="left" style="width:2.4em;">←</button>
+      <button id="pacman-teaser-down" aria-label="down" style="width:2.4em;">↓</button>
+      <button id="pacman-teaser-right" aria-label="right" style="width:2.4em;">→</button>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  // Walkable grid (1 = free cell, 0 = wall), matching the maze used in
+  // Duarte's MATLAB playoptctrpacman.m (9 rows x 13 columns).
+  const grid = [
+    [1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,1,1,0,1,1,0,1,0,1],
+    [1,0,1,1,1,1,0,1,1,0,0,1,1],
+    [1,0,0,0,1,0,0,0,1,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,1,0,1,1,1,1,0,1,1],
+    [1,0,0,0,1,0,0,0,1,1,0,1,1],
+    [1,0,0,0,1,0,0,0,1,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1]
+  ];
+  const rows = grid.length, cols = grid[0].length, cell = 42;
+
+  const canvas = document.getElementById('pacman-teaser-canvas');
+  const ctx = canvas.getContext('2d');
+  const statusEl = document.getElementById('pacman-teaser-status');
+
+  let pac, gho, steps, over;
+
+  function neighbours(p) {
+    const deltas = [[-1,0],[1,0],[0,-1],[0,1]];
+    const res = [];
+    for (const [dr, dc] of deltas) {
+      const r = p.r + dr, c = p.c + dc;
+      if (r >= 0 && r < rows && c >= 0 && c < cols && grid[r][c] === 1) res.push({r, c});
+    }
+    return res;
+  }
+
+  // Breadth-first search from `from` to `to` (equivalent to Dijkstra on an
+  // unweighted graph), returning the first step of a shortest path.
+  function bfsNextStep(from, to) {
+    if (from.r === to.r && from.c === to.c) return from;
+    const key = p => p.r + ',' + p.c;
+    const visited = new Set([key(from)]);
+    const prev = new Map();
+    const queue = [from];
+    let qi = 0;
+    while (qi < queue.length) {
+      const cur = queue[qi++];
+      if (cur.r === to.r && cur.c === to.c) break;
+      for (const n of neighbours(cur)) {
+        const k = key(n);
+        if (!visited.has(k)) {
+          visited.add(k);
+          prev.set(k, cur);
+          queue.push(n);
+        }
+      }
+    }
+    if (!prev.has(key(to))) return from; // no path found (should not happen)
+    let cur = to;
+    let parent = prev.get(key(cur));
+    while (parent && key(parent) !== key(from)) {
+      cur = parent;
+      parent = prev.get(key(cur));
+    }
+    return cur;
+  }
+
+  // Row 0 of `grid` is row 1 of the original MATLAB `States` matrix, which
+  // MATLAB plots at the *bottom* of the figure (larger row index = higher
+  // up on screen). Canvas y grows downward, so row indices are flipped
+  // here when drawing to match the original orientation.
+  function screenRow(r) {
+    return rows - 1 - r;
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        ctx.fillStyle = grid[r][c] === 1 ? '#000' : '#1a1aff';
+        ctx.fillRect(c * cell, screenRow(r) * cell, cell, cell);
+      }
+    }
+    ctx.font = Math.floor(cell * 0.8) + 'px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🟡', pac.c * cell + cell / 2, screenRow(pac.r) * cell + cell / 2);
+    ctx.fillText('👻', gho.c * cell + cell / 2, screenRow(gho.r) * cell + cell / 2);
+  }
+
+  function reset() {
+    pac = {r: 8, c: 0};   // row 9, col 1 (1-indexed in the original script)
+    gho = {r: 0, c: 12};  // row 1, col 13
+    steps = 0;
+    over = false;
+    statusEl.textContent = 'Steps survived: 0';
+    draw();
+  }
+
+  function move(dr, dc) {
+    if (over) return;
+    const oldPac = {r: pac.r, c: pac.c};
+    const oldGho = {r: gho.r, c: gho.c};
+
+    const nr = pac.r + dr, nc = pac.c + dc;
+    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && grid[nr][nc] === 1) {
+      pac = {r: nr, c: nc};
+    }
+    gho = bfsNextStep(gho, pac);
+    steps++;
+
+    const caught = (pac.r === gho.r && pac.c === gho.c) ||
+      (pac.r === oldGho.r && pac.c === oldGho.c && gho.r === oldPac.r && gho.c === oldPac.c);
+
+    draw();
+    statusEl.textContent = caught
+      ? 'Caught! You survived ' + steps + ' move' + (steps === 1 ? '' : 's') + ' -- click Reset to try again.'
+      : 'Steps survived: ' + steps;
+    over = caught;
+  }
+
+  // Grid rows are flipped on screen (see screenRow above), so moving "up"
+  // on screen means *increasing* the internal row index, and vice versa.
+  document.getElementById('pacman-teaser-reset').addEventListener('click', reset);
+  document.getElementById('pacman-teaser-up').addEventListener('click', () => move(1, 0));
+  document.getElementById('pacman-teaser-down').addEventListener('click', () => move(-1, 0));
+  document.getElementById('pacman-teaser-left').addEventListener('click', () => move(0, -1));
+  document.getElementById('pacman-teaser-right').addEventListener('click', () => move(0, 1));
+
+  canvas.tabIndex = 0;
+  canvas.addEventListener('click', () => canvas.focus());
+  canvas.addEventListener('keydown', (e) => {
+    const map = {ArrowUp: [1, 0], ArrowDown: [-1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1]};
+    if (map[e.key]) {
+      e.preventDefault();
+      move(...map[e.key]);
+    }
+  });
+
+  reset();
+})();
+</script>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="the-dynamic-programming-algorithm" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="the-dynamic-programming-algorithm"><span class="header-section-number">2</span> The dynamic programming algorithm</h2>
+<p>Having introduced the range of problems optimal control addresses, we turn to the first general-purpose method for solving them: <em>dynamic programming</em> (DP). Dynamic programming allows us to find not just a single optimal path, but entire policies – functions mapping states to actions – which can then be used to control a system in the presence of disturbances. It can also be used to compute optimal paths or trajectories directly, although, as we shall see later in the course, other methods can be more efficient for that narrower task.</p>
+<section id="the-principle-of-optimality" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="the-principle-of-optimality"><span class="header-section-number">2.1</span> The principle of optimality</h3>
+<p>Dynamic programming rests on a simple but powerful observation, known as the <em>principle of optimality</em>. Consider a simple example: the shortest route from Eindhoven to Paris happens to pass through Antwerp. The principle of optimality then tells us that the portion of that route from Antwerp to Paris must itself be the shortest route between those two cities – if a shorter route from Antwerp to Paris existed, splicing it in would produce a shorter Eindhoven-to-Paris route, contradicting the optimality of the original route.</p>
+<div id="fig-eindhoven-paris" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eindhoven-paris-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/eindhoven-paris-map.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:70.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eindhoven-paris-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;14: The shortest route from Eindhoven to Paris via Antwerp illustrates the principle of optimality.
+</figcaption>
+</figure>
+</div>
+<p>Stated more generally, for a discrete optimization problem: <em>the tail of an optimal path is also optimal</em>. Given an optimal path from stage <span class="math inline">\(0\)</span> to stage <span class="math inline">\(h\)</span>, consider the state at some intermediate stage <span class="math inline">\(j\)</span> that lies on this optimal path. Then the decisions along the optimal path from stage <span class="math inline">\(j\)</span> onward to stage <span class="math inline">\(h\)</span> are themselves optimal for the subproblem that starts at that state at stage <span class="math inline">\(j\)</span>.</p>
+<div id="fig-principle-optimality" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-principle-optimality-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/principle-of-optimality-diagram-v2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-principle-optimality-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;15: The tail of an optimal path is itself optimal: a formal statement of the principle of optimality.
+</figcaption>
+</figure>
+</div>
+<p>The principle of optimality is not specific to discrete optimization problems – it applies equally to stage-decision problems and to continuous-time optimal control problems – and it is the foundation on which the dynamic programming algorithm is built.</p>
+<p>The argument sketched informally above for the Eindhoven-Antwerp-Paris example is worked out precisely, by contradiction, in the following exercise.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Exercise: prove the principle of optimality">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Exercise: prove the principle of optimality
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Consider an optimal path from stage <span class="math inline">\(0\)</span> to stage <span class="math inline">\(h\)</span>, and an intermediate stage <span class="math inline">\(j\)</span> that lies on this path. Prove, by contradiction, that the portion of the path from stage <span class="math inline">\(j\)</span> onward to stage <span class="math inline">\(h\)</span> is itself optimal for the subproblem that starts at that state at stage <span class="math inline">\(j\)</span>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Split the cost of the optimal path into the cost of the portion before stage <span class="math inline">\(j\)</span> and the cost of the portion from stage <span class="math inline">\(j\)</span> onward: <span class="math display">\[\text{cost} = \text{cost}_{[0,j)} + \text{cost}_{[j,h]}.\]</span></p>
+<div id="fig-proof-step1" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-proof-step1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/proof-optimality-step1-diagram.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:55.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-proof-step1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;16: Step 1: an optimal path from stage 0 to stage h, split at an intermediate stage j.
+</figcaption>
+</figure>
+</div>
+<p>Now suppose, for the sake of contradiction, that the portion of this path from stage <span class="math inline">\(j\)</span> to stage <span class="math inline">\(h\)</span> is <em>not</em> optimal for the subproblem starting at that state at stage <span class="math inline">\(j\)</span> – that is, there exists an alternative continuation with strictly smaller cost, <span class="math display">\[\underline{\text{cost}}_{[j,h]} &lt; \text{cost}_{[j,h]}.\]</span></p>
+<div id="fig-proof-step2" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-proof-step2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/proof-optimality-step2-diagram.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:55.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-proof-step2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;17: Step 2: supposing the tail of the path, from stage j onward, is not optimal.
+</figcaption>
+</figure>
+</div>
+<p>Splicing this better continuation onto the original path’s first portion then produces a path from stage <span class="math inline">\(0\)</span> to stage <span class="math inline">\(h\)</span> with strictly smaller total cost, <span class="math display">\[\text{cost}_{[0,j)} + \underline{\text{cost}}_{[j,h]} &lt; \text{cost}_{[0,j)} + \text{cost}_{[j,h]},\]</span> contradicting the assumption that the original path was optimal. Hence the tail of an optimal path must itself be optimal.</p>
+<div id="fig-proof-step3" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-proof-step3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/proof-optimality-step3-diagram.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:55.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-proof-step3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;18: Step 3: splicing in the better tail produces a strictly shorter path overall – a contradiction.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="the-algorithm" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="the-algorithm"><span class="header-section-number">2.2</span> The algorithm</h3>
+<p>The principle of optimality suggests a natural algorithm for discrete decision problems: rather than search forward from stage <span class="math inline">\(0\)</span>, compute optimal decisions <em>backward</em> from the final stage. Concretely, the dynamic programming algorithm proceeds as follows.</p>
+<ol type="1">
+<li>Start at the final decision stage <span class="math inline">\(h\)</span>, and set the cost-to-go at stage <span class="math inline">\(h\)</span> equal to the terminal cost.</li>
+<li>For every state at stage <span class="math inline">\(k&lt;h\)</span>, compute the optimal action by minimizing the sum of the immediate cost and the cost-to-go of the resulting next state; call the minimum value the cost-to-go at stage <span class="math inline">\(k\)</span> for that state.</li>
+<li>Repeat step 2, moving backward through <span class="math inline">\(k=h-1,h-2,\dots,0\)</span>.</li>
+</ol>
+<p>Because each state at each stage only ever needs to look one stage ahead (at the cost-to-go values already computed), the entire diagram can be swept once, backward, rather than requiring an exhaustive search over all possible forward paths.</p>
+</section>
+<section id="a-worked-example" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="a-worked-example"><span class="header-section-number">2.3</span> A worked example</h3>
+<p><a href="#fig-dp-iterations" class="quarto-xref">Fig.&nbsp;19</a> shows the algorithm being applied stage by stage, backward through a small transition diagram.</p>
+<div id="fig-dp-iterations" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dp-iterations-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-dp-iterations" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-dp-iter1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-dp-iter1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/dp-example-iter1-notitle.png" class="img-fluid figure-img" data-ref-parent="fig-dp-iterations">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-dp-iter1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Iteration 1 – Stage 3
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-dp-iterations" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-dp-iter2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-dp-iter2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/dp-example-iter2-notitle.png" class="img-fluid figure-img" data-ref-parent="fig-dp-iterations">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-dp-iter2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Iteration 2 – Stage 2
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-dp-iterations" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-dp-iter3" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-dp-iter3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/dp-example-iter3-notitle.png" class="img-fluid figure-img" data-ref-parent="fig-dp-iterations">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-dp-iter3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(c) Iteration 3 – Stage 1
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-dp-iterations" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-dp-iter4" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-dp-iter4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/dp-example-iter4-notitle.png" class="img-fluid figure-img" data-ref-parent="fig-dp-iterations">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-dp-iter4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(d) Iteration 4 – Stage 0
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dp-iterations-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;19: The algorithm applied stage by stage, backward through a small transition diagram: first computing the cost-to-go at stage 3 from the terminal cost (a), then propagating it back to stage 2 (b), stage 1 (c), and finally stage 0 (d), completing the backward sweep.
+</figcaption>
+</figure>
+</div>
+<p>Once the backward sweep is complete, both the optimal policy and the optimal paths can be read directly off the diagram.</p>
+<div id="fig-dp-optimal-policy" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dp-optimal-policy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/dp-example-optimal-policy-v2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dp-optimal-policy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;20: The completed diagram shows the optimal policy (the chosen decision at every state and stage) and allows the optimal path from any initial state to be read off.
+</figcaption>
+</figure>
+</div>
+<p>While running the algorithm, a decision is made at every state and every stage in order to compute that state’s cost-to-go; this decision is precisely the decision specified by the optimal policy at that state/stage. To obtain the optimal path for a <em>given</em> initial state, simply follow the arrows selected by the policy from that initial state through to the final stage. The cost-to-go computed at stage <span class="math inline">\(0\)</span> for that initial state coincides exactly with the total cost of the resulting optimal path.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: a two-stage recursion by hand">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: a two-stage recursion by hand
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-8" class="callout-8-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Consider a discrete decision problem with <span class="math inline">\(h=2\)</span> stages, states <span class="math inline">\(x_0\in\{1,2\}\)</span> at stage <span class="math inline">\(0\)</span>, states <span class="math inline">\(x_1\in\{1,2\}\)</span> at stage <span class="math inline">\(1\)</span>, and a single terminal state <span class="math inline">\(x_2\)</span>. The stage costs are: from <span class="math inline">\(x_0=1\)</span>, cost <span class="math inline">\(3\)</span> to reach <span class="math inline">\(x_1=1\)</span> and cost <span class="math inline">\(5\)</span> to reach <span class="math inline">\(x_1=2\)</span>; from <span class="math inline">\(x_0=2\)</span>, cost <span class="math inline">\(1\)</span> to reach <span class="math inline">\(x_1=1\)</span> and cost <span class="math inline">\(4\)</span> to reach <span class="math inline">\(x_1=2\)</span>; from <span class="math inline">\(x_1=1\)</span>, cost <span class="math inline">\(2\)</span> to reach <span class="math inline">\(x_2\)</span>; from <span class="math inline">\(x_1=2\)</span>, cost <span class="math inline">\(6\)</span> to reach <span class="math inline">\(x_2\)</span>. The terminal cost is <span class="math inline">\(g_2(x_2)=0\)</span>.</p>
+<ol type="a">
+<li><p>Compute the cost-to-go <span class="math inline">\(J_1(x_1)\)</span> for each <span class="math inline">\(x_1\in\{1,2\}\)</span>.</p></li>
+<li><p>Compute the cost-to-go <span class="math inline">\(J_0(x_0)\)</span> for each <span class="math inline">\(x_0\in\{1,2\}\)</span>, and give the optimal decision at each state.</p></li>
+</ol>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-9-contents" aria-controls="callout-9" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-9" class="callout-9-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<ol type="a">
+<li><p>At stage <span class="math inline">\(1\)</span> there is only one available action from each state, so <span class="math inline">\(J_1(1) = 2\)</span> and <span class="math inline">\(J_1(2) = 6\)</span>.</p></li>
+<li><p>At stage <span class="math inline">\(0\)</span>: <span class="math display">\[J_0(1) = \min\{3+J_1(1),\ 5+J_1(2)\} = \min\{3+2,\ 5+6\} = \min\{5,11\} = 5,\]</span> achieved by moving to <span class="math inline">\(x_1=1\)</span>; and <span class="math display">\[J_0(2) = \min\{1+J_1(1),\ 4+J_1(2)\} = \min\{1+2,\ 4+6\} = \min\{3,10\} = 3,\]</span> also achieved by moving to <span class="math inline">\(x_1=1\)</span>. So the optimal policy sends both <span class="math inline">\(x_0=1\)</span> and <span class="math inline">\(x_0=2\)</span> to <span class="math inline">\(x_1=1\)</span> at stage <span class="math inline">\(0\)</span>, and from <span class="math inline">\(x_1=1\)</span> (the only option) to <span class="math inline">\(x_2\)</span> at stage <span class="math inline">\(1\)</span>. The optimal cost-to-go from <span class="math inline">\(x_0=1\)</span> is <span class="math inline">\(5\)</span>; from <span class="math inline">\(x_0=2\)</span> it is <span class="math inline">\(3\)</span>.</p></li>
+</ol>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Python companion">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-10-contents" aria-controls="callout-10" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Python companion
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-10" class="callout-10-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>As a companion to solving the recursion above by hand, here is the same backward recursion implemented directly in Python. Unlike the surrounding text, this code cell is <em>live</em>: Quarto executes it when the document is rendered (given a Python/Jupyter environment), and the output shown below the cell is produced by actually running the code, not typed in by hand. The parameters describing the problem instance are kept in a clearly marked block at the top, separate from the recursion logic: to try a different transition diagram, edit only that block (add or remove stages, states, or actions) and re-render – the recursion below adapts automatically, with no other changes needed.</p>
+<div id="dc3277f8" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- parameters: edit these to try a different problem ---------------------</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># cost[k] maps each state at stage k to a dict {next_state: arc_cost},</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># describing the actions available from that state. Add/remove stages,</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># states, or actions freely -- the recursion below adapts automatically.</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>cost <span class="op">=</span> {</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span>: {<span class="dv">1</span>: {<span class="dv">1</span>: <span class="dv">3</span>, <span class="dv">2</span>: <span class="dv">5</span>}, <span class="dv">2</span>: {<span class="dv">1</span>: <span class="dv">1</span>, <span class="dv">2</span>: <span class="dv">4</span>}},</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span>: {<span class="dv">1</span>: {<span class="st">"end"</span>: <span class="dv">2</span>}, <span class="dv">2</span>: {<span class="st">"end"</span>: <span class="dv">6</span>}},</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># terminal_cost maps each state at the final stage to its terminal cost g_h</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>terminal_cost <span class="op">=</span> {<span class="st">"end"</span>: <span class="dv">0</span>}</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># -----------------------------------------------------------------------</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># --- backward recursion (no need to edit below this line) ------------------</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>stages <span class="op">=</span> <span class="bu">sorted</span>(cost.keys())      <span class="co"># decision stages, e.g. [0, 1, ...]</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>h <span class="op">=</span> stages[<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> <span class="dv">1</span>                 <span class="co"># terminal stage index</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>J <span class="op">=</span> {h: terminal_cost}             <span class="co"># cost-to-go, keyed by stage then state</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>policy <span class="op">=</span> {}                        <span class="co"># optimal next state, keyed by stage then state</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> <span class="bu">reversed</span>(stages):</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    J[k], policy[k] <span class="op">=</span> {}, {}</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> state, actions <span class="kw">in</span> cost[k].items():</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>        best_next, arc_cost <span class="op">=</span> <span class="bu">min</span>(</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>            actions.items(), key<span class="op">=</span><span class="kw">lambda</span> item: item[<span class="dv">1</span>] <span class="op">+</span> J[k <span class="op">+</span> <span class="dv">1</span>][item[<span class="dv">0</span>]]</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        J[k][state] <span class="op">=</span> arc_cost <span class="op">+</span> J[k <span class="op">+</span> <span class="dv">1</span>][best_next]</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>        policy[k][state] <span class="op">=</span> best_next</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> stages:</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> state <span class="kw">in</span> <span class="bu">sorted</span>(J[k], key<span class="op">=</span><span class="bu">str</span>):</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"stage </span><span class="sc">{</span>k<span class="sc">}</span><span class="ss">, state </span><span class="sc">{</span>state<span class="sc">}</span><span class="ss">: J = </span><span class="sc">{</span>J[k][state]<span class="sc">}</span><span class="ss">, "</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f"optimal next state = </span><span class="sc">{</span>policy[k][state]<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>stage 0, state 1: J = 5, optimal next state = 1
+stage 0, state 2: J = 3, optimal next state = 1
+stage 1, state 1: J = 2, optimal next state = end
+stage 1, state 2: J = 6, optimal next state = end</code></pre>
+</div>
+</div>
+<p>The printed values match the by-hand computation above exactly: <span class="math inline">\(J_1(1)=2\)</span>, <span class="math inline">\(J_1(2)=6\)</span>, <span class="math inline">\(J_0(1)=5\)</span>, <span class="math inline">\(J_0(2)=3\)</span>, with both <span class="math inline">\(x_0=1\)</span> and <span class="math inline">\(x_0=2\)</span> optimally routed through <span class="math inline">\(x_1=1\)</span>. Because the recursion above only ever reads the <code>cost</code> and <code>terminal_cost</code> dictionaries – it never hardcodes the number of stages or states – you can extend the <code>parameters</code> block with a third stage, extra states, or different costs, and the same code will compute the correct backward recursion for that new problem.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="non-uniqueness" class="level3" data-number="2.4">
+<h3 data-number="2.4" class="anchored" data-anchor-id="non-uniqueness"><span class="header-section-number">2.4</span> Non-uniqueness</h3>
+<p>It can happen that, at some state and stage, more than one action achieves the same minimum cost-to-go. When this occurs, any of the tied options may be selected; the algorithm simply picks one of them (arbitrarily, or by convention) and proceeds. The result is a single optimal policy, even though, in general, several different optimal policies may exist – all of them achieving the same optimal cost-to-go, but potentially prescribing different actions at the states and stages where a tie occurred.</p>
+<div id="fig-nonuniqueness" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-nonuniqueness-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/dp-example-nonuniqueness.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-nonuniqueness-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;21: An example of non-uniqueness: more than one action achieves the same cost-to-go at a given state and stage.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: counting optimal policies under ties">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-11-contents" aria-controls="callout-11" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: counting optimal policies under ties
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-11" class="callout-11-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<ol type="a">
+<li><p>Suppose that, while running the DP algorithm, a tie in the cost-to-go between two actions occurs at <span class="math inline">\(r\)</span> different state-stage pairs (possibly at different stages). How many optimal policies does the problem have?</p></li>
+<li><p>Suppose instead that ties occur at only two state-stage pairs, with <span class="math inline">\(3\)</span> optimal actions available at the first and <span class="math inline">\(4\)</span> optimal actions available at the second. How many optimal policies are there in total?</p></li>
+</ol>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-12-contents" aria-controls="callout-12" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-12" class="callout-12-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<ol type="a">
+<li><p>At each of the <span class="math inline">\(r\)</span> tied state-stage pairs, either of the two optimal actions can be selected independently of the choices made at the other tied pairs, and every such combination yields a distinct optimal policy (all achieving the same optimal cost). There are therefore <span class="math inline">\(2^r\)</span> optimal policies.</p></li>
+<li><p>By the same reasoning, the choice made at the first state-stage pair (among <span class="math inline">\(3\)</span> optimal actions) is independent of the choice made at the second (among <span class="math inline">\(4\)</span> optimal actions), so the total number of optimal policies is <span class="math inline">\(3 \times 4 = 12\)</span>.</p></li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="inventory-control-revisited" class="level3" data-number="2.5">
+<h3 data-number="2.5" class="anchored" data-anchor-id="inventory-control-revisited"><span class="header-section-number">2.5</span> Inventory control, revisited</h3>
+<p>We now return to the inventory control problem introduced earlier and formulate it precisely, as a running example for the dynamic programming algorithm. The problem is to control the supply of a single product over time. The dynamic model is <span class="math display">\[x_{k+1} = \max\{x_k+u_k-d_k,0\}, \qquad u_k \in \{0,1,\dots,N-x_k\},\]</span> where <span class="math inline">\(x_k\)</span> is the number of items in stock, <span class="math inline">\(u_k\)</span> the supply ordered at stage <span class="math inline">\(k\)</span>, <span class="math inline">\(d_k\)</span> the demand at stage <span class="math inline">\(k\)</span>, and <span class="math inline">\(N\)</span> the storage capacity. The cost function is <span class="math display">\[\sum_{k=0}^{h-1} g_k(x_k,u_k) + g_h(x_h),\]</span> where the stage cost is <span class="math display">\[g_k(x_k,u_k) = \big(c_1(x_k) + c\,u_k + c_{tr}\lVert u_k\rVert_0\big) - p\min\{d_k,x_k+u_k\},\]</span> with <span class="math inline">\(\lVert u_k\rVert_0\)</span> equal to <span class="math inline">\(0\)</span> if <span class="math inline">\(u_k=0\)</span> and <span class="math inline">\(1\)</span> otherwise, <span class="math inline">\(g_h\)</span> the terminal cost, <span class="math inline">\(p\)</span> the selling price per item, <span class="math inline">\(c\)</span> the purchase price per item, <span class="math inline">\(c_{tr}\)</span> the (fixed, per-order) transportation price, and <span class="math inline">\(c_1\)</span> the storage cost.</p>
+<p>The corresponding transition diagram represents, at each stage, the possible numbers of items in stock as states, with the chosen supplies determining the transitions between them.</p>
+<div id="fig-inventory-transition" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-inventory-transition-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/inventory-transition-diagram-v2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-inventory-transition-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;22: Transition diagram for the inventory control problem: circles at each stage indicate the number of items in stock, and supplies determine the transitions.
+</figcaption>
+</figure>
+</div>
+<p>To make this concrete, consider a numerical instance with <span class="math inline">\(h=4\)</span> stages and capacity <span class="math inline">\(N=4\)</span>, demand <span class="math inline">\(d_0=d_1=2\)</span>, <span class="math inline">\(d_2=d_3=1\)</span>, selling price <span class="math inline">\(p=10\)</span>, purchase price <span class="math inline">\(c=5\)</span>, transportation price <span class="math inline">\(c_{tr}=0.5\)</span>, storage cost <span class="math inline">\(c_1(i)=0.2i\)</span> for <span class="math inline">\(i\in\{0,\dots,N\}\)</span>, and terminal cost <span class="math inline">\(g_4(i)=-r_{i+1}\)</span> for <span class="math inline">\(i\in\{0,\dots,4\}\)</span>, with <span class="math inline">\(r=[0\ 4.8\ 9.6\ 14.4\ 19.2]\)</span>. Applying the backward recursion to this instance proceeds exactly as in the abstract worked example above.</p>
+<div id="fig-inventory-iter1" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-inventory-iter1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/inventory-iterations-1-v2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-inventory-iter1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;23: Several iterations of the backward recursion applied to the numerical inventory example.
+</figcaption>
+</figure>
+</div>
+<p>Once the recursion is complete, the resulting policy and the optimal path for each possible initial state can be read off the diagram, exactly as described above.</p>
+<div id="fig-inventory-iter2" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-inventory-iter2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/inventory-iterations-2-v2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:70.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-inventory-iter2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;24: The final policy and optimal path for the inventory control example.
+</figcaption>
+</figure>
+</div>
+<p>A full Python implementation of this example – reproducing the same numbers, including the open-loop/closed-loop figures further below in this section – is available in <a href="../code/unit1/inventory_control.py"><code>code/unit1/inventory_control.py</code></a>, built on top of the general solver in <a href="../code/unit1/dp.py"><code>code/unit1/dp.py</code></a>; the original annotated notebooks are also included there (<a href="../code/unit1/A_1_inventorycontrol.ipynb"><code>A_1_inventorycontrol.ipynb</code></a>, <a href="../code/unit1/A_1_dp.ipynb"><code>A_1_dp.ipynb</code></a>). These are ordinary Python files meant to be downloaded and run locally, rather than live in-browser snippets, since the general solver is a bit more involved than the short examples embedded directly in this page.</p>
+</section>
+<section id="sec-coping-uncertainty" class="level3" data-number="2.6">
+<h3 data-number="2.6" class="anchored" data-anchor-id="sec-coping-uncertainty"><span class="header-section-number">2.6</span> Coping with uncertainty</h3>
+<div class="callout callout-style-default callout-note callout-titled" title="Optional: coping with uncertainty">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-15-contents" aria-controls="callout-15" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Optional: coping with uncertainty
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-15" class="callout-15-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The dynamic programming algorithm developed above assumes the demand sequence <span class="math inline">\(d_k\)</span> is known in advance. In practice, of course, it is not: the real value of <span class="math inline">\(d_k\)</span> only becomes known once stage <span class="math inline">\(k\)</span> is reached. This section uses the inventory control example to illustrate the difference between planning that ignores this uncertainty and planning that exploits it – a distinction that motivates the extension to <em>stochastic</em> dynamic programming taken up in the next unit.</p>
+<p>Consider again the inventory control example, and suppose the plan was computed assuming an expected demand of <span class="math inline">\(d_2=1\)</span> at stage <span class="math inline">\(2\)</span>, but the realized demand turns out to be <span class="math inline">\(d_2=2\)</span> instead.</p>
+<div id="fig-inventory-disturbances" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-inventory-disturbances-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/inventory-disturbances-diagram-v2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:55.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-inventory-disturbances-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;25: The inventory control example, used to illustrate open-loop versus closed-loop decision-making under uncertainty.
+</figcaption>
+</figure>
+</div>
+<p>Because the realized demand differs from what was planned for, the state actually reached at stage <span class="math inline">\(3\)</span> is <span class="math inline">\(x_3=0\)</span> rather than the <span class="math inline">\(x_3=1\)</span> that had been anticipated. Two ways of proceeding from here are worth distinguishing:</p>
+<ul>
+<li><strong>Open loop</strong>: ignore the discrepancy and blindly apply the action <span class="math inline">\(u_3=0\)</span> that had originally been planned for the anticipated state.</li>
+<li><strong>Closed loop</strong>: instead, use the dynamic programming policy computed for the state actually observed, <span class="math inline">\(x_3=0\)</span>, which prescribes <span class="math inline">\(u_3=1\)</span>.</li>
+</ul>
+<p>The two choices lead to different realized costs. For the open-loop choice, <span class="math display">\[g_0(0,4)+g_1(2,0)+g_2(0,2)+g_3(0,0)+g_4(0) = 0.5 - 19.6 + (-9.5) + 0 + 0 = -28.6,\]</span> whereas for the closed-loop choice, <span class="math display">\[g_0(0,4)+g_1(2,0)+g_2(0,2)+g_3(0,1)+g_4(0) = 0.5 - 19.6 + (-9.5) + (-4.5) + 0 = -33.1.\]</span> The closed-loop cost is lower (recall costs here are net of revenue, so more negative is better): by reacting to the observed state rather than following a fixed plan, the closed-loop policy recovers some of the value lost to the unexpected demand.</p>
+<p>The same comparison can be made in expectation. If <span class="math inline">\(\text{Prob}[d_2=1]=0.5\)</span> and <span class="math inline">\(\text{Prob}[d_2=2]=0.5\)</span>, and the open-loop and closed-loop costs when <span class="math inline">\(d_2=1\)</span> both equal <span class="math inline">\(-28.4\)</span> (the case that matches what was planned for), then the expected costs are <span class="math display">\[\text{Open loop:} \quad 0.5\times(-28.4) + 0.5\times(-28.6) = -28.5,\]</span> <span class="math display">\[\text{Closed loop:} \quad 0.5\times(-28.4) + 0.5\times(-33.1) = -30.75.\]</span> The closed-loop policy achieves a strictly lower expected cost, since it is able to adapt its later decisions to the disturbance actually realized, rather than committing to a fixed sequence of actions in advance. Making this idea precise – computing policies that directly minimize <em>expected</em> cost under a known probability distribution over disturbances – is exactly the subject of Unit 2, stochastic dynamic programming.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: open loop vs. closed loop without disturbances">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-13-contents" aria-controls="callout-13" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: open loop vs.&nbsp;closed loop without disturbances
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-13" class="callout-13-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>True or false: if a discrete decision problem has no disturbances at all (the dynamic model <span class="math inline">\(x_{k+1}=f_k(x_k,u_k)\)</span> is fully deterministic), then the open-loop and closed-loop strategies always achieve exactly the same cost, for any initial state. Justify your answer.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-14-contents" aria-controls="callout-14" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-14" class="callout-14-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>True. The gap between open-loop and closed-loop only arises because a disturbance can push the realized state away from the state that was anticipated when the plan was made, so that re-optimizing from the <em>actual</em> state (closed loop) can differ from – and do better than – blindly following the original plan (open loop). Without disturbances, the state at every stage evolves exactly as predicted when the open-loop plan was computed, so the “actual” state the closed-loop policy would react to is, at every stage, precisely the state the open-loop plan already assumed. The closed-loop policy therefore prescribes the same action as the open-loop plan at every stage, the two strategies coincide exactly, and so do their costs.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="dynamic-programming-equations" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="dynamic-programming-equations"><span class="header-section-number">3</span> Dynamic programming equations</h2>
+<section id="a-more-general-formalism" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="a-more-general-formalism"><span class="header-section-number">3.1</span> A more general formalism</h3>
+<p>The transition-diagram picture used so far is intuitive, but it is useful to also express the dynamic programming algorithm in a more compact, purely algebraic formalism – equivalent to the one above, but easier to generalize to the settings encountered later in the course (stochastic disturbances, continuous state spaces, and so on).</p>
+<p>As before, the dynamic model is <span class="math inline">\(x_{k+1}=f_k(x_k,u_k)\)</span> for <span class="math inline">\(k\in\{0,\dots,h-1\}\)</span>, and the cost is <span class="math inline">\(\sum_{k=0}^{h-1} g_k(x_k,u_k)+g_h(x_h)\)</span>.</p>
+<div id="fig-dp-formalism" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dp-formalism-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/dp-formalism-diagram-v2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:85.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dp-formalism-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;26: The general discrete decision problem, restated in the compact formalism used for the dynamic programming equations.
+</figcaption>
+</figure>
+</div>
+<p>Concretely, at each stage <span class="math inline">\(k\)</span> the state takes values in a finite set, <span class="math inline">\(x_0\in\{1,\dots,n_0\}\)</span>, <span class="math inline">\(x_1\in\{1,\dots,n_1\}\)</span>, …, <span class="math inline">\(x_h\in\{1,\dots,n_h\}\)</span>, and the action available at state <span class="math inline">\(x_k\)</span> takes values in a set that may depend on the state, <span class="math inline">\(u_0\in\{1,\dots,m_{0,x_0}\}\)</span>, <span class="math inline">\(u_1\in\{1,\dots,m_{1,x_1}\}\)</span>, …. The stage costs are simply the arrow costs from before, relabeled as <span class="math inline">\(g_0(x_0,u_0)=c^0_{x_0,u_0}\)</span>, <span class="math inline">\(g_1(x_1,u_1)=c^1_{x_1,u_1}\)</span>, …, and the terminal cost as <span class="math inline">\(g_h(x_h)=c^h_{x_h}\)</span>.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: writing down $f_k$, $g_k$, and $g_h$ for a small example">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-16-contents" aria-controls="callout-16" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: writing down <span class="math inline">\(f_k\)</span>, <span class="math inline">\(g_k\)</span>, and <span class="math inline">\(g_h\)</span> for a small example
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-16" class="callout-16-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Consider the small transition diagram at the top of <a href="#fig-nonuniqueness" class="quarto-xref">Fig.&nbsp;21</a> above: one state at stage <span class="math inline">\(0\)</span>, two states at stage <span class="math inline">\(1\)</span>, and two (terminal) states at stage <span class="math inline">\(2\)</span> (<span class="math inline">\(h=2\)</span>). Write down the dynamics <span class="math inline">\(f_k\)</span>, the stage costs <span class="math inline">\(g_k\)</span>, and the terminal cost <span class="math inline">\(g_h\)</span> for this problem, in the general formalism introduced above.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-17-contents" aria-controls="callout-17" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-17" class="callout-17-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Label actions by the state they lead to, so that <span class="math inline">\(f_k(x_k,u_k)=u_k\)</span> at every stage. There is a single state at stage <span class="math inline">\(0\)</span>, <span class="math inline">\(x_0=1\)</span>, with two available actions: <span class="math display">\[g_0(1,1) = 3, \qquad g_0(1,2) = 2,\]</span> matching the two arrows leaving state <span class="math inline">\(1\)</span> in the diagram (to state <span class="math inline">\(1\)</span> and to state <span class="math inline">\(2\)</span> at stage <span class="math inline">\(1\)</span>, respectively).</p>
+<p>At stage <span class="math inline">\(1\)</span> there are two states, <span class="math inline">\(x_1\in\{1,2\}\)</span>, each with two available actions: <span class="math display">\[g_1(1,1) = 3, \qquad g_1(1,2) = 3, \qquad g_1(2,1) = 1, \qquad g_1(2,2) = 3,\]</span> again matching the four arrows from stage <span class="math inline">\(1\)</span> to stage <span class="math inline">\(2\)</span> in the diagram.</p>
+<p>Finally, the terminal cost at stage <span class="math inline">\(h=2\)</span> is <span class="math display">\[g_2(1) = 2, \qquad g_2(2) = 0.\]</span></p>
+<p>As a check, the two optimal paths shown in <a href="#fig-nonuniqueness" class="quarto-xref">Fig.&nbsp;21</a> both have total cost <span class="math inline">\(5\)</span>: <span class="math inline">\(g_0(1,2)+g_1(2,2)+g_2(2) = 2+3+0=5\)</span>, and <span class="math inline">\(g_0(1,2)+g_1(2,1)+g_2(1) = 2+1+2=5\)</span>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-dynamic-programming-equations" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="the-dynamic-programming-equations"><span class="header-section-number">3.2</span> The dynamic programming equations</h3>
+<p>In this formalism, the dynamic programming algorithm becomes a compact pair of recursive equations. Denoting by <span class="math inline">\(U_k(i)\)</span> the set of actions available at state <span class="math inline">\(i\)</span> and stage <span class="math inline">\(k\)</span>, we initialize <span class="math display">\[J_h(i) = g_h(i)\]</span> for every state <span class="math inline">\(i\)</span>, and then, for each stage starting from the last and moving backward, compute <span class="math display">\[
+J_k(i) = \min_{j\in U_k(i)} \; g_k(i,j) + J_{k+1}(j),
+\]</span> together with the corresponding minimizer <span class="math inline">\(\mu_k(i)=j^\star\)</span>. The function <span class="math inline">\(J_k\)</span> is exactly the cost-to-go at stage <span class="math inline">\(k\)</span> from the diagram picture above, and <span class="math inline">\(\mu_k\)</span> is exactly the optimal policy: at each state <span class="math inline">\(i\)</span> and stage <span class="math inline">\(k\)</span>, the policy prescribes the action <span class="math inline">\(\mu_k(i)\)</span> that achieves the minimum in the recursion. These two equations – the initialization at the terminal stage and the backward recursion – are what we will refer to as the <em>dynamic programming equations</em> throughout the rest of the course; the same two equations, suitably adapted, will reappear for stochastic, continuous-state, and infinite-horizon problems.</p>
+<p>The dynamic programming equations express a trade-off often encountered in real life: should a decision be made to maximize immediate reward (the function <span class="math inline">\(g_k\)</span>), or should it instead favor the long-run reward (the function <span class="math inline">\(J_{k+1}\)</span>)? The dynamic programming equations naturally strike this balance, by adding the two together and optimizing their sum at every stage, rather than treating either one in isolation.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: counting the data in a problem instance">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-18-contents" aria-controls="callout-18" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: counting the data in a problem instance
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-18" class="callout-18-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>In the formalism above, suppose a problem has <span class="math inline">\(h=5\)</span> stages, every state space has exactly <span class="math inline">\(n_k=4\)</span> states, and every state has exactly <span class="math inline">\(3\)</span> actions available. How many stage-cost values <span class="math inline">\(c^k_{i,j}\)</span> need to be specified in total to fully describe the problem (excluding the terminal costs)?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-19-contents" aria-controls="callout-19" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-19" class="callout-19-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>At each of the <span class="math inline">\(k\in\{0,\dots,4\}\)</span> stages (that is, <span class="math inline">\(h=5\)</span> stages), each of the <span class="math inline">\(4\)</span> states has <span class="math inline">\(3\)</span> available actions, so <span class="math inline">\(4\times 3 = 12\)</span> cost values are needed per stage. Across <span class="math inline">\(5\)</span> stages, that is <span class="math inline">\(5\times 12 = 60\)</span> stage-cost values <span class="math inline">\(c^k_{i,j}\)</span> in total (plus <span class="math inline">\(4\)</span> terminal costs <span class="math inline">\(c^h_i\)</span>, one per state at the terminal stage, which are not counted in the question).</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: computing costs-to-go for the same example">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-20-contents" aria-controls="callout-20" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: computing costs-to-go for the same example
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-20" class="callout-20-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Using the functions <span class="math inline">\(f_k\)</span>, <span class="math inline">\(g_k\)</span>, and <span class="math inline">\(g_h\)</span> found in the earlier exercise for the transition diagram on top of <a href="#fig-nonuniqueness" class="quarto-xref">Fig.&nbsp;21</a>, compute the cost-to-go <span class="math inline">\(J_k(i)\)</span> at every state and stage, and the resulting optimal policy, using the dynamic programming equations.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-21-contents" aria-controls="callout-21" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-21" class="callout-21-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>At the terminal stage, <span class="math display">\[J_2(1) = g_2(1) = 2, \qquad J_2(2) = g_2(2) = 0.\]</span></p>
+<p>At stage <span class="math inline">\(1\)</span>: <span class="math display">\[J_1(1) = \min\{g_1(1,1)+J_2(1),\ g_1(1,2)+J_2(2)\} = \min\{3+2,\ 3+0\} = 3,\]</span> achieved uniquely by <span class="math inline">\(\mu_1(1)=2\)</span>; and <span class="math display">\[J_1(2) = \min\{g_1(2,1)+J_2(1),\ g_1(2,2)+J_2(2)\} = \min\{1+2,\ 3+0\} = 3,\]</span> achieved by <em>both</em> <span class="math inline">\(\mu_1(2)=1\)</span> and <span class="math inline">\(\mu_1(2)=2\)</span> – exactly the tie already highlighted in <a href="#fig-nonuniqueness" class="quarto-xref">Fig.&nbsp;21</a>.</p>
+<p>At stage <span class="math inline">\(0\)</span>: <span class="math display">\[J_0(1) = \min\{g_0(1,1)+J_1(1),\ g_0(1,2)+J_1(2)\} = \min\{3+3,\ 2+3\} = 5,\]</span> achieved uniquely by <span class="math inline">\(\mu_0(1)=2\)</span>.</p>
+<p>The optimal cost starting from <span class="math inline">\(x_0=1\)</span> is therefore <span class="math inline">\(J_0(1)=5\)</span>, obtained by first moving to state <span class="math inline">\(2\)</span> at stage <span class="math inline">\(1\)</span>, and then, because of the tie at that state, either to state <span class="math inline">\(2\)</span> or to state <span class="math inline">\(1\)</span> at the terminal stage – matching the two optimal paths and two optimal policies shown in <a href="#fig-nonuniqueness" class="quarto-xref">Fig.&nbsp;21</a>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="historical-note" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="historical-note"><span class="header-section-number">3.3</span> Historical note</h3>
+<p>Dynamic programming was proposed in the 1940s by the American mathematician Richard E. Bellman, whose name is now attached to the recursive equations above (the “Bellman equations”) and to the principle of optimality itself.</p>
+<div id="fig-bellman-portrait" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bellman-portrait-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture1v3/bellman-portrait-v2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:30.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bellman-portrait-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;27: Richard E. Bellman (1920-1984), who proposed dynamic programming in the 1940s.
+</figcaption>
+</figure>
+</div>
+<div style="text-align: center; font-size: 0.4em;">
+<p>Photo: via Wikipedia.</p>
+</div>
+<p>Bellman later reflected on the choice to pursue this line of research in these terms:</p>
+<blockquote class="blockquote">
+<p>“I was intrigued by dynamic programming. It was clear to me that there was a good deal of good analysis there. Furthermore, I could see many applications. It was a clear choice. I could either be a traditional intellectual, or a modern intellectual using the results of my research for the problems of contemporary society.”</p>
+<p>– R. E. Bellman (1920-1984)</p>
+</blockquote>
+</section>
+</section>
+<section id="summary" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="summary"><span class="header-section-number">4</span> Summary</h2>
+<p>This unit introduced optimal control as the problem of determining several optimal decisions over time, each allowed to depend on the state of the system, in contrast with static optimization’s single decision. We distinguished three broad classes of optimal control problems – discrete optimization, stage-decision, and continuous-time control – and surveyed a wide range of applications across engineering, operations research, computer science, and reinforcement learning. We then introduced the dynamic programming algorithm: a backward recursion, grounded in the principle of optimality, that computes optimal decisions stage by stage and yields both the optimal policy and the optimal cost-to-go at every state and stage. The same recursion, expressed compactly as the dynamic programming equations, will be extended throughout the rest of the course to stochastic, continuous, and infinite-horizon settings.</p>
+<div class="callout callout-style-default callout-important callout-titled" title="Teaser: Room for improvement">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-22-contents" aria-controls="callout-22" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Teaser: Room for improvement
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-22" class="callout-22-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>While we have seen, in this unit, many optimal control problems that have already been solved – and whose optimal solutions we use nowadays (games, inventory control, optimal robot motion, and so on) – there remains a large number of problems for which, sometimes surprisingly, the optimal policy is not yet used in practice. For instance, have you ever thought that the order in which we draw the individual strokes of our handwritten letters could be optimized to write faster? See the video below, made by Roy van Zuijlen, a teaching assistant of the course.</p>
+<div style="text-align:center; margin: 1em 0;">
+  <video controls="" style="max-width:100%; width:600px;">
+    <source src="../lectures/figures/lecture1v3/movie_writingpolicy.mp4" type="video/mp4">
+    Your browser does not support embedded video. You can download the
+    video directly instead.
+  </video>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

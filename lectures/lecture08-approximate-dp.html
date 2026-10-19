@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="lecture08-approximate-dp_files/libs/clipboard/clipboard.min.js"></script>
+<script src="lecture08-approximate-dp_files/libs/quarto-html/tabby.min.js"></script>
+<script src="lecture08-approximate-dp_files/libs/quarto-html/popper.min.js"></script>
+<script src="lecture08-approximate-dp_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="lecture08-approximate-dp_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="lecture08-approximate-dp_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="lecture08-approximate-dp_files/libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
+
+  <meta name="author" content="Duarte Antunes">
+  <title>lecture08-approximate-dp</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="lecture08-approximate-dp_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="lecture08-approximate-dp_files/libs/revealjs/dist/reveal.css">
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="lecture08-approximate-dp_files/libs/revealjs/dist/theme/quarto-dbdae09e3717e6ee293fc537af762018.css">
+  <link href="lecture08-approximate-dp_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="lecture08-approximate-dp_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="lecture08-approximate-dp_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="lecture08-approximate-dp_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+  <!--
+  MathJax needs its own macro definitions -- LaTeX's \newcommand in
+  macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+  SAME macro names available when rendering to revealjs/html, so a macro like
+  \costtogo looks identical whether you're viewing slides in the browser or a
+  PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+  -->
+  <script>
+  window.MathJax = {
+    tex: {
+      macros: {
+        E: "\\mathbb{E}",
+        Prob: "\\text{Prob}",
+        R: "\\mathbb{R}",
+        N: "\\mathbb{N}",
+        argmin: ["\\operatorname*{argmin}_{#1}", 1],
+        argmax: ["\\operatorname*{argmax}_{#1}", 1],
+        policy: "\\mu",
+        costtogo: "J",
+        state: "x",
+        action: "u"
+      }
+    }
+  };
+  </script>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+
+<section id="unit-8" class="slide level2 center" style="text-align: center;">
+<h2>Unit 8</h2>
+<!--
+Converted from Slides/Lecture8.pdf (57 slides) on 2026-08-11, following the
+conventions finalized on Lectures 1-7 (see lecture07's header comment for
+the full rationale). Quick recap:
+- No image captions anywhere; every figure is a bare
+  ![](path){width="X%" fig-align="center"} with no caption/credit text.
+- Every crop was produced with the row/column (and sometimes column-only)
+  pixel-band-detection method, targeting a band that excludes the slide
+  title and the Keynote page number, then visually spot-checked.
+- Slides that are pure text/bullets/equations are retyped natively as
+  Quarto/LaTeX. Slides built around a genuine diagram or a numerical plot
+  are kept as a tightly-cropped image.
+- Figures live in figures/lecture8/, named pgNN-slug.png (matching the
+  original PDF page number NN, 1-indexed from the title slide).
+- Per feedback established on Lectures 5-7, the Concluding remarks slide's
+  "After this lecture, you should be able to" and "Additional live
+  scripts" bullet blocks are dropped entirely (not transcribed), and all
+  inline mid-slide LiveScript/*.mlx references are dropped too.
+- IMPORTANT NUMBERING NOTE: this deck's own title slide says "Lecture 9",
+  and every inline LiveScript path says "LiveScript/Lecture9/...". This
+  is evidently a leftover from a prior renumbering of the course (the
+  deck's own first slide recaps "last two lectures" as discretization and
+  static optimization, i.e. this Unit's own Lecture 7, confirming this
+  file's content picks up right where Unit 7 left off). Since the file is
+  named Lecture8.pdf and the user calls it Unit 8, this qmd is Unit 8;
+  the "Lecture 9" label is treated as a source typo and not repeated in
+  the title slide text.
+- Three real photographs appear in this deck: a lab fluid-mixing
+  apparatus/camera-image (slide 39, cited to "V.S. Dolk MSc thesis"),
+  a generic hands-kneading-dough stock photo (slide 40, illustrating the
+  "stretching and folding" mixing analogy), and an OMRON SCARA robot
+  product photo (slide 56). All three are used for identification /
+  illustrative purposes in an internal teaching slide deck (nominative
+  fair use), matching how the Kalman/Obama and other real photos were
+  handled in earlier lectures -- flagged here rather than silently kept.
+
+ROUND 2 (2026-10-01): the two "cost of periodic / cost of rollout" figures
+on the resource-aware example slides were $16.4974$ and $12.4969$; they are
+now $16.1330$ and $12.7055$. Recomputed from the parameters stated on the
+slide itself (Ac, Bc, Qbar=I, Rbar=0.01, tau=0.1, x0, periodic base policy)
+with the infinite-horizon LQR gain K = [-9.0556 -7.0543], the periodic cost
+taken from the exact periodic-Lyapunov solution and the rollout cost from
+simulating the one-step-lookahead policy to convergence; two independent
+implementations (numpy/scipy and the javascript behind the interactive panel
+in notes/unit8-notes.qmd) agree to four decimals, and the resulting schedule
+reproduces the table on the next slide exactly. The improvement is therefore
+about a fifth rather than about a quarter. Changed on Duarte's instruction
+after he was shown both sets of numbers.
+
+FIRST-PASS CAVEAT: this is a first pass prioritizing correct structure,
+faithful transcription of every equation, and careful figure crops. Expect
+a slide-by-slide refinement round, same as Lectures 1-7.
+-->
+<h3 style="text-align: center;" id="approximate-dynamic-programming">Approximate Dynamic Programming</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/shared/tue-logo.png" class="quarto-figure quarto-figure-center" style="width:15.0%"></p>
+</figure>
+</div>
+<div class="title-slide-meta">
+<p>4SC000, Q2 2026-2027</p>
+<p>Duarte Antunes</p>
+</div>
+</section>
+<section id="motivation" class="slide level2 smaller">
+<h2>Motivation</h2>
+<ul>
+<li>Last two lectures we discussed two alternative methods to DP for stage decision problems: discretisation and static optimization.</li>
+<li>Discretization allows to obtain an optimal policy (approximately) when the dimension of the problem (state and input dimension) is small and static optimisation allows to obtain an optimal path when the problem is convex</li>
+</ul>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>dimension</th>
+<th>convexity</th>
+<th>DP discretization</th>
+<th>Static optimization</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>small <span class="math inline">\(n\leq3\)</span></td>
+<td>convex</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr class="even">
+<td>small <span class="math inline">\(n\leq3\)</span></td>
+<td>non-convex</td>
+<td>✓</td>
+<td>✗</td>
+</tr>
+<tr class="odd">
+<td>large</td>
+<td>convex</td>
+<td>✗</td>
+<td>✓</td>
+</tr>
+<tr class="even">
+<td>large</td>
+<td>non-convex</td>
+<td>✗</td>
+<td>✗</td>
+</tr>
+</tbody>
+</table>
+<p><strong>In this lecture:</strong></p>
+<ul>
+<li>we show how to obtain optimal policies using static optimisation and online replanning policies (lec 3, slide 33) applying this to solve linear quadratic control with input constraints.</li>
+<li>discuss related approximate dynamic programming techniques such as MPC and rollout applying it to a non-convex, large dimensional problem (control of switched linear systems).</li>
+</ul>
+</section>
+<section id="outline" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Approximate dynamic programming</li>
+<li>Linear quadratic control with inequality constraints</li>
+<li>Control of switched systems</li>
+</ul>
+</section>
+<section id="challenge" class="slide level2">
+<h2>Challenge</h2>
+<p>Iterating the dynamic programming algorithm for stage decision problems is hard since it is hard to compute the costs-to-go (see e.g.&nbsp;slide 11 of lecture 5).</p>
+<p><span class="math display">\[J_k(x_k) = \min_{u_k} \ g_k(x_k,u_k)+J_{k+1}(f_k(x_k,u_k))\]</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg04-challenge-diagram.png" class="quarto-figure quarto-figure-center" style="width:75.0%"></p>
+</figure>
+</div>
+<ul>
+<li>Moreover:
+<ul>
+<li>discretization is only possible if the state and input spaces are not large.</li>
+<li>static optimisation only assures optimality for convex problems and only allows to compute optimal paths.</li>
+<li>How to obtain (sub)optimal policy?</li>
+</ul></li>
+</ul>
+</section>
+<section id="idea-i-online-replanning-policy" class="slide level2">
+<h2>Idea I – Online replanning policy</h2>
+<p>Compute optimal path online starting from the current state and apply the first decision</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg05-online-replanning-diagram.png" class="quarto-figure quarto-figure-center" style="width:70.0%"></p>
+</figure>
+</div>
+<p>Repeat this procedure at every stage, for the current state</p>
+</section>
+<section id="idea-ii-mpc" class="slide level2">
+<h2>Idea II – MPC</h2>
+<p>Similar to Idea I but compute decisions only in a (short) horizon <span class="math inline">\(H\)</span>.</p>
+<p>Compute optimal path over horizon starting from the current state and apply first decision</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg06-mpc-diagram.png" class="quarto-figure quarto-figure-center" style="width:70.0%"></p>
+</figure>
+</div>
+<p>Repeat this procedure in a receding/rolling horizon way</p>
+<ul>
+<li>Optimization problem to solve at each stage is then much simpler and makes the algorithm feasible to run online. This is the fundamental idea of Model Predictive Control (MPC).</li>
+<li>Note that this is (in general) not optimal, not even for problems without disturbances.</li>
+</ul>
+</section>
+<section id="idea-iii-rollout" class="slide level2">
+<h2>Idea III – Rollout</h2>
+<p>Similar to Ideas I, II but after the optimization horizon use a base policy. Apply the first decision of the optimization procedure.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg07-rollout-diagram.png" class="quarto-figure quarto-figure-center" style="width:70.0%"></p>
+</figure>
+</div>
+<p>Repeat this procedure in a receding/rolling horizon way.</p>
+<ul>
+<li>Optimization problem to solve at each stage is then much simpler and makes the algorithm feasible to run online. This is the fundamental idea of Rollout.</li>
+<li>Note that this is (in general) not optimal, not even for problems without disturbances.</li>
+</ul>
+</section>
+<section id="approximate-dynamic-programming-1" class="slide level2">
+<h2>Approximate dynamic programming</h2>
+<p>Approximate the cost-to-go and use the solution <span class="math inline">\(u_k\)</span> of the following equation as the control input (in general different from optimal control input!)</p>
+<p><span class="math display">\[J_k(x_k) = \min_{u_k} \ g_k(x_k,u_k)+\tilde J_{k+1}(f_k(x_k,u_k))\]</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg08-adp-costtogo.png" class="quarto-figure quarto-figure-center" style="width:80.0%"></p>
+</figure>
+</div>
+<p>For each state <span class="math inline">\(x_k\)</span> just need to minimize this function and compute one action.</p>
+<p>More general than previous ideas!</p>
+</section>
+<section id="discussion" class="slide level2 smaller">
+<h2>Discussion</h2>
+<ul>
+<li>Ideas I, II, III can be seen as special cases of approximate dynamic programming.</li>
+<li>Idea I – for problems with disturbances, the true cost (requiring the computation of expected values) is approximated by a deterministic cost. For problems without disturbances idea I yields the same policy as DP.</li>
+<li>Idea II – approximation is the deterministic cost over a short horizon. This is an approximation even for problems without disturbances.</li>
+<li>Idea III – approximation is the cost of the base policy when <span class="math inline">\(H=1\)</span>, and it is the cost over a short horizon plus the cost of the base policy if the horizon is larger than one. Again this is an approximation even for problems without disturbances.</li>
+<li>Although we mainly consider finite horizon costs the ideas extend naturally to infinite horizon costs.</li>
+</ul>
+<p>We formalize these statements next.</p>
+</section>
+<section id="online-replanning-policy" class="slide level2 smaller scrollable">
+<h2>Online replanning policy</h2>
+<p>Online replanning policy leads to the following implicit policy for a stage decision problem:</p>
+<p><span class="math display">\[x_{k+1}=f_k(x_k,u_k,w_k) \qquad \sum_{k=0}^{h-1}g_k(x_k,u_k)+g_h(x_h)\]</span></p>
+<ol type="1">
+<li>At each stage <span class="math inline">\(k\)</span> (initially <span class="math inline">\(k=0\)</span>), assuming that the full state <span class="math inline">\(x_k\)</span> is measured, solve the following problem (for initial condition <span class="math inline">\(x_k\)</span>), assuming no disturbances (<span class="math inline">\(w_k=0,w_{k+1}=0,\dots\)</span>)</li>
+</ol>
+<p><span class="math display">\[\sum_{\ell=k}^{h-1}g_\ell(x_\ell,u_\ell)+g_h(x_h) \qquad x_{\ell+1}=f_\ell(x_\ell,u_\ell,0) \quad \ell\in\{k,k+1,\dots,h-1\}\]</span></p>
+<p>and obtain estimates of the optimal control inputs <span class="math inline">\(u_k,u_{k+1},\dots,u_{h-1}\)</span></p>
+<ol start="2" type="1">
+<li>Take the first decision <span class="math inline">\(u_k\)</span> and apply it to the process (the system will evolve to <span class="math inline">\(x_{k+1}=f_k(x_k,u_k,w_k)\)</span>, in general different from <span class="math inline">\(x_{k+1}=f_k(x_k,u_k,0)\)</span> due to disturbances). Repeat (go to 1.)</li>
+</ol>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg10-replanning-lattice.png" class="quarto-figure quarto-figure-center" style="width:70.0%"></p>
+</figure>
+</div>
+</section>
+<section id="online-replanning-policy-1" class="slide level2 smaller">
+<h2>Online replanning policy</h2>
+<p>For problems with no disturbances, this is equivalent to</p>
+<p><span class="math display">\[\min_{u_k} \ g_k(x_k,u_k)+\tilde J_{k+1}(x_{k+1}) \qquad x_{\ell+1}=f_\ell(x_\ell,u_\ell,0) \quad \ell\in\{k,k+1,\dots,h-1\} \tag{1}\]</span></p>
+<p><span class="math display">\[\tilde J_{k+1}(x_{k+1}) = \min_{u_{k+1},\dots,u_{h-1}} \ \sum_{\ell=k+1}^{h-1} g_\ell(x_\ell,u_\ell) \quad \text{s.t. (1), initial condition } x_{k+1}\]</span></p>
+<p>and select the first <span class="math inline">\(u_k\)</span> and apply it.</p>
+<p>Note that, for problems without disturbances, <span class="math inline">\(\tilde J_k\)</span> are the optimal costs-to-go and satisfy the DP equation</p>
+<p><span class="math display">\[\tilde J_k(x_k) = \min_{u_k} \ g_k(x_k,u_k)+\tilde J_{k+1}(x_{k+1})\]</span></p>
+<p>For problems with stochastic disturbances <span class="math inline">\(\tilde J_k\)</span> are approximations of optimal costs-to-go</p>
+<p><span class="math display">\[J_k(x_k) = \min_{u_k} \ g_k(x_k,u_k)+\mathbb{E}[J_{k+1}(x_{k+1})] \qquad x_{\ell+1}=f_\ell(x_\ell,u_\ell,w_\ell) \quad \ell\in\{k,k+1,\dots,h-1\}\]</span></p>
+<p><span class="math display">\[\underbrace{\phantom{J_k(x_k) = \min_{u_k} \ g_k(x_k,u_k)+\mathbb{E}[J_{k+1}(x_{k+1})]}}_{\text{approximated by } \tilde J_{k+1}(x_{k+1})}\]</span></p>
+</section>
+<section id="model-predictive-control" class="slide level2">
+<h2>Model Predictive Control</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg12-mpc-path.png" class="quarto-figure quarto-figure-center" style="width:60.0%"></p>
+</figure>
+</div>
+<ul>
+<li>At each time <span class="math inline">\(k\)</span> consider the optimal control problem only in a horizon <span class="math inline">\(H\)</span></li>
+</ul>
+<p><span class="math display">\[\min_{u_k,u_{k+1},\dots,u_{k+H-1}} \ \sum_{\ell=k}^{k+H-1}g_\ell(x_\ell,u_\ell) \quad \text{s.t.} \quad x_{\ell+1}=f_\ell(x_\ell,u_\ell) \quad \ell\in\{k,k+1,\dots,k+H-1\} \tag{1}\]</span></p>
+<p>and select the first control input <span class="math inline">\(u_k\)</span> resulting from this optimization.</p>
+<ul>
+<li>Equivalent to <span class="math inline">\(\displaystyle\min_{u_k} \ g_k(x_k,u_k)+\tilde J_{k+1}(x_{k+1})\)</span></li>
+</ul>
+<p><span class="math display">\[\tilde J_{k+1}(x_{k+1}) = \min_{u_{k+1},\dots,u_{k+H-1}} \ \sum_{\ell=k+1}^{k+H-1}g_\ell(x_\ell,u_\ell) \quad \text{s.t. (1)}\]</span></p>
+</section>
+<section id="model-predictive-control-1" class="slide level2">
+<h2>Model Predictive Control</h2>
+<ul>
+<li>Note that at the last decision stages <span class="math inline">\(k\in\{h-H,h-H-1,\dots,h\}\)</span> the cost function is slightly different for finite horizon problems, including also the terminal cost</li>
+</ul>
+<p><span class="math display">\[\min_{u_k,u_{k+1},\dots,u_{k+H-1}} \ \sum_{\ell=k}^{k+H-1}g_\ell(x_\ell,u_\ell)+g_h(x_h) \quad \text{s.t. (1),} \ \ell\in\{k,k+1,\dots,h-1\}\]</span></p>
+<ul>
+<li>There are several variants of Model Predictive Control and in particular some variants use a terminal constraint (this is useful to prove stability). For example, impose that the state after the horizon must be zero <span class="math inline">\(x_{k+H}=0\)</span> (for finite-horizon problems at the last stages <span class="math inline">\(x_h=0\)</span>).</li>
+</ul>
+</section>
+<section id="rollout" class="slide level2 smaller">
+<h2>Rollout</h2>
+<ul>
+<li>Similar to MPC but use a base policy <span class="math inline">\(u_k=\bar\mu(x_k)\)</span> after the horizon</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg14-rollout-path.png" class="quarto-figure quarto-figure-center" style="width:60.0%"></p>
+</figure>
+</div>
+<ul>
+<li>At each time consider the optimal control problem in a horizon <span class="math inline">\(H\)</span> assuming that after the horizon a base policy is used</li>
+</ul>
+<p><span class="math display">\[\min_{u_k,u_{k+1},\dots,u_{k+H-1}} \ \sum_{\ell=k}^{k+H-1}g_\ell(x_\ell,u_\ell) + \sum_{\ell=k+H}^{h-1}g_\ell(x_\ell,\bar\mu_\ell(x_\ell)) + g_h(x_h) \quad \text{s.t. (1)}\]</span></p>
+<p>and select the first control input <span class="math inline">\(u_k\)</span> resulting from this optimization.</p>
+<ul>
+<li>Equivalent to <span class="math inline">\(\displaystyle\min_{u_k} \ g_k(x_k,u_k)+\tilde J_{k+1}(x_{k+1})\)</span></li>
+</ul>
+<p><span class="math display">\[\tilde J_{k+1}(x_{k+1}) = \min_{u_{k+1},\dots,u_{k+H-1}} \ \sum_{\ell=k+1}^{k+H-1}g_\ell(x_\ell,u_\ell) + \sum_{\ell=k+H}^{h-1}g_\ell(x_\ell,\bar\mu_\ell(x_\ell)) + g_h(x_h)\]</span></p>
+</section>
+<section id="further-remarks-on-adp" class="slide level2 smaller">
+<h2>Further remarks on ADP</h2>
+<ul>
+<li>Quality of an approximation is measured by how “good” <span class="math inline">\(u_k^*\)</span> is, or how close it is from optimal <span class="math inline">\(u_k^*\)</span>, and not by how “good” is the approximation <span class="math inline">\(\tilde J_{k+1}(x_{k+1})\)</span> of <span class="math inline">\(J_{k+1}(x_{k+1})\)</span>.</li>
+<li>Decisions only need to be computed (in real-time) for the value of the present state (do not need to iterate the cost-to-go).</li>
+<li>There are several variants to approximate the costs-to-go.</li>
+<li>Due to the heuristic nature of the approximation, it is very hard to quantify when a specific approximation method is good and to establish formal results.</li>
+<li>For example we have seen that the optimal policy for the infinite horizon linear quadratic regulator problem makes the closed-loop of a linear system stable. This is typically very hard to establish for approximate methods.</li>
+</ul>
+</section>
+<section id="outline-1" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Approximate dynamic programming</li>
+<li><u>Linear quadratic control with inequality constraints</u></li>
+<li>Control of switched systems</li>
+</ul>
+</section>
+<section id="problem-formulation" class="slide level2">
+<h2>Problem formulation</h2>
+<p><strong>Dynamic model</strong> <span class="math inline">\(\quad x_{k+1}=Ax_k+Bu_k+w_k \qquad u_k\in\mathbb{R} \ \text{(for simplicity)}\)</span></p>
+<p><span class="math inline">\(w_k\)</span> – possible disturbances</p>
+<p><strong>Cost function</strong> <span class="math inline">\(\quad \displaystyle\sum_{k=0}^{h-1}x_k^\intercal Qx_k+u_k^\intercal Ru_k+x_h^\intercal Q_hx_h\)</span></p>
+<p><strong>Input constraints</strong> <span class="math inline">\(\quad u_k\in[-c,c] \ \ \forall k \qquad (\text{given } c&gt;0)\)</span></p>
+<p>Find a policy <span class="math inline">\(\pi=\{\mu_0,\dots,\mu_{h-1}\}\)</span>, <span class="math inline">\(u_k=\mu_k(x_k)\)</span>, which minimizes the cost function.</p>
+<p>Let us focus first on obtaining an optimal path and then we will find a control policy with online replanning and MPC.</p>
+</section>
+<section id="quadratic-programming-formulation" class="slide level2 smaller">
+<h2>Quadratic programming formulation</h2>
+<p>Define <span class="math inline">\(\bar x=[x_1^\intercal \ x_2^\intercal \ \dots \ x_h^\intercal]^\intercal \qquad \bar u=[u_0^\intercal \ u_1^\intercal \ \dots \ u_{h-1}^\intercal]^\intercal\)</span></p>
+<p><strong>Cost function</strong> <span class="math inline">\(\quad (\bar A x_0+\bar B\bar u)^\intercal \bar Q(\bar Ax_0+\bar B\bar u)+\bar u^\intercal \bar R\bar u\)</span></p>
+<p><strong>Dynamic model (equality constraints)</strong> <span class="math inline">\(\quad \bar x=\bar Ax_0+\bar B\bar u\)</span></p>
+<p><strong>Inequality constraints</strong> <span class="math inline">\(\quad \begin{bmatrix}I\\-I\end{bmatrix}\bar u \leq c\begin{bmatrix}1\\\vdots\\1\end{bmatrix}\)</span></p>
+<p><span class="math display">\[
+\bar A=\begin{bmatrix}A\\A^2\\\vdots\\A^h\end{bmatrix} \quad
+\bar B=\begin{bmatrix}B&amp;0&amp;0&amp;0&amp;\cdots&amp;0\\AB&amp;B&amp;0&amp;0&amp;\cdots&amp;0\\A^2B&amp;AB&amp;B&amp;0&amp;\cdots&amp;0\\A^3B&amp;A^2B&amp;AB&amp;B&amp;\cdots&amp;0\\\vdots&amp;\ddots&amp;\ddots&amp;\ddots&amp;\ddots&amp;\vdots\\A^{h-1}B&amp;A^{h-2}B&amp;A^{h-3}B&amp;\cdots&amp;AB&amp;B\end{bmatrix} \quad
+\bar Q=\begin{bmatrix}Q&amp;0&amp;0&amp;\cdots&amp;0\\0&amp;Q&amp;0&amp;\cdots&amp;0\\\vdots&amp;\ddots&amp;\ddots&amp;\ddots&amp;\vdots\\0&amp;0&amp;0&amp;\cdots&amp;Q_h\end{bmatrix} \quad
+\bar R=\begin{bmatrix}R&amp;0&amp;0&amp;\cdots&amp;0\\0&amp;R&amp;0&amp;\cdots&amp;0\\\vdots&amp;\ddots&amp;\ddots&amp;\ddots&amp;\vdots\\0&amp;0&amp;0&amp;\cdots&amp;R\end{bmatrix}
+\]</span></p>
+<p>Standard quadratic programming problem (see, e.g., <em>Convex optimization</em>, Stephen Boyd, Lieven Vandenberghe) implemented in Matlab with <code>quadprog.m</code>. Convex problem!</p>
+<p>This allows us already to obtain an optimal path.</p>
+</section>
+<section id="example" class="slide level2">
+<h2>Example</h2>
+<p><strong>Double integrator</strong> (model slide 20, Lec. 5)</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg19-cart-diagram.png" class="quarto-figure quarto-figure-center" style="width:55.0%"></p>
+</figure>
+</div>
+<p><span class="math display">\[x = [y \ \ v]^\intercal \ \text{(Position, Velocity)}\]</span></p>
+<p>Optimal path no constraints (slide 30, Lec 5), parameters <span class="math inline">\(Q=Q_h=I\)</span>, <span class="math inline">\(R=1\)</span>, <span class="math inline">\(x_0=[1 \ \ 0]^\intercal\)</span>, <span class="math inline">\(\tau=0.2\)</span>, <span class="math inline">\(h=50\)</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg19-example-unconstrained.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+<p>Optimal path with constraints <span class="math inline">\(u_k\in[-L,L]\)</span>, <span class="math inline">\(L=0.25\)</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg19-example-constrained.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+</section>
+<section id="example-1" class="slide level2">
+<h2>Example</h2>
+<p>What if there are disturbances? Desired behaviour far from expected!</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg20-example-disturbances.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+<p>We want an optimal <strong>policy</strong>! CEC! (and MPC)</p>
+</section>
+<section id="online-replanning-policy-2" class="slide level2 smaller">
+<h2>Online replanning policy</h2>
+<p>At each stage define <span class="math inline">\(\bar x=[x_{k+1}^\intercal \ x_{k+2}^\intercal \ \dots \ x_h^\intercal]^\intercal \qquad \bar u=[u_k^\intercal \ u_{k+1}^\intercal \ \dots \ u_{h-1}^\intercal]^\intercal\)</span></p>
+<p><strong>Cost function</strong> <span class="math inline">\(\quad \displaystyle\sum_{\ell=k}^{h-1}x_\ell^\intercal Qx_\ell+u_\ell^\intercal Ru_\ell+x_h^\intercal Q_hx_h = (\bar Ax_k+\bar B\bar u)^\intercal \bar Q(\bar Ax_k+\bar B\bar u)+\bar u^\intercal \bar R\bar u\)</span></p>
+<p><strong>Dynamic model (equality constraints)</strong> <span class="math inline">\(\quad \bar x=\bar Ax_k+\bar B\bar u\)</span></p>
+<p><strong>Inequality constraints</strong> <span class="math inline">\(\quad \begin{bmatrix}I\\-I\end{bmatrix}\bar u \leq c\begin{bmatrix}1\\\vdots\\1\end{bmatrix}\)</span></p>
+<p><span class="math display">\[
+\bar A=\begin{bmatrix}A\\A^2\\\vdots\\A^{h-k}\end{bmatrix} \quad
+\bar B=\begin{bmatrix}B&amp;0&amp;0&amp;0&amp;\cdots&amp;0\\AB&amp;B&amp;0&amp;0&amp;\cdots&amp;0\\A^2B&amp;AB&amp;B&amp;0&amp;\cdots&amp;0\\A^3B&amp;A^2B&amp;AB&amp;B&amp;\cdots&amp;0\\\vdots&amp;\ddots&amp;\ddots&amp;\ddots&amp;\ddots&amp;\vdots\\A^{h-1-k}B&amp;A^{h-2-k}B&amp;A^{h-3-k}B&amp;\cdots&amp;AB&amp;B\end{bmatrix} \quad
+\bar Q=\begin{bmatrix}Q&amp;0&amp;0&amp;\cdots&amp;0\\0&amp;Q&amp;0&amp;\cdots&amp;0\\\vdots&amp;\ddots&amp;\ddots&amp;\ddots&amp;\vdots\\0&amp;0&amp;0&amp;\cdots&amp;Q_h\end{bmatrix} \quad
+\bar R=\begin{bmatrix}R&amp;0&amp;0&amp;\cdots&amp;0\\0&amp;R&amp;0&amp;\cdots&amp;0\\\vdots&amp;\ddots&amp;\ddots&amp;\ddots&amp;\vdots\\0&amp;0&amp;0&amp;\cdots&amp;R\end{bmatrix}
+\]</span></p>
+<p>Take the first component of <span class="math inline">\(\bar u\)</span>, that is, <span class="math inline">\(u_k\)</span>, and apply it to the plant.</p>
+</section>
+<section id="example-2" class="slide level2">
+<h2>Example</h2>
+<p>Considering disturbances affecting the system</p>
+<p><span class="math display">\[x_{k+1}=Ax_k+Bu_k+w_k\]</span></p>
+<p>and applying online replanning we obtain</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg22-example-replanning.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+</section>
+<section id="discussion-1" class="slide level2 smaller">
+<h2>Discussion</h2>
+<ul>
+<li>CEC allowed to transform an algorithm to compute optimal paths (using <code>quadprog.m</code>) into an algorithm that computes optimal policies.</li>
+<li>The fact that it works so well follows from the fact that the problem is convex: a problem with inequality constraints is convex if the cost is convex and the set of feasible solutions is convex, which can be shown to be the case for this problem.</li>
+<li>Although <code>quadprog.m</code> is quite efficient in problems with a large sampling rate or a large time horizon of interest, it might not be possible to run <code>quadprog.m</code>, and this motivates MPC.</li>
+<li>Another motivation for MPC is that the model is typically not extremely accurate and considering a short horizon might even lead to better results.</li>
+<li>We shall try MPC imposing that the final state after the prediction horizon is zero. See Bertsekas’ book, Ch. 6, for the close connection with Rollout (after the horizon the base policy is to apply zero control input!).</li>
+</ul>
+</section>
+<section id="mpc" class="slide level2 smaller">
+<h2>MPC</h2>
+<p>At each stage define <span class="math inline">\(\bar x=[x_{k+1}^\intercal \ x_{k+2}^\intercal \ \dots \ x_{k+H-1}^\intercal]^\intercal \qquad \bar u=[u_k^\intercal \ u_{k+1}^\intercal \ \dots \ u_{k+H-1}^\intercal]^\intercal\)</span></p>
+<p><strong>Cost function</strong> <span class="math inline">\(\quad \displaystyle\sum_{\ell=k}^{k+H-1}x_\ell^\intercal Qx_\ell+u_\ell^\intercal Ru_\ell = (\bar Ax_k+\bar B\bar u)^\intercal \bar Q(\bar Ax_k+\bar B\bar u)+\bar u^\intercal \bar R\bar u\)</span></p>
+<p><strong>Dynamic model (equality constraints)</strong> <span class="math inline">\(\quad \bar x=\bar Ax_k+\bar B\bar u\)</span></p>
+<p><strong>Inequality constraints</strong> <span class="math inline">\(\quad \begin{bmatrix}I\\-I\end{bmatrix}\bar u \leq c\begin{bmatrix}1\\\vdots\\1\end{bmatrix}\)</span></p>
+<p><span class="math display">\[
+\bar A=\begin{bmatrix}A\\A^2\\\vdots\\A^{H-1}\end{bmatrix} \quad
+\bar B=\begin{bmatrix}B&amp;0&amp;0&amp;0&amp;\cdots&amp;0\\AB&amp;B&amp;0&amp;0&amp;\cdots&amp;0\\A^2B&amp;AB&amp;B&amp;0&amp;\cdots&amp;0\\\vdots&amp;\ddots&amp;\ddots&amp;\ddots&amp;\ddots&amp;\vdots\\A^{H-2}B&amp;A^{H-3}B&amp;\cdots&amp;\cdots&amp;B&amp;0\end{bmatrix} \quad
+\bar Q=\begin{bmatrix}Q&amp;0&amp;0&amp;\cdots&amp;0\\0&amp;Q&amp;0&amp;\cdots&amp;0\\\vdots&amp;\ddots&amp;\ddots&amp;\ddots&amp;\vdots\\0&amp;0&amp;0&amp;\cdots&amp;Q\end{bmatrix} \quad
+\bar R=\begin{bmatrix}R&amp;0&amp;0&amp;\cdots&amp;0\\0&amp;R&amp;0&amp;\cdots&amp;0\\\vdots&amp;\ddots&amp;\ddots&amp;\ddots&amp;\vdots\\0&amp;0&amp;0&amp;\cdots&amp;R\end{bmatrix}
+\]</span></p>
+<p>Take the first component of <span class="math inline">\(\bar u\)</span>, that is, <span class="math inline">\(u_k\)</span>, and apply it to the plant.</p>
+</section>
+<section id="example-3" class="slide level2">
+<h2>Example</h2>
+<p>First iteration (no disturbances). This is the state and input that is predicted</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg25-mpc-first-iteration.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+<p>Applying the first control input <span class="math inline">\(u_0=-0.25\)</span> leads to the state <span class="math inline">\(x_1=\begin{bmatrix}0.995\\-0.05\end{bmatrix}\)</span> and the process is repeated.</p>
+</section>
+<section id="example-4" class="slide level2">
+<h2>Example</h2>
+<p><strong>End result</strong></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg26-mpc-end-result.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+<p>Note that the end result is different from the one predicted at iteration 0 because the state and input predictions change over time.</p>
+</section>
+<section id="example-5" class="slide level2">
+<h2>Example</h2>
+<p><strong>Results with disturbances</strong></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg27-mpc-disturbances.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+</section>
+<section id="reference-tracking" class="slide level2">
+<h2>Reference tracking</h2>
+<p>The ideas of the previous slides extend to the reference tracking problem of having the state follow a desired trajectory <span class="math inline">\(\{r_k \mid k\in\{0,1,\dots,h\}\}\)</span>:</p>
+<p><strong>Dynamic model</strong> <span class="math inline">\(\quad x_{k+1}=Ax_k+Bu_k+w_k \qquad u_k\in\mathbb{R} \ \text{(for simplicity)}\)</span></p>
+<p><strong>Cost function</strong> <span class="math inline">\(\quad \displaystyle\sum_{k=0}^{h-1}(x_k-r_k)^\intercal Q(x_k-r_k)+u_k^\intercal Ru_k+(x_h-r_h)^\intercal Q_h(x_h-r_h)\)</span></p>
+<p><strong>Input constraints</strong> <span class="math inline">\(\quad u_k\in[-c,c] \ \ \forall k \qquad (\text{given } c&gt;0)\)</span></p>
+<p>Find a policy <span class="math inline">\(\pi=\{\mu_0,\dots,\mu_{h-1}\}\)</span>, <span class="math inline">\(u_k=\mu_k(x_k)\)</span>, which minimizes the cost function.</p>
+</section>
+<section id="quadratic-programming-formulation-1" class="slide level2">
+<h2>Quadratic programming formulation</h2>
+<p>Define <span class="math inline">\(\bar x=[x_1^\intercal \dots x_h^\intercal]^\intercal \qquad \bar u=[u_0^\intercal \dots u_{h-1}^\intercal]^\intercal \qquad \bar r=[r_1^\intercal \dots r_h^\intercal]^\intercal\)</span></p>
+<p><strong>Cost function</strong> <span class="math inline">\(\quad (\bar Ax_0+\bar B\bar u+\bar r)^\intercal \bar Q(\bar Ax_0+\bar B\bar u+\bar r)+\bar u^\intercal \bar R\bar u\)</span></p>
+<p><strong>Dynamic model (equality constraints)</strong> <span class="math inline">\(\quad \bar x=\bar Ax_0+\bar B\bar u\)</span></p>
+<p><strong>Inequality constraints</strong> <span class="math inline">\(\quad \begin{bmatrix}I\\-I\end{bmatrix}\bar u \leq c\begin{bmatrix}1\\\vdots\\1\end{bmatrix}\)</span></p>
+<p><span class="math inline">\(\bar A,\bar B,\bar Q,\bar R\)</span> as in slide 15.</p>
+<p>MPC and online replanning ideas can be developed similarly to the stabilization problem.</p>
+</section>
+<section id="application" class="slide level2 scrollable">
+<h2>Application</h2>
+<p>MPC for reference tracking is applied in the MSc thesis <em>“Quadrotor Trajectory Tracking using Cascaded Model Predictive Control and Attitude Control on <span class="math inline">\(S^2\times S^1\)</span>”</em>, Dave Kooijman, to control a quadcopter.</p>
+<p>As explained there, MPC has several advantages with respect to a standard feedback plus feedforward policy:</p>
+<ol type="i">
+<li><p>it allows to meet input and state constraints;</p></li>
+<li><p>it integrates feedforward and feedback;</p></li>
+<li><p>it anticipates future references.</p></li>
+</ol>
+<p>The advantages are explained now resorting to experimental results.</p>
+</section>
+<section id="application-1" class="slide level2 smaller">
+<h2>Application</h2>
+<p>PD+FF vs.&nbsp;MPC</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg31-application-position.png" class="quarto-figure quarto-figure-center" style="width:60.0%"></p>
+</figure>
+</div>
+<p>Integrated FF &amp; FB avoids strange behavior of the FB+FF strategy.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg31-application-acceleration.png" class="quarto-figure quarto-figure-center" style="width:60.0%"></p>
+</figure>
+</div>
+<p>Constraints are met.</p>
+</section>
+<section id="application-2" class="slide level2">
+<h2>Application</h2>
+<p>Constant velocity square trajectory, <span class="math inline">\(0.4\)</span> m/s and <span class="math inline">\(0.8\)</span> m/s: PD+FF vs.&nbsp;MPC</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg32-application-trajectory.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+<p>Anticipation of future references.</p>
+</section>
+<section id="outline-2" class="slide level2">
+<h2>Outline</h2>
+<ul>
+<li>Approximate dynamic programming</li>
+<li>Linear quadratic control with inequality constraints</li>
+<li><u>Control of switched systems</u></li>
+</ul>
+</section>
+<section id="switched-linear-systems" class="slide level2">
+<h2>Switched linear systems</h2>
+<p><strong>Dynamic model</strong> <span class="math inline">\(\quad x_{k+1}=A_{\sigma_k}x_k \qquad \sigma_k\in\{1,\dots,m\} \qquad x_k\in\mathbb{R}^n\)</span></p>
+<p><strong>Cost function</strong> <span class="math inline">\(\quad \displaystyle\sum_{k=0}^{h-1}x_k^\intercal Q_{\sigma_k}x_k+x_h^\intercal \bar Q_hx_h\)</span></p>
+<p><strong>Goal:</strong> Find an optimal path (or policy) for the control input <span class="math inline">\(u_k=\sigma_k\)</span> for a given initial condition <span class="math inline">\(x_0\)</span>.</p>
+<ul>
+<li>Applying the dynamic programming algorithm would lead to a combinatorial problem.</li>
+<li>Let us apply approximate dynamic programming.</li>
+</ul>
+</section>
+<section id="cec" class="slide level2 smaller">
+<h2>CEC</h2>
+<p><strong>Step 1.</strong> At step <span class="math inline">\(k\)</span> compute all the possible control sequences</p>
+<p><span class="math display">\[(\sigma_k,\sigma_{k+1},\sigma_{k+2},\dots,\sigma_{h-1})\]</span></p>
+<p><strong>Step 2.</strong> Compute the cost <span class="math inline">\(\displaystyle\sum_{\ell=k}^{h-1}x_\ell^\intercal Q_{\sigma_\ell}x_\ell+x_h^\intercal \bar Q_hx_h\)</span> for each of these control sequences, and pick a sequence <span class="math inline">\((\tilde\sigma_k,\tilde\sigma_{k+1},\tilde\sigma_{k+2},\dots,\tilde\sigma_{h-1})\)</span> with minimum cost.</p>
+<p><strong>Step 3.</strong> Apply the first element <span class="math inline">\(\sigma_k=\tilde\sigma_k\)</span>, set <span class="math inline">\(k=k+1\)</span> and go again to step 1 if <span class="math inline">\(k\neq h\)</span>.</p>
+<p>Still combinatorial!</p>
+</section>
+<section id="mpc-1" class="slide level2 smaller">
+<h2>MPC</h2>
+<p><strong>Step 1.</strong> At step <span class="math inline">\(k\)</span> compute all possible control sequences in the prediction horizon</p>
+<p><span class="math display">\[(\sigma_k,\sigma_{k+1},\dots,\sigma_{k+H-1}) \ \text{ if } 0\leq k\leq h-H \qquad (\sigma_k,\sigma_{k+1},\dots,\sigma_{h-1}) \ \text{ otherwise}\]</span></p>
+<p><strong>Step 2.</strong> Compute the cost</p>
+<p><span class="math display">\[\sum_{\ell=k}^{k+H-1}x_\ell^\intercal Q_{\sigma_\ell}x_\ell \ \text{ if } 0\leq k\leq h-H \qquad \sum_{\ell=k}^{h-1}x_\ell^\intercal Q_{\sigma_\ell}x_\ell+x_h^\intercal \bar Q_hx_h \ \text{ otherwise}\]</span></p>
+<p>for each of these control sequences and pick a sequence <span class="math inline">\((\tilde\sigma_k,\dots,\tilde\sigma_{k+H-1})\)</span> or <span class="math inline">\((\tilde\sigma_k,\dots,\tilde\sigma_{h-1})\)</span> (as above) with minimum cost.</p>
+<p><strong>Step 3.</strong> Apply the first element <span class="math inline">\(\sigma_k=\tilde\sigma_k\)</span>, set <span class="math inline">\(k=k+1\)</span> and go again to step 1 if <span class="math inline">\(k\neq h\)</span>.</p>
+</section>
+<section id="rollout-1" class="slide level2 smaller scrollable">
+<h2>Rollout</h2>
+<p>Pick a base policy <span class="math inline">\((\bar\sigma_0,\bar\sigma_1,\dots,\bar\sigma_{h-1})\)</span>, <span class="math inline">\(H&gt;0\)</span>, and start with <span class="math inline">\(k=0\)</span></p>
+<ol type="1">
+<li>At step <span class="math inline">\(k\)</span> compute all the control sequences with free <span class="math inline">\(\sigma_k,\dots,\sigma_{k+H-1}\)</span> taking the form</li>
+</ol>
+<p><span class="math display">\[(\sigma_k,\dots,\sigma_{k+H-1},\bar\sigma_0,\bar\sigma_1,\dots,\bar\sigma_{h-1-k-H}) \ \text{ if } 0\leq k\leq h-H \qquad (\sigma_k,\sigma_{k+1},\dots,\sigma_{h-1}) \ \text{ otherwise}\]</span></p>
+<ol start="2" type="1">
+<li><p>Compute the cost <span class="math inline">\(\displaystyle\sum_{\ell=k}^{h-1}x_\ell^\intercal Q_{\sigma_\ell}x_\ell+x_h^\intercal \bar Q_hx_h\)</span> for each of these control sequences, and pick a sequence <span class="math inline">\((\tilde\sigma_k,\tilde\sigma_{k+1},\tilde\sigma_{k+2},\dots,\tilde\sigma_{h-1})\)</span> with minimum cost.</p></li>
+<li><p>Apply the first element <span class="math inline">\(\sigma_k=\tilde\sigma_k\)</span>, set <span class="math inline">\(k=k+1\)</span> and go again to step 1 if <span class="math inline">\(k\neq h\)</span>.</p></li>
+</ol>
+</section>
+<section id="mixing" class="slide level2 scrollable">
+<h2>Mixing</h2>
+<p>How to mix two fluids in minimum time?<sup>1</sup></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg39-mixing-photo.png" class="quarto-figure quarto-figure-center" style="width:70.0%"></p>
+</figure>
+</div>
+<p><span class="math inline">\(\sigma_k\in\{1,\dots,4\}\)</span>. Actuation: 4 possible rotations decided once every <span class="math inline">\(h\)</span> seconds.</p>
+<aside><ol class="aside-footnotes"><li id="fn1"><p>Mixing and switching, V.S. Dolk MSc thesis</p></li></ol></aside></section>
+<section id="periodic-open-loop-policy" class="slide level2">
+<h2>Periodic open loop policy</h2>
+<p>Basic mechanism for effective mixing is repetitive <strong>stretching</strong> &amp; <strong>folding</strong></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg40-kneading-stretching.png" class="quarto-figure quarto-figure-center" style="width:80.0%"></p>
+</figure>
+</div>
+<p>Basic mechanism can be seen as a periodic open-loop strategy.</p>
+<p>Can a closed-loop strategy perform better?</p>
+</section>
+<section id="model" class="slide level2">
+<h2>Model</h2>
+<p>Divide the domain into <span class="math inline">\(N\)</span> subdomains and denote by <span class="math inline">\(x_k^i\)</span>, <span class="math inline">\(i\in\{1,\dots,N\}\)</span>, the concentration of fluid at time <span class="math inline">\(k\tau\)</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg41-spiral-diagram.png" class="quarto-figure quarto-figure-center" style="width:30.0%"></p>
+</figure>
+</div>
+<p>Then the following equation describes how the concentrations evolve as a function of the control action <span class="math inline">\(\sigma_k\in\{1,\dots,4\}\)</span></p>
+<p><span class="math display">\[x_{k+1} = A_{\sigma_k}x_k\]</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg41-grid-diagram.png" class="quarto-figure quarto-figure-center" style="width:55.0%"></p>
+</figure>
+</div>
+</section>
+<section id="cost-function" class="slide level2 smaller">
+<h2>Cost function</h2>
+<ul>
+<li>The concentrations for each subdomain will be equal to a given constant <span class="math inline">\(c\)</span> when homogeneity is achieved. This means that the following error will converge to zero</li>
+</ul>
+<p><span class="math display">\[e_k := x_k - c\begin{bmatrix}1\\1\\\vdots\\1\end{bmatrix} \qquad c = \frac1N\begin{bmatrix}1 &amp; 1 &amp; \dots &amp; 1\end{bmatrix}x_0\]</span></p>
+<ul>
+<li>The intensity of segregation is defined as</li>
+</ul>
+<p><span class="math display">\[e_k^\intercal e_k\]</span></p>
+<p>and measures how far the concentration is from homogeneity.</p>
+<ul>
+<li>We are interested in minimizing the intensity of segregation for every time step</li>
+</ul>
+<p><span class="math display">\[\sum_{k=0}^h e_k^\intercal e_k\]</span></p>
+</section>
+<section id="results" class="slide level2">
+<h2>Results</h2>
+<p><strong>Rollout</strong> vs.&nbsp;<strong>Periodic</strong></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg43-results-apparatus.png" class="quarto-figure quarto-figure-center" style="width:85.0%"></p>
+</figure>
+</div>
+<ul>
+<li>The periodic sequence consists of alternating a rotation of the outer cylinder and a clockwise rotation of the inner cylinder.</li>
+<li>The rollout strategy consists of optimizing in a horizon of length 4, assuming that afterwards this periodic policy is used.</li>
+</ul>
+</section>
+<section id="results-1" class="slide level2">
+<h2>Results</h2>
+<ul>
+<li>An MPC approach with horizon <span class="math inline">\(H=2\)</span> boils down to picking the decision minimizing the (squared) norm of the error at the next iteration (minimum error “greedy” strategy)</li>
+</ul>
+<p><span class="math display">\[\underset{\sigma_k}{\arg\min} \ e_k^\intercal e_k+e_{k+1}^\intercal e_{k+1} = \underset{\sigma_k}{\arg\min} \ e_k^\intercal e_k+e_k^\intercal A_{\sigma_k}^\intercal A_{\sigma_k}e_k = \underset{\sigma_k}{\arg\min} \ \underbrace{e_k^\intercal A_{\sigma_k}^\intercal A_{\sigma_k}e_k}_{e_{k+1}^\intercal e_{k+1}}\]</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg44-mpc-h2-results.png" class="quarto-figure quarto-figure-center" style="width:55.0%"></p>
+</figure>
+</div>
+<ul>
+<li>In this case MPC with <span class="math inline">\(H=2\)</span> leads to worse results.</li>
+</ul>
+</section>
+<section id="introduction" class="slide level2">
+<h2>Introduction</h2>
+<ul>
+<li>We show next that for switched linear systems, we can write explicit rollout and MPC policies.</li>
+<li>Although finite-horizon costs can be considered, this is actually easier if we consider infinite-horizon costs</li>
+</ul>
+<p><span class="math display">\[x_{k+1}=A_{\sigma_k}x_k \qquad \sum_{k=0}^\infty x_k^\intercal Q_{\sigma_k}x_k\]</span></p>
+<ul>
+<li>Note that online replanning in the case of infinite horizon switched systems problems would entail computing an infinite number of options and therefore it is not viable.</li>
+</ul>
+</section>
+<section id="cost-of-base-policy" class="slide level2 smaller">
+<h2>Cost of base policy</h2>
+<ul>
+<li>Suppose that the base policy corresponds to a constant switching <span class="math inline">\(\sigma_k=j\)</span>, <span class="math inline">\(\forall k\)</span>. Then it is easy to show that</li>
+</ul>
+<p><span class="math display">\[\sum_{k=\ell}^\infty x_k^\intercal Q_jx_k = x_\ell^\intercal M^jx_\ell \quad \text{when} \quad x_{k+1}=A_jx_k\]</span></p>
+<p>where <span class="math inline">\(M^j=\sum_{k=0}^\infty (A_j^\intercal)^kQ_j(A_j)^k\)</span> is the solution to the linear (Lyapunov) system</p>
+<p><span class="math display">\[A_j^\intercal M^jA_j - M^j = -Q_j\]</span></p>
+<ul>
+<li>If the base policy corresponds to periodic switching a similar expression can be obtained.</li>
+<li>For example if <span class="math inline">\(m=2\)</span>, <span class="math inline">\(\sigma_k\in\{1,2\}\)</span> and <span class="math inline">\((\sigma_\ell,\sigma_{\ell+1},\sigma_{\ell+2},\sigma_{\ell+3},\sigma_{\ell+4},\dots)=(1,2,1,2,1,\dots)\)</span> then</li>
+</ul>
+<p><span class="math display">\[\sum_{k=\ell}^\infty x_k^\intercal Q_{\sigma_k}x_k = x_\ell^\intercal \bar M^1x_\ell\]</span></p>
+<p>where <span class="math inline">\(A_1^\intercal \bar M^2A_1-\bar M^1=-Q_1 \qquad A_2^\intercal \bar M^1A_2-\bar M^2=-Q_2\)</span></p>
+</section>
+<section id="explicit-rollout-policy" class="slide level2 smaller">
+<h2>Explicit rollout policy</h2>
+<p>Note that in the prediction horizon there are <span class="math inline">\(m^H\)</span> options to be considered.</p>
+<p>Suppose that we index all these options <span class="math inline">\(i\in\{1,2,3,\dots,m^H\}\)</span>.</p>
+<p>Then each <span class="math inline">\(i\)</span> corresponds to a unique set of free schedules at each iteration</p>
+<p><span class="math display">\[(\sigma_k,\sigma_{k+1},\dots,\sigma_{k+H-1}) = (\bar\sigma_0^i,\bar\sigma_1^i,\bar\sigma_2^i,\dots,\bar\sigma_{H-1}^i)\]</span></p>
+<p>and a unique set of costs can be obtained</p>
+<p><span class="math display">\[x_k^\intercal P^ix_k = \sum_{\ell=k}^{k+H-1}x_\ell^\intercal Q_{\sigma_\ell}x_\ell + \sum_{\ell=k+H}^\infty x_\ell^\intercal Q_{\bar\sigma_\ell}x_\ell\]</span></p>
+<p>Then an explicit expression for the rollout policy is</p>
+<p><span class="math display">\[\iota(x_k) = \underset{i}{\arg\min} \ x_k^\intercal P^ix_k \qquad \sigma_k=\pi(\iota(x_k))\]</span></p>
+<p>where <span class="math inline">\(\pi\)</span> is a map that extracts the first component of the scheduling associated with <span class="math inline">\(i\)</span>: <span class="math inline">\(\pi(i)=\bar\sigma_0^i\)</span>.</p>
+</section>
+<section id="example-6" class="slide level2 smaller">
+<h2>Example</h2>
+<p>If <span class="math inline">\(m=2\)</span> and <span class="math inline">\(H=2\)</span>:</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th><span class="math inline">\(i\)</span></th>
+<th><span class="math inline">\(\bar\sigma_0\)</span></th>
+<th><span class="math inline">\(\bar\sigma_1\)</span></th>
+<th><span class="math inline">\(\pi(i)\)</span></th>
+<th><span class="math inline">\(P^i\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td><span class="math inline">\(P^1=Q_1+A_1^\intercal Q_1A_1+(A_1A_1)^\intercal \bar M(A_1A_1)\)</span></td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>1</td>
+<td>2</td>
+<td>1</td>
+<td><span class="math inline">\(P^2=Q_1+A_1^\intercal Q_2A_1+(A_2A_1)^\intercal \bar M(A_2A_1)\)</span></td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>2</td>
+<td>1</td>
+<td>2</td>
+<td><span class="math inline">\(P^3=Q_2+A_2^\intercal Q_1A_2+(A_1A_2)^\intercal \bar M(A_1A_2)\)</span></td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td><span class="math inline">\(P^4=Q_2+A_2^\intercal Q_2A_2+(A_2A_2)^\intercal \bar M(A_2A_2)\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="resource-aware-control" class="slide level2">
+<h2>Resource-aware control</h2>
+<p>How to efficiently control several dynamical systems via a wireless network by deciding how to schedule transmissions?</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg51-inverted-pendulums.png" class="quarto-figure quarto-figure-center" style="width:80.0%"></p>
+</figure>
+</div>
+<p>(only one user can transmit at a given time)</p>
+</section>
+<section id="model-1" class="slide level2 smaller">
+<h2>Model</h2>
+<ul>
+<li>The two processes are identical and modeled by</li>
+</ul>
+<p><span class="math display">\[x_{k+1}^i = \bar Ax_k^i+\bar Bu_k^i \qquad i\in\{1,2\}\]</span></p>
+<ul>
+<li>Each system has an identical cost</li>
+</ul>
+<p><span class="math display">\[J_i = \sum_{k=0}^\infty (x_k^i)^\intercal \bar Qx_k^i+(u_k^i)^\intercal \bar Ru_k^i\]</span></p>
+<p>and we wish to minimize <span class="math inline">\(J_1+J_2\)</span>.</p>
+<ul>
+<li>If each system could update the control law at every time instant, the optimal control law would take the form (LQR problem) <span class="math inline">\(u_k^i=K_ix_k^i\)</span>.</li>
+<li>Instead, since each system can only update the control input at mutually exclusive times, we have</li>
+</ul>
+<p><span class="math display">\[u_k^1 = \begin{cases}K_1x_k^1, &amp; \text{if } \sigma_k=1\\v_k^1, &amp; \text{if } \sigma_k=2\end{cases} \qquad u_k^2 = \begin{cases}K_2x_k^2, &amp; \text{if } \sigma_k=2\\v_k^2, &amp; \text{if } \sigma_k=1\end{cases} \qquad v_k^i=u_{k-1}^i, \ \ i\in\{1,2\}\]</span></p>
+</section>
+<section id="model-2" class="slide level2 smaller">
+<h2>Model</h2>
+<ul>
+<li>If we let <span class="math inline">\(\displaystyle x_k = \begin{bmatrix}x_k^1\\v_k^1\\x_k^2\\v_k^2\end{bmatrix}\)</span> we can write</li>
+</ul>
+<p><strong>model</strong> <span class="math inline">\(\quad x_{k+1}=A_{\sigma_k}x_k \qquad\)</span> <strong>cost</strong> <span class="math inline">\(\quad \displaystyle\sum_{k=0}^\infty x_k^\intercal Q_{\sigma_k}x_k\)</span></p>
+<p>where</p>
+<p><span class="math display">\[A_1=\begin{bmatrix}\bar A+\bar BK &amp; 0 &amp; 0 &amp; 0\\K &amp; 0 &amp; 0 &amp; 0\\0 &amp; 0 &amp; \bar A &amp; \bar B\\0 &amp; 0 &amp; 0 &amp; I\end{bmatrix} \qquad A_2=\begin{bmatrix}\bar A &amp; \bar B &amp; 0 &amp; 0\\0 &amp; I &amp; 0 &amp; 0\\0 &amp; 0 &amp; \bar A+\bar BK &amp; 0\\0 &amp; 0 &amp; K &amp; 0\end{bmatrix}\]</span></p>
+<p><span class="math display">\[Q_1=\begin{bmatrix}\bar Q+K^\intercal \bar RK &amp; 0 &amp; 0 &amp; 0\\0 &amp; 0 &amp; 0 &amp; 0\\0 &amp; 0 &amp; \bar Q &amp; 0\\0 &amp; 0 &amp; 0 &amp; \bar R\end{bmatrix} \qquad Q_2=\begin{bmatrix}\bar Q &amp; 0 &amp; 0 &amp; 0\\0 &amp; \bar R &amp; 0 &amp; 0\\0 &amp; 0 &amp; \bar Q+K^\intercal \bar RK &amp; 0\\0 &amp; 0 &amp; 0 &amp; 0\end{bmatrix}\]</span></p>
+</section>
+<section id="example-7" class="slide level2 smaller">
+<h2>Example</h2>
+<p><strong>Parameters</strong> <span class="math inline">\(\quad \bar A=e^{A_c\tau} \qquad \bar B=\int_0^\tau e^{A_cs}ds\,B_c \qquad A_c=\begin{bmatrix}0&amp;1\\3&amp;0\end{bmatrix} \qquad B_c=\begin{bmatrix}0\\1\end{bmatrix}\)</span></p>
+<p><span class="math display">\[\bar Q=I \qquad \bar R=0.01 \qquad \tau=0.1 \qquad x_0=\begin{bmatrix}-0.1\\0\\0\\1\\0\\0\end{bmatrix} \qquad \text{base policy } (1,2,1,2,1,\dots)\]</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg54-example-4plots.png" class="quarto-figure quarto-figure-center" style="width:80.0%"></p>
+</figure>
+</div>
+<p>cost of periodic (base): <span class="math inline">\(16.1330\)</span> &nbsp;&nbsp;&nbsp; cost of rollout: <span class="math inline">\(12.7055\)</span></p>
+</section>
+<section id="example-8" class="slide level2 smaller">
+<h2>Example</h2>
+<p>Given the initial condition, paying more attention to system 2 leads to better results!</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th><span class="math inline">\(k\)</span></th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+<th>8</th>
+<th>9</th>
+<th>10</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(\sigma_k\)</span></td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>1</td>
+<td>2</td>
+<td>1</td>
+<td>2</td>
+<td>1</td>
+<td>2</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg55-example-control-inputs.png" class="quarto-figure quarto-figure-center" style="width:80.0%"></p>
+</figure>
+</div>
+<p>cost of periodic (base): <span class="math inline">\(16.1330\)</span> &nbsp;&nbsp;&nbsp; cost of rollout: <span class="math inline">\(12.7055\)</span></p>
+</section>
+<section id="resource-aware-control-1" class="slide level2 scrollable">
+<h2>Resource-aware control</h2>
+<p>How to control the two arms of a SCARA robot with only one amplifier to track a trajectory for the tip with minimum error?<sup>1</sup></p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="figures/lecture8/pg56-scara-robot.png" class="quarto-figure quarto-figure-center" style="width:90.0%"></p>
+</figure>
+</div>
+<p>Only torque <span class="math inline">\(\tau_1\)</span> or <span class="math inline">\(\tau_2\)</span> can be applied at each time instant.</p>
+<aside><ol class="aside-footnotes"><li id="fn2"><p>Control of a SCARA robot with a reduced number of amplifiers, Internship report TU/e, VDL, Yuri Steinbuch, 2015</p></li></ol></aside></section>
+<section id="concluding-remarks" class="slide level2 smaller">
+<h2>Concluding remarks</h2>
+<p><strong>To summarize:</strong></p>
+<ul>
+<li>When discretization is not feasible, approximate dynamic programming (e.g.&nbsp;CEC, rollout, MPC) can be a practical way to provide a policy. However, it is suboptimal.</li>
+<li>Must see case by case if it can be used – for switched linear systems it works very well (although suboptimal!)</li>
+</ul>
+<table class="caption-top" style="width:100%;">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>dimension</th>
+<th>convexity</th>
+<th>DP discretization</th>
+<th>Static optimization</th>
+<th>ADP</th>
+<th>ADP (switched systems)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>small</td>
+<td>convex</td>
+<td>✓</td>
+<td>✓</td>
+<td>?</td>
+<td>✓</td>
+</tr>
+<tr class="even">
+<td>small</td>
+<td>non-convex</td>
+<td>✓</td>
+<td>✗</td>
+<td>?</td>
+<td>✓</td>
+</tr>
+<tr class="odd">
+<td>large</td>
+<td>convex</td>
+<td>✗</td>
+<td>✓</td>
+<td>?</td>
+<td>✓</td>
+</tr>
+<tr class="even">
+<td>large</td>
+<td>non-convex</td>
+<td>✗</td>
+<td>✗</td>
+<td>?</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+<p>4SC000 – Optimal Control and Reinforcement Learning</p>
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="lecture08-approximate-dp_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="lecture08-approximate-dp_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="lecture08-approximate-dp_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="lecture08-approximate-dp_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="lecture08-approximate-dp_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="lecture08-approximate-dp_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="lecture08-approximate-dp_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="lecture08-approximate-dp_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="lecture08-approximate-dp_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="lecture08-approximate-dp_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>
