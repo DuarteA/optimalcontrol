@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>Intersection Policy in Pac-man’s grid world – 4SC000 -- Optimal Control and Reinforcement Learning</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../lectures/figures/shared/tue-logo.png" rel="icon" type="image/png">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-d7bb0dc79c45b9e954fc327e3c878a31.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      argmin: ["\\operatorname*{argmin}_{#1}", 1],
+      argmax: ["\\operatorname*{argmax}_{#1}", 1],
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../../lectures/figures/shared/tue-logo.png" alt="" class="navbar-logo light-content">
+    <img src="../../lectures/figures/shared/tue-logo.png" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">4SC000 – Optimal Control and Reinforcement Learning</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">Intersection Policy in Pac-man’s grid world</li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Unit 1 – Introduction and DP</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../notes/unit1-notes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unit 1 – Introduction to Optimal Control and the Dynamic Programming Algorithm</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../exercises/unit1-exercises.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unit 1 Exercises</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Unit 2 – Stochastic DP</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../notes/unit2-notes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unit 2 – Stochastic Dynamic Programming and Applications</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../exercises/unit2-exercises.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unit 2 Exercises</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Unit 3 – Graph search</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../exercises/unit3-exercises.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unit 3 Exercises</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Unit 4 – POMDPs and Bayes filtering</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../exercises/unit4-exercises.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unit 4 Exercises</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Unit 5 – LQR</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../exercises/unit5-exercises.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unit 5 Exercises</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text">Unit 6 – Kalman filtering and LQG</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../exercises/unit6-exercises.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unit 6 Exercises</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true">
+ <span class="menu-text">Unit 7 – Discretization and static optimization</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../exercises/unit7-exercises.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unit 7 Exercises</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Unit 8 – Approximate DP</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../exercises/unit8-exercises.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Unit 8 Exercises</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        
+    <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="A_3_A_Intersection_policy_pacman.html"><i class="bi bi-file-slides"></i>RevealJS</a></li><li><a href="A_3_A_Intersection_policy_pacman.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Intersection Policy in Pac-man’s grid world</h1>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Pac-man is an example of a pursuit-evasion game: the main player pac-man tries to evade a set of so-called ghosts, which are pursuing players. A very simplified version of this game is considered here where the aim is to compute a policy for a single ghost to pursue pac-man in a grid world.</p>
+<p>The stage for the game is depicted in Figure 1 where 77 possible positions/cells for pac-man and for the ghost are considered. Both ghost and pac-man can only move to an adjacent cell (left, right, up down, while diagonal moves are not allowed) at each time step/iteration <span class="math inline">\(k \in \{1, 2, \ldots\}\)</span> or stay in the same cell (e.g.&nbsp;if the current position is 65, then the next cell might be 65, 66 or 61, if the current cell is 38 then the next cell might be 38, 48, 39, 37, 31. The game ends when pac-man and ghost occupy the same cell or cross each other in a given move, i.e., at a given time <span class="math inline">\(k\)</span> the move of the ghost is such that the next cell is the current position of the pac-man, and vice-versa. Run the following instruction with the functions provided to see the behavior of pac-man and ghost with some random policies.</p>
+<p><code>playoptctrpacman([9 1]',[5 13]',2,1)</code></p>
+<p>The first and second arguments of this function are vectors with the (y,x) coordinates of pac-man and ghost, respectively. The third and fourth arguments define the policies which should be used for the players. See more details about this function below.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="A_3_A_Intersection_policy_pacman_files/figure-html/cell-1-1-2a07f0fb-9db8-4421-86d1-4097528224f0.png" class="img-fluid figure-img"></p>
+<figcaption>image_0.png</figcaption>
+</figure>
+</div>
+<p>In this live script, we find the <em>intersection policy</em> for the ghost assuming that the path taken by pac-man is periodic and known. Let <span class="math inline">\(s_{ghost} \in \{1,
+\ldots , 77 \}\)</span>, <span class="math inline">\(s_{pac} \in \{1, \ldots, 77\}\)</span> denote the cell of the ghost and the cell of pac-man. The policy must be such that starting at any initial cell, the ghost intersects pac-man with the least number of time iterations. That is, the policy should provide the next cell of the ghost <span class="math inline">\(s_{next}\)</span> along the path that intersects pac-man in the shortest amount of time. Again if this optimal path is not unique, then the output should be the cell with the smallest numerical label. The considered periodic motion of pac-man is an anti-clockwise trajectory along cells adjacent to the outer walls, i.e., if cell 1 corresponds to the initial pac-man position, one period of the trajectory corresponds to the cells <span class="math inline">\((1, 2, \ldots, 12, 13, 20, 29, 33, \ldots, 77, 76, \ldots, 65, 61,
+\ldots, 21, 14)\)</span>. However, the initial cell can be any of these cells.</p>
+<p>The Matlab function <code>intersectpol</code> provided below finds the policy assuming that the path taken by pac-man is an anti-clockwise periodic trajectory along cells adjacent to the outer walls. The policy is calculated such that by starting at any initial cell, the ghost intersects with pac-man with the least number of iterations.</p>
+<p>The inputs to the Matlab function are:</p>
+<ul>
+<li>sgho = <span class="math inline">\(s_{ghost} \in \{1, 2, \ldots, 12, 13, 20, 29, 33, \ldots, 77, 76,
+\ldots, 65, 61, \ldots, 21, 14\}\)</span> representing the cell of the ghost;</li>
+<li>spac = <span class="math inline">\(s_{pac} \in \{1, \ldots, 77\}\)</span>representing the cell of the pac-man</li>
+</ul>
+<p>The output is nextstate = <span class="math inline">\(s_{next}\)</span> which is the first state of the ghost along the optimal path connecting <span class="math inline">\(s_{ghost}\)</span> to <span class="math inline">\(s_{pac}\)</span>. If this optimal path is not unique, then the output should be the state cell with the smallest numerical label.</p>
+<div id="cell-2" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> clear_output</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.patches <span class="im">as</span> patches</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">#import keyboard #commented out as can currently not be used from Jupyter Notebook</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>matplotlib inline</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The MATLAB implementation is given next. The next function relies on the stochastic dynamic programming algorithm to compute a matrix that provides the next state for the ghost to move given the cell numbers of the ghost (row) and of pac-man (column). Although the current problem is deterministic, one can model the trajectory of pac-man as a ‘disturbance’ that occurs at each state with probability one.</p>
+<div id="cell-4" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> intersecpolMatrix():</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    States <span class="op">=</span> np.array([[<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">11</span>, <span class="dv">12</span>, <span class="dv">13</span>],</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">14</span>, np.inf, np.inf, np.inf, <span class="dv">15</span>, <span class="dv">16</span>, np.inf, <span class="dv">17</span>, <span class="dv">18</span>, np.inf, <span class="dv">19</span>, np.inf, <span class="dv">20</span>],</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">21</span>, np.inf, <span class="dv">22</span>, <span class="dv">23</span>, <span class="dv">24</span>, <span class="dv">25</span>, np.inf, <span class="dv">26</span>, <span class="dv">27</span>, np.inf, np.inf, <span class="dv">28</span>, <span class="dv">29</span>],</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">30</span>, np.inf, np.inf, np.inf, <span class="dv">31</span>, np.inf, np.inf, np.inf, <span class="dv">32</span>, np.inf, np.inf, np.inf, <span class="dv">33</span>],</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">34</span>, <span class="dv">35</span>, <span class="dv">36</span>, <span class="dv">37</span>, <span class="dv">38</span>, <span class="dv">39</span>, <span class="dv">40</span>, <span class="dv">41</span>, <span class="dv">42</span>, <span class="dv">43</span>, <span class="dv">44</span>, <span class="dv">45</span>, <span class="dv">46</span>],</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">47</span>, np.inf, np.inf, np.inf, <span class="dv">48</span>, np.inf, <span class="dv">49</span>, <span class="dv">50</span>, <span class="dv">51</span>, <span class="dv">52</span>, np.inf, <span class="dv">53</span>, <span class="dv">54</span>],</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">55</span>, np.inf, np.inf, np.inf, <span class="dv">56</span>, np.inf, np.inf, np.inf, <span class="dv">57</span>, <span class="dv">58</span>, np.inf, <span class="dv">59</span>, <span class="dv">60</span>],</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">61</span>, np.inf, np.inf, np.inf, <span class="dv">62</span>, np.inf, np.inf, np.inf, <span class="dv">63</span>, np.inf, np.inf, np.inf, <span class="dv">64</span>],</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">65</span>, <span class="dv">66</span>, <span class="dv">67</span>, <span class="dv">68</span>, <span class="dv">69</span>, <span class="dv">70</span>, <span class="dv">71</span>, <span class="dv">72</span>, <span class="dv">73</span>, <span class="dv">74</span>, <span class="dv">75</span>, <span class="dv">76</span>, <span class="dv">77</span>]])</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    statesDim <span class="op">=</span> States.shape</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    n1 <span class="op">=</span> statesDim[<span class="dv">0</span>]</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    n2 <span class="op">=</span> statesDim[<span class="dv">1</span>]</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    States2PosM <span class="op">=</span> States2Pos(States)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    [Graph, Neighboursgho] <span class="op">=</span> States2Graph(States)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    L <span class="op">=</span> <span class="bu">int</span>(np.<span class="bu">max</span>(States[States <span class="op">!=</span> np.inf]))</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  Neighbours of pac - next state along periodic motion</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    statespermotion <span class="op">=</span> np.concatenate([States[<span class="dv">0</span>, :], States[<span class="dv">1</span>:<span class="op">-</span><span class="dv">1</span>, n2 <span class="op">-</span> <span class="dv">1</span>], States[n1 <span class="op">-</span> <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>::<span class="op">-</span><span class="dv">1</span>], States[<span class="op">-</span><span class="dv">2</span>:<span class="dv">0</span>:<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>]])</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    Lpac <span class="op">=</span> <span class="bu">len</span>(statespermotion)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    Neighbourspac <span class="op">=</span> [[] <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">int</span>(<span class="bu">max</span>(statespermotion)))]</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(statespermotion)):</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>        Neighbourspac[<span class="bu">int</span>(statespermotion[i]) <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> statespermotion[<span class="bu">int</span>(np.remainder(i <span class="op">+</span> <span class="dv">1</span>, <span class="bu">len</span>(statespermotion)))]</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> [<span class="va">None</span>] <span class="op">*</span> L <span class="op">*</span> Lpac</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    C <span class="op">=</span> [<span class="va">None</span>] <span class="op">*</span> L <span class="op">*</span> Lpac</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    P <span class="op">=</span> [<span class="va">None</span>] <span class="op">*</span> L <span class="op">*</span> Lpac</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    Jh <span class="op">=</span> np.zeros(L <span class="op">*</span> Lpac)</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(Lpac):  <span class="co">#pac</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(L):  <span class="co">#gho</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>            overallstate <span class="op">=</span> pacgho2state(i <span class="op">+</span> <span class="dv">1</span>, j <span class="op">+</span> <span class="dv">1</span>, L)</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>            ngho <span class="op">=</span> Neighboursgho[j]</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>            npac <span class="op">=</span> [Neighbourspac[<span class="bu">int</span>(statespermotion[i]) <span class="op">-</span> <span class="dv">1</span>]]</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Loop to preallocate</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>            M[overallstate <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> [<span class="va">None</span>] <span class="op">*</span> <span class="bu">len</span>(ngho)</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>            C[overallstate <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> [<span class="va">None</span>] <span class="op">*</span> <span class="bu">len</span>(ngho)</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>            P[overallstate <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> [<span class="va">None</span>] <span class="op">*</span> <span class="bu">len</span>(ngho)</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> iPreall <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(ngho)):</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>                M[overallstate <span class="op">-</span> <span class="dv">1</span>][iPreall] <span class="op">=</span> [<span class="va">None</span>] <span class="op">*</span> <span class="bu">len</span>(np.atleast_1d(npac))</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>                C[overallstate <span class="op">-</span> <span class="dv">1</span>][iPreall] <span class="op">=</span> [<span class="va">None</span>] <span class="op">*</span> <span class="bu">len</span>(np.atleast_1d(npac))</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>                P[overallstate <span class="op">-</span> <span class="dv">1</span>][iPreall] <span class="op">=</span> [<span class="va">None</span>] <span class="op">*</span> <span class="bu">len</span>(np.atleast_1d(npac))</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> ind1 <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(np.atleast_1d(npac))):</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> ind2 <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(np.atleast_1d(ngho))):</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>                    nextstate <span class="op">=</span> pacgho2state(np.where(statespermotion <span class="op">==</span> npac[ind1])[<span class="dv">0</span>][<span class="dv">0</span>] <span class="op">+</span> <span class="dv">1</span>, ngho[ind2], L)</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">if</span> j <span class="op">==</span> statespermotion[i] <span class="op">-</span> <span class="dv">1</span>:  <span class="co"># terminal state</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>                        M[overallstate <span class="op">-</span> <span class="dv">1</span>][ind2][ind1] <span class="op">=</span> overallstate</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>                        C[overallstate <span class="op">-</span> <span class="dv">1</span>][ind2][ind1] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>                        P[overallstate <span class="op">-</span> <span class="dv">1</span>][ind2][ind1] <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">else</span>:</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">if</span> npac[ind1] <span class="op">==</span> i:          <span class="co"># stay in the same node</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>                            C[overallstate <span class="op">-</span> <span class="dv">1</span>][ind2][ind1] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">else</span>:</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>                            C[overallstate <span class="op">-</span> <span class="dv">1</span>][ind2][ind1] <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>                        M[overallstate <span class="op">-</span> <span class="dv">1</span>][ind2][ind1] <span class="op">=</span> nextstate</span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>                        P[overallstate <span class="op">-</span> <span class="dv">1</span>][ind2][ind1] <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> j <span class="op">==</span> statespermotion[i] <span class="op">-</span> <span class="dv">1</span>:</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>                Jh[overallstate <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>                Jh[overallstate <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> np.inf</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  call stochastic dp routine, see live script for a description of this function</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 'Inventory Control and the stochastic dynamic programming algorithm'</span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  although the current function contains some adjustments in the 2nd output</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  argument</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> <span class="dv">100</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>    [J_, nextstate] <span class="op">=</span> stochDP(M, C, P, Jh, h)</span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>    P_ <span class="op">=</span> np.zeros([L, L])</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(Lpac):  <span class="co"># pac</span></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(L):  <span class="co"># gho</span></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>            overallstate <span class="op">=</span> pacgho2state(i <span class="op">+</span> <span class="dv">1</span>, j <span class="op">+</span> <span class="dv">1</span>, L)</span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>            stategho_ <span class="op">=</span> np.zeros(<span class="bu">len</span>(nextstate[overallstate <span class="op">-</span> <span class="dv">1</span>][<span class="dv">0</span>]))</span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> ell <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(nextstate[overallstate <span class="op">-</span> <span class="dv">1</span>][<span class="dv">0</span>])):</span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>                [statepac, stategho_[ell]] <span class="op">=</span> state2pacgho(nextstate[overallstate <span class="op">-</span> <span class="dv">1</span>][<span class="dv">0</span>][ell], L)</span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>            stategho_2 <span class="op">=</span> np.sort(stategho_)</span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>            P_[j][<span class="bu">int</span>(statespermotion[i]) <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> stategho_2[<span class="dv">0</span>]</span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> P_</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Inverse operation of previous function: given a state of the DP formualtion, compute the cells of pac-man and ghost.</p>
+<div id="cell-6" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pacgho2state(statepac, stategho, ngho):</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    overallstate <span class="op">=</span> stategho <span class="op">+</span> ngho <span class="op">*</span> (statepac <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> overallstate</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Given the cells of pac-man and ghost, compute the state of a reformulated problem such that if fits the standard DP framework.</p>
+<div id="cell-8" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> state2pacgho(overallstate, ngho):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    statepac <span class="op">=</span> np.floor(overallstate <span class="op">/</span> ngho) <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    stategho <span class="op">=</span> np.mod(overallstate <span class="op">-</span> <span class="dv">1</span>, ngho) <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [statepac, stategho]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The next function is an auxiliary function. Given a matrix with states corresponding to each entry (i,j) it provides:(i) adjacency graph with cost 1 if i and j are neighbours. (ii) cell vector Neighbours{i} with neighbours that are not a wall;</p>
+<div id="cell-10" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> States2Graph(States):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    statesDim <span class="op">=</span> States.shape</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    n1 <span class="op">=</span> statesDim[<span class="dv">0</span>]</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    n2 <span class="op">=</span> statesDim[<span class="dv">1</span>]</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    vec1 <span class="op">=</span> np.arange(<span class="dv">1</span>, n1 <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    vec2 <span class="op">=</span> np.arange(<span class="dv">1</span>, n2 <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    L <span class="op">=</span> <span class="bu">int</span>(<span class="bu">max</span>(States[States <span class="op">!=</span> np.inf]))</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> np.zeros((L, <span class="dv">2</span>))</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    Neighbours <span class="op">=</span> [<span class="va">None</span>] <span class="op">*</span> L</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n1):</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(n2):</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> States[i, j] <span class="op">!=</span> np.inf:</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> j <span class="op">!=</span> <span class="dv">0</span> <span class="kw">and</span> j <span class="op">!=</span> n2 <span class="op">-</span> <span class="dv">1</span> <span class="kw">and</span> i <span class="op">!=</span> <span class="dv">0</span> <span class="kw">and</span> i <span class="op">!=</span> n1 <span class="op">-</span> <span class="dv">1</span>:</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>                    possibleNeighboors <span class="op">=</span> np.array(</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>                        [States[i <span class="op">+</span> <span class="dv">1</span>, j], States[i, j <span class="op">+</span> <span class="dv">1</span>], States[i, j], States[i, j <span class="op">-</span> <span class="dv">1</span>], States[i <span class="op">-</span> <span class="dv">1</span>, j]])</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>                    Neighbours[<span class="bu">int</span>(States[i, j]) <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> possibleNeighboors[possibleNeighboors <span class="op">!=</span> np.inf]</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> i <span class="op">==</span> <span class="dv">0</span> <span class="kw">and</span> j <span class="op">!=</span> n2 <span class="op">-</span> <span class="dv">1</span> <span class="kw">and</span> j <span class="op">!=</span> <span class="dv">0</span>:</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>                    possibleNeighboors <span class="op">=</span> np.array([States[i <span class="op">+</span> <span class="dv">1</span>, j], States[i, j <span class="op">+</span> <span class="dv">1</span>], States[i, j], States[i, j <span class="op">-</span> <span class="dv">1</span>]])</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>                    Neighbours[<span class="bu">int</span>(States[i, j]) <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> possibleNeighboors[possibleNeighboors <span class="op">!=</span> np.inf]</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> i <span class="op">==</span> n1 <span class="op">-</span> <span class="dv">1</span> <span class="kw">and</span> j <span class="op">!=</span> <span class="dv">0</span> <span class="kw">and</span> j <span class="op">!=</span> n2 <span class="op">-</span> <span class="dv">1</span>:</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>                    possibleNeighboors <span class="op">=</span> np.array([States[i, j <span class="op">+</span> <span class="dv">1</span>], States[i, j], States[i, j <span class="op">-</span> <span class="dv">1</span>], States[i <span class="op">-</span> <span class="dv">1</span>, j]])</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>                    Neighbours[<span class="bu">int</span>(States[i, j]) <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> possibleNeighboors[possibleNeighboors <span class="op">!=</span> np.inf]</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> j <span class="op">==</span> <span class="dv">0</span> <span class="kw">and</span> i <span class="op">!=</span> <span class="dv">0</span> <span class="kw">and</span> i <span class="op">!=</span> n1 <span class="op">-</span> <span class="dv">1</span>:</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>                    possibleNeighboors <span class="op">=</span> np.array([States[i <span class="op">+</span> <span class="dv">1</span>, j], States[i, j <span class="op">+</span> <span class="dv">1</span>], States[i, j], States[i <span class="op">-</span> <span class="dv">1</span>, j]])</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>                    Neighbours[<span class="bu">int</span>(States[i, j]) <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> possibleNeighboors[possibleNeighboors <span class="op">!=</span> np.inf]</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> j <span class="op">==</span> n2 <span class="op">-</span> <span class="dv">1</span> <span class="kw">and</span> i <span class="op">!=</span> <span class="dv">0</span> <span class="kw">and</span> i <span class="op">!=</span> n1 <span class="op">-</span> <span class="dv">1</span>:</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>                    possibleNeighboors <span class="op">=</span> np.array([States[i <span class="op">+</span> <span class="dv">1</span>, j], States[i, j], States[i, j <span class="op">-</span> <span class="dv">1</span>], States[i <span class="op">-</span> <span class="dv">1</span>, j]])</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>                    Neighbours[<span class="bu">int</span>(States[i, j]) <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> possibleNeighboors[possibleNeighboors <span class="op">!=</span> np.inf]</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  corner (1,1)</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    possibleNeighboors <span class="op">=</span> np.array([States[<span class="dv">0</span>, <span class="dv">0</span>], States[<span class="dv">0</span>, <span class="dv">1</span>], States[<span class="dv">1</span>, <span class="dv">0</span>]])</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    Neighbours[<span class="bu">int</span>(States[<span class="dv">0</span>, <span class="dv">0</span>]) <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> possibleNeighboors[possibleNeighboors <span class="op">!=</span> np.inf]</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  corner (n1,n2)</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    possibleNeighboors <span class="op">=</span> np.array([States[n1 <span class="op">-</span> <span class="dv">1</span>, n2 <span class="op">-</span> <span class="dv">1</span>], States[n1 <span class="op">-</span> <span class="dv">2</span>, n2 <span class="op">-</span> <span class="dv">1</span>], States[n1 <span class="op">-</span> <span class="dv">1</span>, n2 <span class="op">-</span> <span class="dv">2</span>]])</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>    Neighbours[<span class="bu">int</span>(States[n1 <span class="op">-</span> <span class="dv">1</span>, n2 <span class="op">-</span> <span class="dv">1</span>]) <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> possibleNeighboors[possibleNeighboors <span class="op">!=</span> np.inf]</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  corner (n1,1)</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>    possibleNeighboors <span class="op">=</span> np.array([States[n1 <span class="op">-</span> <span class="dv">1</span>, <span class="dv">0</span>], States[n1 <span class="op">-</span> <span class="dv">2</span>, <span class="dv">0</span>], States[n1 <span class="op">-</span> <span class="dv">1</span>, <span class="dv">1</span>]])</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>    Neighbours[<span class="bu">int</span>(States[n1 <span class="op">-</span> <span class="dv">1</span>, <span class="dv">0</span>]) <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> possibleNeighboors[possibleNeighboors <span class="op">!=</span> np.inf]</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  corner (1,n2)</span></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>    possibleNeighboors <span class="op">=</span> np.array([States[<span class="dv">0</span>, n2 <span class="op">-</span> <span class="dv">1</span>], States[<span class="dv">0</span>, n2 <span class="op">-</span> <span class="dv">2</span>], States[<span class="dv">1</span>, n2 <span class="op">-</span> <span class="dv">1</span>]])</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>    Neighbours[<span class="bu">int</span>(States[<span class="dv">0</span>, n2 <span class="op">-</span> <span class="dv">1</span>]) <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> possibleNeighboors[possibleNeighboors <span class="op">!=</span> np.inf]</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(Neighbours)</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>    Graph <span class="op">=</span> np.inf <span class="op">*</span> np.ones([n, n])</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(Neighbours[i])):</span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>            Graph[i, <span class="bu">int</span>(Neighbours[i][j]) <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [Graph, Neighbours]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The next function is an auxiliary function that provides the coordinates of each cell labeled with a number different from infinity, given the States matrix. Each row i of M contains the (x,y) coordinates.</p>
+<div id="cell-12" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> States2Pos(States):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    statesDim <span class="op">=</span> States.shape</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    n1 <span class="op">=</span> statesDim[<span class="dv">0</span>]</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    n2 <span class="op">=</span> statesDim[<span class="dv">1</span>]</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    vec1 <span class="op">=</span> np.arange(<span class="dv">1</span>, n1 <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    vec2 <span class="op">=</span> np.arange(<span class="dv">1</span>, n2 <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    L <span class="op">=</span> <span class="bu">int</span>(<span class="bu">max</span>(States[States <span class="op">!=</span> np.inf]))</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> np.zeros((L, <span class="dv">2</span>))</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(L):</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        temp1 <span class="op">=</span> vec1[(np.<span class="bu">sum</span>(States <span class="op">==</span> (i <span class="op">+</span> <span class="dv">1</span>), axis<span class="op">=</span><span class="dv">1</span>)) <span class="op">&gt;=</span> <span class="dv">1</span>]</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        temp2 <span class="op">=</span> vec2[(np.<span class="bu">sum</span>(States <span class="op">==</span> (i <span class="op">+</span> <span class="dv">1</span>), axis<span class="op">=</span><span class="dv">0</span>)) <span class="op">&gt;=</span> <span class="dv">1</span>]</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        M[i, <span class="dv">0</span>:<span class="dv">2</span>] <span class="op">=</span> np.concatenate((temp1, temp2))</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> M</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The next function is a general function to compute an optimal stochastic dynamic programming policy. The explanation is omitted here, see <code>A_2_stochasticinventorycontrol.ipynb</code>.</p>
+<div id="cell-14" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> stochDP(M, C, P, Jh, h):</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(M)  <span class="co"># statedimension</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    J <span class="op">=</span> Jh</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    J_ <span class="op">=</span> np.zeros([n, h])</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    u_ <span class="op">=</span> []</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    nextstate <span class="op">=</span> []</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(h <span class="op">-</span> <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>):</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> k <span class="op">==</span> h <span class="op">-</span> <span class="dv">1</span>:</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>                u_.append([[] <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(h)])</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>                nextstate.append([[] <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(h)])</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>            nj <span class="op">=</span> <span class="bu">len</span>(M[i])</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>            caux <span class="op">=</span> np.zeros(nj)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(nj):</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>                caux[j] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> l <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(M[i][j])):</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>                    caux[j] <span class="op">=</span> caux[j] <span class="op">+</span> P[i][j][l] <span class="op">*</span> (C[i][j][l] <span class="op">+</span> J[<span class="bu">int</span>(M[i][j][l]) <span class="op">-</span> <span class="dv">1</span>])</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>            a <span class="op">=</span> np.sort(caux)</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>            b <span class="op">=</span> np.argsort(caux)</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>            J_[i, k] <span class="op">=</span> a[<span class="dv">0</span>]</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>            u_[i][k] <span class="op">=</span> [<span class="va">None</span>]</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>            nextstate[i][k] <span class="op">=</span> [<span class="va">None</span>]</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>            u_[i][k][<span class="dv">0</span>] <span class="op">=</span> b[<span class="dv">0</span>]</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>            nextstate[i][k][<span class="dv">0</span>] <span class="op">=</span> M[i][u_[i][k][<span class="dv">0</span>]][<span class="dv">0</span>]</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> ell <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="bu">len</span>(a)):</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> np.isinf(a[ell]) <span class="kw">or</span> np.isinf(a[<span class="dv">0</span>]):</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">break</span></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="bu">abs</span>(a[ell] <span class="op">-</span> a[<span class="dv">0</span>]) <span class="op">&lt;</span> <span class="fl">1e-8</span>:</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>                    u_[i][k].append(b[ell])</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>                    nextstate[i][k].append(M[i][u_[i][k][ell]][<span class="dv">0</span>])</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>                <span class="cf">else</span>:</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">break</span></span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>        J <span class="op">=</span> J_[:, k]</span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [J_, nextstate]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-15" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> drawPacMan(x,y,ax):</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    posxy <span class="op">=</span> np.column_stack([[<span class="op">-</span><span class="fl">0.4</span>, <span class="op">-</span><span class="fl">0.4</span>, <span class="fl">0.4</span>, <span class="dv">0</span>, <span class="fl">0.4</span>],[<span class="op">-</span><span class="fl">0.4</span>, <span class="fl">0.4</span>, <span class="fl">0.4</span>, <span class="dv">0</span>, <span class="op">-</span><span class="fl">0.4</span>]]) <span class="op">+</span> np.array([x,y])</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    Hpac <span class="op">=</span> patches.Polygon(posxy, closed<span class="op">=</span><span class="va">True</span>,facecolor<span class="op">=</span><span class="st">'y'</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    ax.add_patch(Hpac)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> drawGhost(x,y,ax):</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    posxy <span class="op">=</span> np.column_stack([[<span class="op">-</span><span class="fl">0.4</span>, <span class="op">-</span><span class="fl">0.4</span>, <span class="fl">0.4</span>, <span class="fl">0.4</span>, <span class="fl">0.2</span>, <span class="dv">0</span>, <span class="op">-</span><span class="fl">0.2</span>],[<span class="op">-</span><span class="fl">0.4</span>, <span class="fl">0.4</span>, <span class="fl">0.4</span>, <span class="op">-</span><span class="fl">0.4</span>, <span class="op">-</span><span class="fl">0.1</span>, <span class="op">-</span><span class="fl">0.4</span>, <span class="op">-</span><span class="fl">0.1</span>]]) <span class="op">+</span> np.array([x,y])</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    Hgho <span class="op">=</span> patches.Polygon( posxy, closed<span class="op">=</span><span class="va">True</span>, facecolor<span class="op">=</span><span class="st">'r'</span>)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    ax.add_patch(Hgho)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    posxyeyel <span class="op">=</span> np.column_stack(np.array([[<span class="op">-</span><span class="fl">0.05</span>, <span class="op">-</span><span class="fl">0.05</span>, <span class="fl">0.05</span>, <span class="fl">0.05</span>], [<span class="op">-</span><span class="fl">0.05</span>, <span class="fl">0.05</span>, <span class="fl">0.05</span>, <span class="op">-</span><span class="fl">0.05</span>]])) <span class="op">+</span> np.array([<span class="op">-</span><span class="fl">0.1</span>, <span class="fl">0.25</span>])<span class="op">+</span>np.array([x,y])</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    Hghoeyel <span class="op">=</span> patches.Polygon(posxyeyel,facecolor<span class="op">=</span><span class="st">'w'</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    ax.add_patch(Hghoeyel)</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    posxyeyer <span class="op">=</span> np.column_stack(np.array([[<span class="op">-</span><span class="fl">0.05</span>, <span class="op">-</span><span class="fl">0.05</span>, <span class="fl">0.05</span>, <span class="fl">0.05</span>], [<span class="op">-</span><span class="fl">0.05</span>, <span class="fl">0.05</span>, <span class="fl">0.05</span>, <span class="op">-</span><span class="fl">0.05</span>]])) <span class="op">+</span> np.array([<span class="fl">0.1</span>, <span class="fl">0.25</span>])<span class="op">+</span>np.array([x,y])</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    Hghoeyer <span class="op">=</span> patches.Polygon(posxyeyer, facecolor<span class="op">=</span><span class="st">'w'</span>)</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    ax.add_patch(Hghoeyer)</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> live_plot(States, xPac, yPac,xGho, yGho):</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    f, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>)</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    clear_output(wait<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    drawbackground(States, f, ax)</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>    drawPacMan(xPac,yPac,ax)</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>    drawGhost(xGho, yGho, ax)</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>    ax.set_xlim(<span class="op">-</span><span class="dv">2</span>, <span class="dv">16</span>)</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    ax.set_ylim(<span class="op">-</span><span class="dv">2</span>, <span class="dv">12</span>)</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>    plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The next function is the main function to play the optimal control pacman game, for an example call</p>
+<pre><code>playoptctrpacman([9 1]',[1 13]',1,1)</code></pre>
+<p>The inputs are * p0pac - initial position packman, e.g.&nbsp;[9 1]’ * p0gho - initial position ghost, e.g., [1 13]’ * polgho - policy ghost 1 intersect policy, 2 purely stochastic * polpac - policy packman 1 biased stochastic, 2 periodic motion, 3 user input,</p>
+<div id="cell-17" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> playoptctrpacman(p0pac, p0gho, polgho, polpac):</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  define states -----------------------------------------------------------</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">#                          |</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">#      i,x \in {1,...,n1=9}|</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">#                          |_____________</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">#                             j,z \in {1,...,n2=13}</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    States <span class="op">=</span> np.array([[<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">11</span>, <span class="dv">12</span>, <span class="dv">13</span>],</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">14</span>, np.inf, np.inf, np.inf, <span class="dv">15</span>, <span class="dv">16</span>, np.inf, <span class="dv">17</span>, <span class="dv">18</span>, np.inf, <span class="dv">19</span>, np.inf, <span class="dv">20</span>],</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">21</span>, np.inf, <span class="dv">22</span>, <span class="dv">23</span>, <span class="dv">24</span>, <span class="dv">25</span>, np.inf, <span class="dv">26</span>, <span class="dv">27</span>, np.inf, np.inf, <span class="dv">28</span>, <span class="dv">29</span>],</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">30</span>, np.inf, np.inf, np.inf, <span class="dv">31</span>, np.inf, np.inf, np.inf, <span class="dv">32</span>, np.inf, np.inf, np.inf, <span class="dv">33</span>],</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">34</span>, <span class="dv">35</span>, <span class="dv">36</span>, <span class="dv">37</span>, <span class="dv">38</span>, <span class="dv">39</span>, <span class="dv">40</span>, <span class="dv">41</span>, <span class="dv">42</span>, <span class="dv">43</span>, <span class="dv">44</span>, <span class="dv">45</span>, <span class="dv">46</span>],</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">47</span>, np.inf, np.inf, np.inf, <span class="dv">48</span>, np.inf, <span class="dv">49</span>, <span class="dv">50</span>, <span class="dv">51</span>, <span class="dv">52</span>, np.inf, <span class="dv">53</span>, <span class="dv">54</span>],</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">55</span>, np.inf, np.inf, np.inf, <span class="dv">56</span>, np.inf, np.inf, np.inf, <span class="dv">57</span>, <span class="dv">58</span>, np.inf, <span class="dv">59</span>, <span class="dv">60</span>],</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">61</span>, np.inf, np.inf, np.inf, <span class="dv">62</span>, np.inf, np.inf, np.inf, <span class="dv">63</span>, np.inf, np.inf, np.inf, <span class="dv">64</span>],</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>                       [<span class="dv">65</span>, <span class="dv">66</span>, <span class="dv">67</span>, <span class="dv">68</span>, <span class="dv">69</span>, <span class="dv">70</span>, <span class="dv">71</span>, <span class="dv">72</span>, <span class="dv">73</span>, <span class="dv">74</span>, <span class="dv">75</span>, <span class="dv">76</span>, <span class="dv">77</span>]])</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    statesDim <span class="op">=</span> States.shape</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    n1 <span class="op">=</span> statesDim[<span class="dv">0</span>]</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    n2 <span class="op">=</span> statesDim[<span class="dv">1</span>]</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    States2PosM <span class="op">=</span> States2Pos(States)</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>    [Graph, Neighboors] <span class="op">=</span> States2Graph(States)</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  -------------------------------------------------------------------------</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># draw background and players----------------------------------------------</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># View Starting point.</span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    live_plot(States, p0pac[<span class="dv">0</span>][<span class="dv">0</span>], p0pac[<span class="dv">1</span>][<span class="dv">0</span>],p0gho[<span class="dv">0</span>][<span class="dv">0</span>], p0gho[<span class="dv">1</span>][<span class="dv">0</span>])</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  policy matrix for stochastic dp policy</span></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    PolMatrix <span class="op">=</span> intersecpolMatrix()</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>    ppac <span class="op">=</span> p0pac</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>    pgho <span class="op">=</span> p0gho</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> <span class="dv">8</span></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>    indm <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">True</span>:</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> k <span class="op">&gt;</span> <span class="dv">1</span> <span class="kw">and</span> np.linalg.norm(ppac[:, k <span class="op">-</span> <span class="dv">1</span>] <span class="op">-</span> pgho[:, k <span class="op">-</span> <span class="dv">2</span>]) <span class="op">==</span> <span class="dv">0</span> <span class="kw">and</span> np.linalg.norm(</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>                pgho[:, k <span class="op">-</span> <span class="dv">1</span>] <span class="op">-</span> ppac[:, k <span class="op">-</span> <span class="dv">2</span>]) <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>        xyP <span class="op">=</span> np.array([ppac[<span class="dv">1</span>, k <span class="op">-</span> <span class="dv">1</span>], ppac[<span class="dv">0</span>, k <span class="op">-</span> <span class="dv">1</span>]])</span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>        xyG <span class="op">=</span> np.array([pgho[<span class="dv">1</span>, k <span class="op">-</span> <span class="dv">1</span>], pgho[<span class="dv">0</span>, k <span class="op">-</span> <span class="dv">1</span>]])</span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> np.linalg.norm(pgho[:, k <span class="op">-</span> <span class="dv">1</span>] <span class="op">-</span> ppac[:, k <span class="op">-</span> <span class="dv">1</span>]) <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a>        live_plot(States, xyP[<span class="dv">0</span>], xyP[<span class="dv">1</span>],xyG[<span class="dv">0</span>], xyG[<span class="dv">1</span>])</span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a>        <span class="co"># iterate</span></span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a>        <span class="co"># ghost</span></span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a>        sgho <span class="op">=</span> States[<span class="bu">int</span>(pgho[<span class="dv">0</span>, k <span class="op">-</span> <span class="dv">1</span>]) <span class="op">-</span> <span class="dv">1</span>, <span class="bu">int</span>(pgho[<span class="dv">1</span>, k <span class="op">-</span> <span class="dv">1</span>]) <span class="op">-</span> <span class="dv">1</span>]</span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a>        spac <span class="op">=</span> States[<span class="bu">int</span>(ppac[<span class="dv">0</span>, k <span class="op">-</span> <span class="dv">1</span>]) <span class="op">-</span> <span class="dv">1</span>, <span class="bu">int</span>(ppac[<span class="dv">1</span>, k <span class="op">-</span> <span class="dv">1</span>]) <span class="op">-</span> <span class="dv">1</span>]</span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> polgho <span class="op">==</span> <span class="dv">1</span>:</span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a>            nextstate <span class="op">=</span> PolMatrix[<span class="bu">int</span>(sgho) <span class="op">-</span> <span class="dv">1</span>, <span class="bu">int</span>(spac) <span class="op">-</span> <span class="dv">1</span>]</span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> polgho <span class="op">==</span> <span class="dv">2</span>:</span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>            nextstate <span class="op">=</span> randompolicy(sgho, Neighboors)</span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a>        pgho <span class="op">=</span> np.append(pgho, np.transpose(States2PosM[[<span class="bu">int</span>(nextstate) <span class="op">-</span> <span class="dv">1</span>], :]), axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a>        <span class="co"># pacman</span></span>
+<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> polpac <span class="op">==</span> <span class="dv">1</span>:</span>
+<span id="cb10-65"><a href="#cb10-65" aria-hidden="true" tabindex="-1"></a>            states2PosMInput <span class="op">=</span> randompolicybiased(States[<span class="bu">int</span>(ppac[<span class="dv">0</span>, k <span class="op">-</span> <span class="dv">1</span>]) <span class="op">-</span> <span class="dv">1</span>, <span class="bu">int</span>(ppac[<span class="dv">1</span>, k <span class="op">-</span> <span class="dv">1</span>]) <span class="op">-</span> <span class="dv">1</span>], Neighboors,</span>
+<span id="cb10-66"><a href="#cb10-66" aria-hidden="true" tabindex="-1"></a>                                                  States, States2PosM)</span>
+<span id="cb10-67"><a href="#cb10-67" aria-hidden="true" tabindex="-1"></a>            ppac <span class="op">=</span> np.append(ppac, np.transpose(States2PosM[[<span class="bu">int</span>(states2PosMInput) <span class="op">-</span> <span class="dv">1</span>], :]), axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb10-68"><a href="#cb10-68" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> polpac <span class="op">==</span> <span class="dv">2</span>:</span>
+<span id="cb10-69"><a href="#cb10-69" aria-hidden="true" tabindex="-1"></a>            periodicMotionOutput <span class="op">=</span> periodicmotion(ppac[:, [k <span class="op">-</span> <span class="dv">1</span>]], n1, n2)</span>
+<span id="cb10-70"><a href="#cb10-70" aria-hidden="true" tabindex="-1"></a>            ppac <span class="op">=</span> np.append(ppac, periodicMotionOutput, axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb10-71"><a href="#cb10-71" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> polpac <span class="op">==</span> <span class="dv">3</span>:</span>
+<span id="cb10-72"><a href="#cb10-72" aria-hidden="true" tabindex="-1"></a>            p <span class="op">=</span> keyboard.read_key()</span>
+<span id="cb10-73"><a href="#cb10-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-74"><a href="#cb10-74" aria-hidden="true" tabindex="-1"></a>            <span class="co"># test if possible first to add offset, otherwise do not move</span></span>
+<span id="cb10-75"><a href="#cb10-75" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> p <span class="op">==</span> <span class="st">'left'</span>:</span>
+<span id="cb10-76"><a href="#cb10-76" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> ppac[<span class="dv">1</span>, k <span class="op">-</span> <span class="dv">1</span>] <span class="op">!=</span> <span class="dv">1</span> <span class="kw">and</span> States[ppac[<span class="dv">0</span>, k <span class="op">-</span> <span class="dv">1</span>] <span class="op">-</span> <span class="dv">1</span>, ppac[<span class="dv">1</span>, k <span class="op">-</span> <span class="dv">1</span>] <span class="op">-</span> <span class="dv">2</span>] <span class="op">!=</span> np.inf:</span>
+<span id="cb10-77"><a href="#cb10-77" aria-hidden="true" tabindex="-1"></a>                    ppac <span class="op">=</span> np.append(ppac, ppac[:, [k <span class="op">-</span> <span class="dv">1</span>]] <span class="op">+</span> np.array([[<span class="dv">0</span>], [<span class="op">-</span><span class="dv">1</span>]]), axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb10-78"><a href="#cb10-78" aria-hidden="true" tabindex="-1"></a>                <span class="cf">else</span>:</span>
+<span id="cb10-79"><a href="#cb10-79" aria-hidden="true" tabindex="-1"></a>                    ppac <span class="op">=</span> np.append(ppac, ppac[:, [k <span class="op">-</span> <span class="dv">1</span>]], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb10-80"><a href="#cb10-80" aria-hidden="true" tabindex="-1"></a>            <span class="cf">elif</span> p <span class="op">==</span> <span class="st">'right'</span>:</span>
+<span id="cb10-81"><a href="#cb10-81" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> ppac[<span class="dv">1</span>, k <span class="op">-</span> <span class="dv">1</span>] <span class="op">!=</span> n2 <span class="kw">and</span> States[ppac[<span class="dv">0</span>, k <span class="op">-</span> <span class="dv">1</span>] <span class="op">-</span> <span class="dv">1</span>, ppac[<span class="dv">1</span>, k <span class="op">-</span> <span class="dv">1</span>]] <span class="op">!=</span> np.inf:</span>
+<span id="cb10-82"><a href="#cb10-82" aria-hidden="true" tabindex="-1"></a>                    ppac <span class="op">=</span> np.append(ppac, ppac[:, [k <span class="op">-</span> <span class="dv">1</span>]] <span class="op">+</span> np.array([[<span class="dv">0</span>], [<span class="dv">1</span>]]), axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb10-83"><a href="#cb10-83" aria-hidden="true" tabindex="-1"></a>                <span class="cf">else</span>:</span>
+<span id="cb10-84"><a href="#cb10-84" aria-hidden="true" tabindex="-1"></a>                    ppac <span class="op">=</span> np.append(ppac, ppac[:, [k <span class="op">-</span> <span class="dv">1</span>]], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb10-85"><a href="#cb10-85" aria-hidden="true" tabindex="-1"></a>            <span class="cf">elif</span> p <span class="op">==</span> <span class="st">'up'</span>:</span>
+<span id="cb10-86"><a href="#cb10-86" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> ppac[<span class="dv">0</span>, k <span class="op">-</span> <span class="dv">1</span>] <span class="op">!=</span> n1 <span class="kw">and</span> States[ppac[<span class="dv">0</span>, k <span class="op">-</span> <span class="dv">1</span>], ppac[<span class="dv">1</span>, k <span class="op">-</span> <span class="dv">1</span>] <span class="op">-</span> <span class="dv">1</span>] <span class="op">!=</span> np.inf:</span>
+<span id="cb10-87"><a href="#cb10-87" aria-hidden="true" tabindex="-1"></a>                    ppac <span class="op">=</span> np.append(ppac, ppac[:, [k <span class="op">-</span> <span class="dv">1</span>]] <span class="op">+</span> np.array([[<span class="dv">1</span>], [<span class="dv">0</span>]]), axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb10-88"><a href="#cb10-88" aria-hidden="true" tabindex="-1"></a>                <span class="cf">else</span>:</span>
+<span id="cb10-89"><a href="#cb10-89" aria-hidden="true" tabindex="-1"></a>                    ppac <span class="op">=</span> np.append(ppac, ppac[:, [k <span class="op">-</span> <span class="dv">1</span>]], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb10-90"><a href="#cb10-90" aria-hidden="true" tabindex="-1"></a>            <span class="cf">elif</span> p <span class="op">==</span> <span class="st">'down'</span>:</span>
+<span id="cb10-91"><a href="#cb10-91" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> ppac[<span class="dv">0</span>, k <span class="op">-</span> <span class="dv">1</span>] <span class="op">!=</span> <span class="dv">1</span> <span class="kw">and</span> States[ppac[<span class="dv">0</span>, k <span class="op">-</span> <span class="dv">1</span>] <span class="op">-</span> <span class="dv">2</span>, ppac[<span class="dv">1</span>, k <span class="op">-</span> <span class="dv">1</span>] <span class="op">-</span> <span class="dv">1</span>] <span class="op">!=</span> np.inf:</span>
+<span id="cb10-92"><a href="#cb10-92" aria-hidden="true" tabindex="-1"></a>                    ppac <span class="op">=</span> np.append(ppac, ppac[:, [k <span class="op">-</span> <span class="dv">1</span>]] <span class="op">+</span> np.array([[<span class="op">-</span><span class="dv">1</span>], [<span class="dv">0</span>]]), axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb10-93"><a href="#cb10-93" aria-hidden="true" tabindex="-1"></a>                <span class="cf">else</span>:</span>
+<span id="cb10-94"><a href="#cb10-94" aria-hidden="true" tabindex="-1"></a>                    ppac <span class="op">=</span> np.append(ppac, ppac[:, [k <span class="op">-</span> <span class="dv">1</span>]], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb10-95"><a href="#cb10-95" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:</span>
+<span id="cb10-96"><a href="#cb10-96" aria-hidden="true" tabindex="-1"></a>                ppac <span class="op">=</span> np.append(ppac, ppac[:, [k <span class="op">-</span> <span class="dv">1</span>]], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb10-97"><a href="#cb10-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-98"><a href="#cb10-98" aria-hidden="true" tabindex="-1"></a>        k <span class="op">=</span> k <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb10-99"><a href="#cb10-99" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb10-100"><a href="#cb10-100" aria-hidden="true" tabindex="-1"></a>    live_plot(States, xyP[<span class="dv">0</span>], xyP[<span class="dv">1</span>],xyG[<span class="dv">0</span>], xyG[<span class="dv">1</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The next function draws the background given a matrix with states corresponding to each entry (i,j) (entry with inf means obstacle).</p>
+<div id="cell-19" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> drawbackground(States, f, ax):</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="op">-</span><span class="fl">0.5</span>, <span class="op">-</span><span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">10</span>, ax)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">13.5</span>, <span class="op">-</span><span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">10</span>, ax)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="op">-</span><span class="fl">0.5</span>, <span class="op">-</span><span class="fl">0.5</span>, <span class="dv">14</span>, <span class="dv">1</span>, ax)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="op">-</span><span class="fl">0.5</span>, <span class="fl">9.5</span>, <span class="dv">15</span>, <span class="dv">1</span>, ax)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">9</span>):</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">13</span>):</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>            plotsquare(j <span class="op">+</span> <span class="fl">0.5</span>, i <span class="op">+</span> <span class="fl">0.5</span>, ax)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> States[i, j] <span class="op">!=</span> np.inf:</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>                plt.text(j <span class="op">+</span> <span class="fl">0.7</span>, i <span class="op">+</span> <span class="fl">0.7</span>, <span class="st">"%.0f"</span> <span class="op">%</span> States[i, j])</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  O</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">1.5</span>, <span class="fl">5.5</span>, <span class="dv">3</span>, <span class="dv">3</span>, ax)</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># P</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">5.5</span>, <span class="fl">5.5</span>, <span class="dv">1</span>, <span class="dv">3</span>, ax)</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">7.5</span>, <span class="fl">6.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, ax)</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">6.5</span>, <span class="fl">6.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, ax)</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># T top</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">10.5</span>, <span class="fl">5.5</span>, <span class="dv">1</span>, <span class="dv">3</span>, ax)</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">9.5</span>, <span class="fl">7.5</span>, <span class="dv">1</span>, <span class="dv">1</span>, ax)</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">11.5</span>, <span class="fl">7.5</span>, <span class="dv">1</span>, <span class="dv">1</span>, ax)</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># C</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">1.5</span>, <span class="fl">1.5</span>, <span class="dv">1</span>, <span class="dv">3</span>, ax)</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>    <span class="co"># plotrectangle(3.5,1.5,1,3,ax)</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">2.5</span>, <span class="fl">1.5</span>, <span class="dv">2</span>, <span class="dv">1</span>, ax)</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">2.5</span>, <span class="fl">3.5</span>, <span class="dv">2</span>, <span class="dv">1</span>, ax)</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>    <span class="co"># T bottom</span></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">6.5</span>, <span class="fl">1.5</span>, <span class="dv">1</span>, <span class="dv">3</span>, ax)</span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">5.5</span>, <span class="fl">3.5</span>, <span class="dv">1</span>, <span class="dv">1</span>, ax)</span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">7.5</span>, <span class="fl">3.5</span>, <span class="dv">1</span>, <span class="dv">1</span>, ax)</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">9.5</span>, <span class="fl">1.5</span>, <span class="dv">1</span>, <span class="dv">3</span>, ax)</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">10.5</span>, <span class="fl">2.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, ax)</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">11.5</span>, <span class="fl">1.5</span>, <span class="dv">1</span>, <span class="dv">1</span>, ax)</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>    plotrectangle(<span class="fl">11.5</span>, <span class="fl">3.5</span>, <span class="dv">1</span>, <span class="dv">1</span>, ax)</span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [ax, f]</span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plotrectangle(l, r, ll, lr, ax):</span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a>    rect <span class="op">=</span> patches.Rectangle((l, r), ll, lr, facecolor<span class="op">=</span><span class="st">'k'</span>)</span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>    ax.add_patch(rect)</span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plotsquare(l, r, ax):</span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a>    rect <span class="op">=</span> patches.Rectangle((l, r), <span class="dv">1</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">'w'</span>, edgecolor<span class="op">=</span><span class="st">'k'</span>)</span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a>    ax.add_patch(rect)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The next function is used to general the random policy by simply picking a random neighbour with equal probability</p>
+<div id="cell-21" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> randompolicy(currentstate, Neighbours):</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(Neighbours[<span class="bu">int</span>(currentstate) <span class="op">-</span> <span class="dv">1</span>])</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    nextstate <span class="op">=</span> Neighbours[<span class="bu">int</span>(currentstate) <span class="op">-</span> <span class="dv">1</span>][<span class="bu">int</span>(np.floor(random.uniform(<span class="dv">0</span>, <span class="dv">1</span>) <span class="op">*</span> n <span class="op">+</span> <span class="dv">1</span>)) <span class="op">-</span> <span class="dv">1</span>]</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> nextstate</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The next function is used to general a biased random policy. If it is possible to go right, do go right with probability 0.5 otherwise pick another random neighbour with equal probability</p>
+<div id="cell-23" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> randompolicybiased(currentstate, Neighbours, States, States2PosM):</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    statesDim <span class="op">=</span> States.shape</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    n1 <span class="op">=</span> statesDim[<span class="dv">0</span>]</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    n2 <span class="op">=</span> statesDim[<span class="dv">1</span>]</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> States2PosM[<span class="bu">int</span>(currentstate) <span class="op">-</span> <span class="dv">1</span>, <span class="dv">1</span>] <span class="op">==</span> n2 <span class="kw">or</span> States[</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>        <span class="bu">int</span>(States2PosM[<span class="bu">int</span>(currentstate) <span class="op">-</span> <span class="dv">1</span>, <span class="dv">0</span>]) <span class="op">-</span> <span class="dv">1</span>, <span class="bu">int</span>(States2PosM[<span class="bu">int</span>(currentstate) <span class="op">-</span> <span class="dv">1</span>, <span class="dv">1</span>])] <span class="op">==</span> np.inf:</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> <span class="bu">len</span>(Neighbours[<span class="bu">int</span>(currentstate) <span class="op">-</span> <span class="dv">1</span>])</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>        nextstate <span class="op">=</span> Neighbours[<span class="bu">int</span>(currentstate) <span class="op">-</span> <span class="dv">1</span>][<span class="bu">int</span>(np.floor(random.uniform(<span class="dv">0</span>, <span class="dv">1</span>) <span class="op">*</span> n <span class="op">+</span> <span class="dv">1</span>)) <span class="op">-</span> <span class="dv">1</span>]</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>        rightneighboor <span class="op">=</span> States[</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>            <span class="bu">int</span>(States2PosM[<span class="bu">int</span>(currentstate) <span class="op">-</span> <span class="dv">1</span>, <span class="dv">0</span>] <span class="op">-</span> <span class="dv">1</span>), <span class="bu">int</span>(States2PosM[<span class="bu">int</span>(currentstate) <span class="op">-</span> <span class="dv">1</span>, <span class="dv">1</span>] <span class="op">+</span> <span class="dv">1</span> <span class="op">-</span> <span class="dv">1</span>)]</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="dv">1</span> <span class="op">&lt;</span> <span class="fl">0.5</span>:</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>            nextstate <span class="op">=</span> rightneighboor</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>            Neighbours[<span class="bu">int</span>(currentstate) <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> Neighbours[<span class="bu">int</span>(currentstate) <span class="op">-</span> <span class="dv">1</span>][</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>                Neighbours[<span class="bu">int</span>(currentstate) <span class="op">-</span> <span class="dv">1</span>] <span class="op">!=</span> rightneighboor]</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>            n <span class="op">=</span> <span class="bu">len</span>(Neighbours[<span class="bu">int</span>(currentstate) <span class="op">-</span> <span class="dv">1</span>])</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>            nextstate <span class="op">=</span> Neighbours[<span class="bu">int</span>(currentstate) <span class="op">-</span> <span class="dv">1</span>][<span class="bu">int</span>(np.floor(random.uniform(<span class="dv">0</span>, <span class="dv">1</span>) <span class="op">*</span> n <span class="op">+</span> <span class="dv">1</span>)) <span class="op">-</span> <span class="dv">1</span>]</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> nextstate</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The next function provides the next cell number given the previous cell number of the periodic motion strategy described above for the pac-man.</p>
+<div id="cell-25" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> periodicmotion(ppac, n1, n2):</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ppac[<span class="dv">0</span>] <span class="op">==</span> <span class="dv">1</span> <span class="kw">and</span> ppac[<span class="dv">1</span>] <span class="op">!=</span> n2:  <span class="co"># right</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>        ppac[<span class="dv">1</span>] <span class="op">=</span> ppac[<span class="dv">1</span>] <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> ppac[<span class="dv">0</span>] <span class="op">==</span> n1 <span class="kw">and</span> ppac[<span class="dv">1</span>] <span class="op">!=</span> <span class="dv">1</span>:  <span class="co"># left</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>            ppac[<span class="dv">1</span>] <span class="op">=</span> ppac[<span class="dv">1</span>] <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> ppac[<span class="dv">1</span>] <span class="op">==</span> <span class="dv">1</span> <span class="kw">and</span> ppac[<span class="dv">0</span>] <span class="op">!=</span> <span class="dv">1</span>:  <span class="co"># down</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>                ppac[<span class="dv">0</span>] <span class="op">=</span> ppac[<span class="dv">0</span>] <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> ppac[<span class="dv">1</span>] <span class="op">==</span> n2 <span class="kw">and</span> ppac[<span class="dv">0</span>] <span class="op">!=</span> n1:  <span class="co"># up</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>                    ppac[<span class="dv">0</span>] <span class="op">=</span> ppac[<span class="dv">0</span>] <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ppac</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-26" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>playoptctrpacman(np.array([[<span class="dv">9</span>], [<span class="dv">1</span>]]), np.array([[<span class="dv">5</span>], [<span class="dv">13</span>]]), <span class="dv">1</span>, <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+
+
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

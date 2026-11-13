@@ -1,0 +1,5 @@
+# The site is a draft under review: keep it out of search engines.
+# Delete this file (and its entry in the `resources:` list of
+# _quarto.yml) when the materials should become publicly findable.
+User-agent: *
+Disallow: /

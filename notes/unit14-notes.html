@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>Unit 14 – State-of-the-Art Methods: TRPO, PPO and Soft Actor-Critic</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="unit14-notes_files/libs/clipboard/clipboard.min.js"></script>
+<script src="unit14-notes_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="unit14-notes_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="unit14-notes_files/libs/quarto-html/popper.min.js"></script>
+<script src="unit14-notes_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="unit14-notes_files/libs/quarto-html/anchor.min.js"></script>
+<link href="unit14-notes_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="unit14-notes_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="unit14-notes_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="unit14-notes_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="unit14-notes_files/libs/bootstrap/bootstrap-5f5514ab72c605193d28bd5ace4a0252.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      // NOTE: these must stay 0-argument, matching \newcommand{\argmin}
+      // in macros.tex. They used to be declared here as taking one
+      // argument ("\\operatorname*{argmin}_{#1}", 1), so \argmin{...}
+      // rendered in html but produced garbage in pdf, and \argmin_{...}
+      // rendered in pdf but produced garbage in html. Use \argmin_{x}.
+      argmin: "\\operatorname*{argmin}",
+      argmax: "\\operatorname*{argmax}",
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#where-this-unit-sits-in-the-course" id="toc-where-this-unit-sits-in-the-course" class="nav-link active" data-scroll-target="#where-this-unit-sits-in-the-course"><span class="header-section-number">1</span> Where this unit sits in the course</a></li>
+  <li><a href="#working-with-the-matlab-toolbox" id="toc-working-with-the-matlab-toolbox" class="nav-link" data-scroll-target="#working-with-the-matlab-toolbox"><span class="header-section-number">2</span> Working with the MATLAB toolbox</a></li>
+  <li><a href="#trust-region-methods" id="toc-trust-region-methods" class="nav-link" data-scroll-target="#trust-region-methods"><span class="header-section-number">3</span> Trust region methods</a>
+  <ul class="collapse">
+  <li><a href="#why-the-policy-gradient-step-needs-a-leash" id="toc-why-the-policy-gradient-step-needs-a-leash" class="nav-link" data-scroll-target="#why-the-policy-gradient-step-needs-a-leash"><span class="header-section-number">3.1</span> Why the policy gradient step needs a leash</a></li>
+  <li><a href="#trpo-the-optimization-problem" id="toc-trpo-the-optimization-problem" class="nav-link" data-scroll-target="#trpo-the-optimization-problem"><span class="header-section-number">3.2</span> TRPO: the optimization problem</a></li>
+  <li><a href="#trpo-in-practice" id="toc-trpo-in-practice" class="nav-link" data-scroll-target="#trpo-in-practice"><span class="header-section-number">3.3</span> TRPO in practice</a></li>
+  <li><a href="#the-algorithm" id="toc-the-algorithm" class="nav-link" data-scroll-target="#the-algorithm"><span class="header-section-number">3.4</span> The algorithm</a></li>
+  </ul></li>
+  <li><a href="#ppo" id="toc-ppo" class="nav-link" data-scroll-target="#ppo"><span class="header-section-number">4</span> PPO</a>
+  <ul class="collapse">
+  <li><a href="#clipping-instead-of-a-constraint" id="toc-clipping-instead-of-a-constraint" class="nav-link" data-scroll-target="#clipping-instead-of-a-constraint"><span class="header-section-number">4.1</span> Clipping instead of a constraint</a></li>
+  <li><a href="#trpo-versus-ppo" id="toc-trpo-versus-ppo" class="nav-link" data-scroll-target="#trpo-versus-ppo"><span class="header-section-number">4.2</span> TRPO versus PPO</a></li>
+  <li><a href="#example-the-lander-vehicle" id="toc-example-the-lander-vehicle" class="nav-link" data-scroll-target="#example-the-lander-vehicle"><span class="header-section-number">4.3</span> Example: the lander vehicle</a></li>
+  </ul></li>
+  <li><a href="#soft-actor-critic" id="toc-soft-actor-critic" class="nav-link" data-scroll-target="#soft-actor-critic"><span class="header-section-number">5</span> Soft actor-critic</a>
+  <ul class="collapse">
+  <li><a href="#the-problem-sac-addresses" id="toc-the-problem-sac-addresses" class="nav-link" data-scroll-target="#the-problem-sac-addresses"><span class="header-section-number">5.1</span> The problem SAC addresses</a></li>
+  <li><a href="#the-objective" id="toc-the-objective" class="nav-link" data-scroll-target="#the-objective"><span class="header-section-number">5.2</span> The objective</a></li>
+  <li><a href="#what-else-sac-carries" id="toc-what-else-sac-carries" class="nav-link" data-scroll-target="#what-else-sac-carries"><span class="header-section-number">5.3</span> What else SAC carries</a></li>
+  <li><a href="#example-ball-balancing" id="toc-example-ball-balancing" class="nav-link" data-scroll-target="#example-ball-balancing"><span class="header-section-number">5.4</span> Example: ball balancing</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">6</span> Summary</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="unit14-notes.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Unit 14 – State-of-the-Art Methods: TRPO, PPO and Soft Actor-Critic</h1>
+<p class="subtitle lead">4SC000 Optimal Control and Reinforcement Learning</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Textbook-prose companion to lectures/lecture14-trpo-ppo-sac.qmd, intended
+as a booklet chapter for readers who did not attend the lecture. Same
+content and figure as the slides, but written as connected prose rather
+than bullet points, so it can stand on its own.
+
+FIRST PASS (2026-10-26). Conventions carried over from units 1-13:
+- Prose, not bullets; every equation from the deck is kept.
+- Figure captions are written here (the slides deliberately carry none).
+- Quick-check callouts follow the unit 1-13 pattern: an OPEN
+  {.callout-tip collapse="false"} with the question, immediately followed
+  by a COLLAPSED {.callout-note collapse="true"} with the solution.
+- Per [[feedback-concluding-remarks-no-learning-outcomes]], no "After this
+  lecture you should be able to" block; the deck's Concluding remarks are
+  absorbed into the closing Summary section.
+- Costs are MINIMISED throughout, as in Units 1-13. See CONVENTION below.
+
+HEADER LINK ROW: Slides only. Duarte confirmed on 2026-10-26 that Unit 14
+has neither exercises nor Jupyter notebooks -- it is a survey lecture, and
+PS3 has no section covering TRPO, PPO or SAC. Add the links here if that
+ever changes.
+
+THIS UNIT IS SHORTER than 10-13 on purpose: the source deck is 17 numbered
+slides against Unit 13's 20, and four of those are MATLAB-toolbox
+housekeeping rather than method content. These notes are correspondingly
+shorter. Three quick exercises rather than four.
+
+CONVENTION: COST vs REWARD. This is the first unit whose source slides are
+written in the reward-maximising form of the original papers rather than
+the course's cost-minimising one, so the conversion changes formulas, not
+just symbols. The deck's header comment lists all three; they are repeated
+here because the notes have to explain them to a student who will open the
+papers:
+  - TRPO and PPO: the slides define L with a LEADING MINUS and then write
+    "min_theta L". With A_pi = Q_pi - J_pi read as a cost advantage
+    (negative = good, as Unit 13 defines it), that minimises the wrong
+    thing. The minus is dropped.
+  - PPO: the slide takes min(r A, c A). Minimising a cost needs the
+    PESSIMISTIC branch, which for a cost is the MAXIMUM, by the identity
+    -min(a,b) = max(-a,-b). Written as max.
+  - SAC: the slide writes E[sum gamma^k (g + alpha H)], while its own
+    sentence says "add a reward to the cost function to promote entropy".
+    Adding a reward to a cost is a SUBTRACTION; as printed, minimising
+    g + alpha H drives the entropy DOWN. Written g - lambda H.
+THE KEYNOTE STILL CARRIES ALL THREE AS PRINTED.
+
+NOTATION. As in Units 10-13: alpha = discount, gamma = step size. The
+source writes the SAC discount as gamma^k (-> alpha^k here) and the SAC
+temperature as alpha (-> lambda here; tau was unavailable because the
+ball-balance example uses tau_1, tau_2 for the joint torques). Two
+collisions are kept and flagged in the text: TRPO's line-search step size
+is alpha, standard in that literature; and phi is the critic's parameter
+vector, where Unit 13's deck wrote alpha_k.
+
+VERIFICATION. Two claims in these notes were checked numerically rather
+than asserted:
+  - the clipping analysis in the PPO section (which branch of the max is
+    active, and where the gradient vanishes) was evaluated by finite
+    differences at r = 0.5, 0.9, 1.0, 1.1, 1.5 for both signs of the
+    advantage, and the cost form max(r A_c, c A_c) was confirmed equal to
+    minus the reward form min(r A_r, c A_r) over 20000 random draws;
+  - the entropy facts in the SAC section (maximiser at p = 1/2 with
+    H = log 2, H -> 0 at both ends, H'(p) = log((1-p)/p) diverging at both
+    ends) were confirmed symbolically.
+
+THIRD-PARTY IMAGES. Four of the deck's source slides were MathWorks
+screenshots and were not carried into the deck (see its header comment);
+they are not here either. The two toolbox tables of contents are retyped,
+as in the deck. The one figure carried is Duarte's own actor-critic block
+diagram, referenced from ../lectures/figures/lecture14/.
+
+FIRST-PASS CAVEAT: expect a section-by-section refinement round, same as
+every other unit.
+-->
+<p><a href="../lectures/lecture14-trpo-ppo-sac.html">Slides</a></p>
+<section id="where-this-unit-sits-in-the-course" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="where-this-unit-sits-in-the-course"><span class="header-section-number">1</span> Where this unit sits in the course</h2>
+<p>Units 10 to 13 built reinforcement learning from the ground up, and by the end of Unit 13 all of the structural ideas were in place: Q-factors and Q-learning, policy iteration and SARSA, function approximation and deep Q-learning, the policy gradient theorem, REINFORCE, baselines and the actor-critic. What was <em>not</em> in place was the engineering. Unit 13’s mountain car made the point concretely – a correct implementation of a correct algorithm converged, quickly and confidently, to a policy that does nothing.</p>
+<p>This unit is about the methods that practitioners actually reach for, and about the two specific repairs that separate them from the textbook algorithms. Both repairs address failures already met:</p>
+<ul>
+<li><strong>Trust region methods</strong> – TRPO and PPO – limit how far a single policy update may move. The policy gradient is a local object, and Unit 13’s warning that these methods “require careful tuning of the learning rate” is the symptom; constraining the step is the cure.</li>
+<li><strong>Soft actor-critic</strong> adds an explicit reward for keeping the policy random. This is exactly the exploration collapse the mountain car exhibited, named and priced into the objective rather than patched afterwards.</li>
+</ul>
+<p>Everything here is a variant of the actor-critic of Unit 13. The names differ, the engineering differs, but the architecture is the same one.</p>
+<div style="text-align: center;">
+<div id="fig-ac-block" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ac-block-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture14/pg06-actor-critic-diagram.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:72.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ac-block-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;1: The actor-critic architecture of Unit 13, which every method in this unit is a variant of. The actor is the policy, the critic is the value function, the temporal difference computed from the critic’s successive estimates and the observed reward is what passes between them, and the process supplies states and rewards in return for actions.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The methods of this unit – PPO, TRPO, SAC, and also <strong>DDPG</strong> (deep deterministic policy gradient) and <strong>TD3</strong> (twin-delayed DDPG), which the course does not cover – are all closely related to <a href="#fig-ac-block" class="quarto-xref">Fig.&nbsp;1</a>. One family that is genuinely different, <strong>model-based reinforcement learning</strong>, combines model-based and data-based ideas; it is outside the scope of the course.</p>
+<p>A warning that runs through the whole unit. These three algorithms are stated here, as everywhere in this course, for a <strong>cost</strong> that is minimised. Their original papers maximise a reward, and the translation is not merely a change of symbol: an objective loses a minus sign, a minimum becomes a maximum, and an entropy bonus that is added becomes one that is subtracted. Each is flagged where it occurs. If you open the papers – and you should – expect the mirror image.</p>
+</section>
+<section id="working-with-the-matlab-toolbox" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="working-with-the-matlab-toolbox"><span class="header-section-number">2</span> Working with the MATLAB toolbox</h2>
+<p>A practical remark before the methods. Every algorithm in this unit has many hyperparameters and is hard to train from scratch; a first encounter with them is much more productive through an implementation that is known to work. MATLAB’s Reinforcement Learning Toolbox is what this unit uses, because it ships with trained examples.</p>
+<p>The toolbox’s agents divide neatly into those the course has already built by hand and those it has not. The first group:</p>
+<table class="caption-top table">
+<caption>Toolbox agents already covered.</caption>
+<colgroup>
+<col style="width: 46%">
+<col style="width: 22%">
+<col style="width: 32%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Agent</th>
+<th style="text-align: left;">Toolbox section</th>
+<th style="text-align: left;">In this course</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Q-Learning</td>
+<td style="text-align: left;">3-19</td>
+<td style="text-align: left;">Unit 10</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">SARSA</td>
+<td style="text-align: left;">3-22</td>
+<td style="text-align: left;">Unit 11</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LSPI</td>
+<td style="text-align: left;">3-25</td>
+<td style="text-align: left;">— (related to LSTD, Unit 12)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Deep Q-Network (DQN)</td>
+<td style="text-align: left;">3-29</td>
+<td style="text-align: left;">Unit 12</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">REINFORCE Policy Gradient (PG)</td>
+<td style="text-align: left;">3-34</td>
+<td style="text-align: left;">Unit 13</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Actor-Critic (AC)</td>
+<td style="text-align: left;">3-40</td>
+<td style="text-align: left;">Unit 13</td>
+</tr>
+</tbody>
+</table>
+<p>and the second:</p>
+<table class="caption-top table">
+<caption>Toolbox agents introduced in this unit, and the three that are not covered.</caption>
+<colgroup>
+<col style="width: 46%">
+<col style="width: 22%">
+<col style="width: 32%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Agent</th>
+<th style="text-align: left;">Toolbox section</th>
+<th style="text-align: left;">In this course</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Proximal Policy Optimization (PPO)</td>
+<td style="text-align: left;">3-45</td>
+<td style="text-align: left;">this unit</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Trust Region Policy Optimization (TRPO)</td>
+<td style="text-align: left;">3-51</td>
+<td style="text-align: left;">this unit</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Deep Deterministic Policy Gradient (DDPG)</td>
+<td style="text-align: left;">3-59</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Twin-Delayed Deep Deterministic (TD3) Policy Gradient</td>
+<td style="text-align: left;">3-64</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Soft Actor-Critic (SAC)</td>
+<td style="text-align: left;">3-70</td>
+<td style="text-align: left;">this unit</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Model-Based Policy Optimization (MBPO)</td>
+<td style="text-align: left;">3-78</td>
+<td style="text-align: left;">—</td>
+</tr>
+</tbody>
+</table>
+<p>The toolbox allows custom environments to be built and ships with many pre-built ones, especially control-related. A custom environment needs only three pieces, which map exactly onto the course’s notation: a <code>step</code> function, which is the dynamics <span class="math inline">\(f_k\)</span>; a <code>reset</code> function, which draws the initial condition; and a reward, which is the negative of the cost <span class="math inline">\(g_k\)</span>. The state space may be discrete or continuous. The drawback worth naming is that the toolbox’s generative AI tooling is not close to what is available elsewhere, for instance VS Code with Copilot.</p>
+</section>
+<section id="trust-region-methods" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="trust-region-methods"><span class="header-section-number">3</span> Trust region methods</h2>
+<section id="why-the-policy-gradient-step-needs-a-leash" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="why-the-policy-gradient-step-needs-a-leash"><span class="header-section-number">3.1</span> Why the policy gradient step needs a leash</h3>
+<p>The policy gradient theorem gives the exact derivative of the cost with respect to the policy parameters, and REINFORCE and the actor-critic estimate that derivative from data. A derivative, however, is a purely <strong>local</strong> object: it describes the cost in an infinitesimal neighbourhood of the current parameters, and says nothing about what happens a finite distance away. Two consequences follow, and both are familiar from Unit 13.</p>
+<p>The first is that a large update can change the policy <em>distribution</em> radically even when it changes the parameters only slightly. A soft-max policy whose preferences shift by a modest amount can go from nearly uniform to nearly deterministic; the parameter step was small, the behavioural step was not. The second is that the policy gradient objective carries no guarantee of improvement at all. Descending a gradient by a finite step can increase the cost, and in reinforcement learning the data for the next step then comes from the worse policy, so there is no mechanism that pulls the iteration back.</p>
+<p>Trust region methods address both by changing what “small step” means. Improvement should be local <strong>in distribution space</strong>, not in parameter space – the quantity to be kept small is a distance between the old policy and the new one, not a distance between <span class="math inline">\(\theta_k\)</span> and <span class="math inline">\(\theta_{k+1}\)</span>. On top of that, the actual step length is chosen by a line search that verifies improvement rather than assuming it.</p>
+<p>TRPO implements this directly. It is complex and has many hyperparameters, which is why <strong>PPO</strong> – a simplification of the same idea, with fewer – is what is used in practice. Both are treated here, TRPO first because PPO only makes sense as a response to it.</p>
+</section>
+<section id="trpo-the-optimization-problem" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="trpo-the-optimization-problem"><span class="header-section-number">3.2</span> TRPO: the optimization problem</h3>
+<p>Central to TRPO is an optimization problem solved once per batch of data. Suppose a batch <span class="math inline">\((x_i,u_i)\)</span>, <span class="math inline">\(i\in\{1,\dots,M\}\)</span>, has been generated by the current policy, written <span class="math inline">\(\pi_{\text{old}}\)</span>. TRPO then solves</p>
+<p><span class="math display">\[\min_\theta L(\theta), \qquad L(\theta)=\frac{1}{M}\sum_{i=1}^M\left[\frac{\pi_\theta(u_i\mid x_i)}{\pi_{\text{old}}(u_i\mid x_i)}A_{\pi_{\text{old}}}(x_i,u_i)\right]\]</span></p>
+<p>subject to</p>
+<p><span class="math display">\[\frac{1}{M}\sum_{i=1}^M\big[D_{\text{KL}}\big(\pi_{\theta_{\text{old}}}(\cdot\mid x_i)\,\|\,\pi_\theta(\cdot\mid x_i)\big)\big]\le\delta,\]</span></p>
+<p>where <span class="math inline">\(\theta\)</span> are the parameters of the new policy, <span class="math inline">\(\pi_\theta(u\mid x)\)</span> and <span class="math inline">\(\pi_{\text{old}}(u\mid x)\)</span> are the probabilities the new and old policies assign to action <span class="math inline">\(u\)</span> at state <span class="math inline">\(x\)</span>,</p>
+<p><span class="math display">\[A_{\pi}(x,u)=Q_{\pi}(x,u)-J_{\pi}(x)\]</span></p>
+<p>is the advantage function of Unit 13, and <span class="math inline">\(D_{\text{KL}}\)</span> is the Kullback-Leibler divergence between the two policies.</p>
+<p>Read the objective first. The advantage <span class="math inline">\(A_{\pi_{\text{old}}}(x_i,u_i)\)</span> is negative for actions that cost less than the old policy’s average and positive for those that cost more. Minimising <span class="math inline">\(L\)</span> therefore raises the ratio <span class="math inline">\(\pi_\theta/\pi_{\text{old}}\)</span> on the good actions and lowers it on the bad ones – which is policy improvement, written in terms of how much the <em>new</em> policy would have liked the <em>old</em> policy’s data. The whole expression is evaluated on data that the new policy did not generate, and the ratio is what makes that legitimate: it is the importance sampling weight of Unit 11, in its third appearance in this course.</p>
+<p>Now read the constraint. Importance sampling is only trustworthy while the two distributions are close; when they are not, the estimate becomes dominated by a few samples with enormous weights, exactly as Unit 11’s off-policy estimators did. The KL constraint bounds precisely that discrepancy. So the two halves of the problem are not independent pieces of machinery bolted together: the constraint is what makes the objective mean anything.</p>
+<p>Intuitively, then: optimize the advantage using the old policy’s data and an importance sampling ratio, subject to the new policy’s distribution staying <strong>not far</strong> from the old one. That region is the trust region.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="The sign, once">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>The sign, once
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The slides write <span class="math inline">\(L\)</span> with a leading minus sign and then minimise it, which is the form used in the original papers. Those maximise a reward, where a good action has a <em>positive</em> advantage. This course minimises a cost, where a good action has a <em>negative</em> advantage, so the minus must go. The same applies to the PPO objective below, where it also turns a minimum into a maximum. The mathematics is identical; only the direction of “good” differs.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: where have you seen that ratio before?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: where have you seen that ratio before?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>The fraction <span class="math inline">\(\pi_\theta(u_i\mid x_i)/\pi_{\text{old}}(u_i\mid x_i)\)</span> has appeared twice already in this course, in different guises. Name both. Then say what their common failure mode is, and which part of the TRPO problem is designed to prevent it.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>It first appeared in Unit 11 as the <strong>importance sampling weight</strong>, which lets data collected under a behaviour policy be used to estimate the value of a different target policy: <span class="math inline">\(\rho=\prod_k\pi(u_k\mid x_k)/\mu(u_k\mid x_k)\)</span>. It appeared again in Unit 13, differentiated, as <span class="math inline">\(\nabla_\theta\pi/\pi=\nabla_\theta\log\pi\)</span> in the REINFORCE update – the same quotient, obtained there by multiplying and dividing by the policy’s own probability.</p>
+<p>The common failure mode is <strong>variance</strong>. A ratio with a probability in the denominator is unbounded: a rarely-taken action under the old policy that the new policy favours produces a huge weight, and a handful of such samples dominate the whole average. Unit 11 saw this as the gap between ordinary and weighted importance sampling; Unit 13 saw it as the second of the two sources of REINFORCE’s variance.</p>
+<p>The KL constraint is the part of the TRPO problem that prevents it. Bounding <span class="math inline">\(D_{\text{KL}}(\pi_{\text{old}}\,\|\,\pi_\theta)\)</span> bounds how different the two distributions can be, and hence how large the ratios can get. Note the direction of the divergence: it penalises <span class="math inline">\(\pi_\theta\)</span> being small where <span class="math inline">\(\pi_{\text{old}}\)</span> is not, which is exactly the configuration that produces a large weight. The trust region is a variance control, not only a safety device.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="trpo-in-practice" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="trpo-in-practice"><span class="header-section-number">3.3</span> TRPO in practice</h3>
+<p>The constrained problem above is not solved exactly. In practice the objective is approximated linearly and the constraint quadratically, both around the current parameters, and the resulting search direction is</p>
+<p><span class="math display">\[\theta_{k+1}=\theta_k-\alpha F^{-1}g,\]</span></p>
+<p>where <span class="math inline">\(g\)</span> is the gradient of the cost, <span class="math inline">\(F\)</span> is a matrix that improves the directionality of that gradient – it is the Fisher information matrix of the policy, the quadratic form that the KL constraint reduces to near <span class="math inline">\(\theta_k\)</span> – and <span class="math inline">\(\alpha\)</span> is a step length picked by <strong>line search</strong>.</p>
+<p>Two remarks on that expression. First, <span class="math inline">\(\alpha\)</span> here is a step size and has nothing to do with the discount factor, which is written <span class="math inline">\(\alpha\)</span> everywhere else in this course; the clash is standard in the TRPO literature and is kept so that these notes match the sources. Second, the line search is doing real work: it is what guarantees both that the new parameters are better than the old ones and that the constraint is actually met, neither of which the linear-quadratic approximation can promise by itself. An update that fails the test is simply shortened until it passes.</p>
+<p>Note also what the trust region does <em>not</em> cover. It applies only to the policy, not to the value or advantage function – the critic. For the critic, the methods of Units 11 and 12 apply unchanged: a Monte-Carlo target or a semi-gradient TD target, the same trade between an unbiased noisy estimate and a biased quiet one. The original TRPO paper uses a more elaborate scheme, but nothing in the method requires it.</p>
+</section>
+<section id="the-algorithm" class="level3" data-number="3.4">
+<h3 data-number="3.4" class="anchored" data-anchor-id="the-algorithm"><span class="header-section-number">3.4</span> The algorithm</h3>
+<div class="callout callout-style-default callout-note callout-titled" title="Algorithm: main ideas behind full TRPO">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Algorithm: main ideas behind full TRPO
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Initialize the policy parameters <span class="math inline">\(\theta\)</span> and the value function parameters <span class="math inline">\(\phi\)</span>. Then repeat:</p>
+<ol type="1">
+<li>Collect trajectories using <span class="math inline">\(\pi_\theta\)</span>.</li>
+<li>Estimate the advantages <span class="math inline">\(A_t\)</span>.</li>
+<li>Compute the policy gradient <span class="math inline">\(g\)</span> and the matrix <span class="math inline">\(F\)</span>.</li>
+<li>Compute the search direction by conjugate gradient.</li>
+<li>Line search, to satisfy the KL constraint.</li>
+<li>Update the policy parameters, <span class="math inline">\(\theta\leftarrow\theta-\alpha F^{-1}g\)</span>.</li>
+<li>Update the value/advantage function parameters <span class="math inline">\(\phi\)</span>.</li>
+</ol>
+</div>
+</div>
+</div>
+<p>Step 1 is worth dwelling on, because two of TRPO’s defining properties follow from it alone. Because the trajectories are collected under the very policy being improved, TRPO is an <strong>on-policy</strong> method, like SARSA in Unit 11 and unlike Q-learning. And because a whole batch must be collected before a single policy update can be made, it is <strong>sample-inefficient</strong>: every sample is used once, for one step, and then discarded. Deep Q-learning’s replay buffer, which reuses each transition many times, is not available here – the ratio in the objective is only valid for data drawn under <span class="math inline">\(\pi_{\text{old}}\)</span>, and a buffer holds data from policies that are older still.</p>
+<p>The critic parameters are written <span class="math inline">\(\phi\)</span> here, where Unit 13’s deck wrote <span class="math inline">\(\alpha_k\)</span> for the same thing. <span class="math inline">\(\phi\)</span> is the better symbol and these notes use it; the two sources have not yet been reconciled.</p>
+</section>
+</section>
+<section id="ppo" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="ppo"><span class="header-section-number">4</span> PPO</h2>
+<section id="clipping-instead-of-a-constraint" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="clipping-instead-of-a-constraint"><span class="header-section-number">4.1</span> Clipping instead of a constraint</h3>
+<p>TRPO is a complex algorithm. Its original form carries genuine guarantees of policy improvement, which is a real achievement, but the price is a conjugate-gradient solve, a Fisher matrix and a line search inside every iteration. <strong>Proximal Policy Optimization</strong> keeps the idea and throws away the machinery.</p>
+<p>PPO solves, over the same kind of batch generated by <span class="math inline">\(\pi_{\theta_{\text{old}}}\)</span>,</p>
+<p><span class="math display">\[\min_\theta L(\theta), \qquad L(\theta)=\frac{1}{M}\sum_{i=1}^M\big[\max\big(r_i(\theta)A_{\pi_{\text{old}}}(x_i,u_i),\;c_i(\theta)A_{\pi_{\text{old}}}(x_i,u_i)\big)\big],\]</span></p>
+<p>where</p>
+<p><span class="math display">\[r_i(\theta)=\frac{\pi_\theta(u_i\mid x_i)}{\pi_{\theta_{\text{old}}}(u_i\mid x_i)}, \qquad c_i(\theta)=\max\big(\min(r_i(\theta),1+\epsilon),1-\epsilon\big).\]</span></p>
+<p>The quantity <span class="math inline">\(c_i(\theta)\)</span> is simply <span class="math inline">\(r_i(\theta)\)</span> <strong>clipped</strong> to the interval <span class="math inline">\([1-\epsilon,1+\epsilon]\)</span>. There is no constraint anywhere: the problem is unconstrained, and the trust region is enforced implicitly, by the fact that the objective stops rewarding the optimizer once the ratio has left that interval in the direction the advantage favours.</p>
+<p>That last clause is the whole trick, and it is worth working out rather than taking on faith.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: what does the clipping actually block?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: what does the clipping actually block?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Fix one sample and drop the index, so the term is <span class="math inline">\(\max\big(rA,\,cA\big)\)</span> with <span class="math inline">\(c\)</span> the clip of <span class="math inline">\(r\)</span> to <span class="math inline">\([1-\epsilon,1+\epsilon]\)</span>. Take <span class="math inline">\(\epsilon=0.2\)</span>. For each sign of the advantage <span class="math inline">\(A\)</span>, work out which of the two arguments the maximum selects when <span class="math inline">\(r=0.5\)</span> and when <span class="math inline">\(r=1.5\)</span>, and in which of those four cases the term has zero derivative with respect to <span class="math inline">\(r\)</span>. Then say in one sentence what the clipping permits and what it forbids.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>With <span class="math inline">\(\epsilon=0.2\)</span>, <span class="math inline">\(c=0.8\)</span> when <span class="math inline">\(r=0.5\)</span> and <span class="math inline">\(c=1.2\)</span> when <span class="math inline">\(r=1.5\)</span>.</p>
+<p><strong>Good action, <span class="math inline">\(A&lt;0\)</span>.</strong> The map <span class="math inline">\(x\mapsto xA\)</span> is decreasing, so the maximum picks the <em>smaller</em> of <span class="math inline">\(r\)</span> and <span class="math inline">\(c\)</span>. At <span class="math inline">\(r=0.5\)</span> that is <span class="math inline">\(r\)</span> itself, and the term is <span class="math inline">\(rA\)</span> with derivative <span class="math inline">\(A\ne0\)</span> – live. At <span class="math inline">\(r=1.5\)</span> it is <span class="math inline">\(c=1.2\)</span>, and the term is the constant <span class="math inline">\((1+\epsilon)A\)</span>, with derivative zero.</p>
+<p><strong>Bad action, <span class="math inline">\(A&gt;0\)</span>.</strong> The map is increasing, so the maximum picks the <em>larger</em>. At <span class="math inline">\(r=1.5\)</span> that is <span class="math inline">\(r\)</span>, term <span class="math inline">\(rA\)</span>, derivative live. At <span class="math inline">\(r=0.5\)</span> it is <span class="math inline">\(c=0.8\)</span>, term <span class="math inline">\((1-\epsilon)A\)</span>, derivative zero.</p>
+<p>Collecting the four cases:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;"><span class="math inline">\(r=0.5\)</span></th>
+<th style="text-align: left;"><span class="math inline">\(r=1.5\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(A&lt;0\)</span> (good action, optimizer wants <span class="math inline">\(r\)</span> <strong>up</strong>)</td>
+<td style="text-align: left;">live</td>
+<td style="text-align: left;"><strong>clipped</strong></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(A&gt;0\)</span> (bad action, optimizer wants <span class="math inline">\(r\)</span> <strong>down</strong>)</td>
+<td style="text-align: left;"><strong>clipped</strong></td>
+<td style="text-align: left;">live</td>
+</tr>
+</tbody>
+</table>
+<p>The pattern is exact and not symmetric by accident. The derivative vanishes precisely when a further step would push the ratio <em>further outside</em> <span class="math inline">\([1-\epsilon,1+\epsilon]\)</span> in the direction the advantage favours, and it stays live whenever the step would pull the ratio <em>back towards</em> <span class="math inline">\(1\)</span>. So the clipping forbids the optimizer from being paid to keep moving away, while permitting it to return at full speed. A constraint would have forbidden both.</p>
+<p>That is also why the objective takes the maximum rather than, say, just using <span class="math inline">\(c\)</span> everywhere. Using <span class="math inline">\(cA\)</span> alone would freeze the ratio outside the interval in both directions, leaving a policy that had drifted out unable to come back.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="trpo-versus-ppo" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="trpo-versus-ppo"><span class="header-section-number">4.2</span> TRPO versus PPO</h3>
+<p>The two methods are worth comparing along four axes.</p>
+<p><strong>Trust region.</strong> TRPO enforces a hard KL constraint in policy space. PPO has no constraint at all: the region is enforced implicitly, by clipping, inside an unconstrained problem.</p>
+<p><strong>Optimization.</strong> TRPO is a second-order method – the matrix <span class="math inline">\(F\)</span> – followed by a line search. PPO is ordinary stochastic gradient descent, the intermezzo of Units 12 and 13, applied to the objective above.</p>
+<p><strong>Use of a batch.</strong> TRPO performs one policy update per batch of data. PPO performs multiple epochs over the same batch. This is the practical difference that matters most: because the clipped objective degrades gracefully as <span class="math inline">\(\pi_\theta\)</span> drifts from <span class="math inline">\(\pi_{\theta_{\text{old}}}\)</span> instead of becoming invalid, the same data can be reused several times before it is thrown away.</p>
+<p><strong>In practice.</strong> TRPO is too complex and is rarely used. PPO is widely used, in robotics among many other fields, and is the default first choice for a continuous-control problem.</p>
+</section>
+<section id="example-the-lander-vehicle" class="level3" data-number="4.3">
+<h3 data-number="4.3" class="anchored" data-anchor-id="example-the-lander-vehicle"><span class="header-section-number">4.3</span> Example: the lander vehicle</h3>
+<p>A MATLAB version of the lander vehicle of Unit 12 is available in the toolbox documentation, as <a href="https://nl.mathworks.com/help/reinforcement-learning/ug/train-discrete-ppo-agent-to-land-vehicle.html">Train Default PPO Agent for Discrete Lander Vehicle</a>. It trains a PPO agent with a <strong>discrete</strong> action space, and walks through building the environment, creating a default PPO agent, training it, and simulating the result. It is the same problem Unit 12 solved with deep Q-learning, which makes it a fair comparison of the two families on identical dynamics.</p>
+</section>
+</section>
+<section id="soft-actor-critic" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="soft-actor-critic"><span class="header-section-number">5</span> Soft actor-critic</h2>
+<section id="the-problem-sac-addresses" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="the-problem-sac-addresses"><span class="header-section-number">5.1</span> The problem SAC addresses</h3>
+<p>Unit 13 ended with a measurement rather than a theorem. On the mountain car, both REINFORCE and the actor-critic converged to a policy that never accelerates, and the actor-critic – whose gradient estimates had about <span class="math inline">\(109\)</span> times less spread – got there roughly thirty times faster. The diagnosis offered there was that a noisy gradient estimate is incidentally a form of exploration, and that removing the noise removes the exploration with it.</p>
+<p>Soft actor-critic is the systematic version of that diagnosis. Standard actor-critic methods do parameterize a stochastic policy, but nothing in the objective rewards them for keeping it stochastic, and the parameters they converge to therefore make the policy almost deterministic – the covariance of a Gaussian policy shrinks towards zero, which is exactly what the final policy standard deviations of <span class="math inline">\(0.0057\)</span> and <span class="math inline">\(0.0011\)</span> in Unit 13’s table recorded.</p>
+<p>The quantity that captures this is the <strong>entropy</strong> of the policy. For a discrete action space,</p>
+<p><span class="math display">\[H(x)=-\sum_u\pi(u\mid x)\log\big(\pi(u\mid x)\big).\]</span></p>
+<p>Low entropy means the policy is close to deterministic – a Dirac distribution; high entropy means close to uniform. In those terms the observation is: usual actor-critic methods converge to policies of low entropy. And low-entropy policies do not explore the input space, so they cannot find the improvements that are not already nearby. The usual remedy is to bolt a randomization on afterwards – an <span class="math inline">\(\epsilon\)</span>-soft policy, as in Unit 11.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: how hard does entropy push back?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: how hard does entropy push back?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Take a two-action policy with <span class="math inline">\(\pi(1\mid x)=p\)</span>, so that <span class="math inline">\(H(p)=-p\log p-(1-p)\log(1-p)\)</span>. Where is <span class="math inline">\(H\)</span> largest, and what is its value there? What happens to <span class="math inline">\(H\)</span> as <span class="math inline">\(p\to0\)</span> or <span class="math inline">\(p\to1\)</span>? Now compute <span class="math inline">\(H'(p)\)</span> and look at what it does at those two ends. What does that tell you about an objective that includes an entropy term?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-8" class="callout-8-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Differentiating,</p>
+<p><span class="math display">\[H'(p)=-\log p-1+\log(1-p)+1=\log\!\left(\frac{1-p}{p}\right),\]</span></p>
+<p>which vanishes only at <span class="math inline">\(p=1/2\)</span>, where <span class="math inline">\(H=\log 2\approx0.693\)</span> – the uniform policy, as expected. At both ends <span class="math inline">\(H\to0\)</span>: a deterministic policy has no entropy.</p>
+<p>The informative part is the slope. As <span class="math inline">\(p\to0^+\)</span>, <span class="math inline">\(H'(p)\to+\infty\)</span>, and as <span class="math inline">\(p\to1^-\)</span>, <span class="math inline">\(H'(p)\to-\infty\)</span>. Some values:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"><span class="math inline">\(p\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(0.5\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(0.1\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(0.01\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(10^{-4}\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(H\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.693\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.325\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.056\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.001\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(H'\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.20\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(4.60\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(9.21\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>So the entropy itself is nearly gone by <span class="math inline">\(p=0.01\)</span>, but its <em>derivative</em> is still growing, and without bound. In a cost objective containing <span class="math inline">\(-\lambda H\)</span>, the marginal cost of making the policy more deterministic diverges as the policy approaches determinism. The entropy term is not a gentle nudge towards randomness that is eventually overwhelmed; it is a barrier at the boundary of the probability simplex, with an infinite restoring force. That is precisely what Unit 13’s mountain car lacked – nothing there made the collapse of the policy’s standard deviation towards zero expensive.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-objective" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="the-objective"><span class="header-section-number">5.2</span> The objective</h3>
+<p>SAC adds a reward for entropy to the cost function – that is, it <strong>subtracts</strong> the entropy from the cost being minimised:</p>
+<p><span class="math display">\[\mathbb{E}\left[\sum_{k=0}^{\infty}\alpha^k\Big(g(x_k,u_k)-\lambda H\big(\pi(\cdot\mid x_k)\big)\Big)\right], \qquad H\big(\pi(\cdot\mid x_k)\big)=-\mathbb{E}_u\big[\log\big(\pi(u\mid x_k)\big)\big],\]</span></p>
+<p>which specialises to</p>
+<p><span class="math display">\[\textbf{discrete input spaces}\qquad H=-\sum_u\pi(u\mid x_k)\log\big(\pi(u\mid x_k)\big)\]</span></p>
+<p><span class="math display">\[\textbf{continuous input spaces}\qquad H=-\int_u\pi(u\mid x_k)\log\big(\pi(u\mid x_k)\big)\,du.\]</span></p>
+<p>The weighting factor <span class="math inline">\(\lambda\)</span> is called the <strong>temperature</strong>: the higher the temperature, the more stochastic the policy. At <span class="math inline">\(\lambda=0\)</span> the objective is the ordinary discounted cost of Unit 10 and the method degenerates to an actor-critic; as <span class="math inline">\(\lambda\)</span> grows the policy is paid more and more to stay random, at the expense of cost. Choosing it is the one genuinely new hyperparameter, and modern implementations usually tune it automatically rather than fixing it.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="Two symbols, changed">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Two symbols, changed
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The SAC literature, and the source slides, write the discount as <span class="math inline">\(\gamma\)</span> and the temperature as <span class="math inline">\(\alpha\)</span>. This course has used <span class="math inline">\(\alpha\)</span> for the discount since Unit 10, so the discount keeps <span class="math inline">\(\alpha\)</span> here and the temperature becomes <span class="math inline">\(\lambda\)</span>. The literature also maximises a reward, where the entropy term is <strong>added</strong> rather than subtracted; the slides carry the added form while describing it in words as a reward added to a cost. Minimising <span class="math inline">\(g+\lambda H\)</span> would drive the entropy down, which is the opposite of the method’s purpose.</p>
+</div>
+</div>
+</section>
+<section id="what-else-sac-carries" class="level3" data-number="5.3">
+<h3 data-number="5.3" class="anchored" data-anchor-id="what-else-sac-carries"><span class="header-section-number">5.3</span> What else SAC carries</h3>
+<p>Beyond the entropy term, soft actor-critic has several features, each of which is a device already met in this course:</p>
+<ul>
+<li><strong>Two critics</strong>, <span class="math inline">\(Q_{\phi_1}\)</span> and <span class="math inline">\(Q_{\phi_2}\)</span>, with separate parameters. Carrying two and using the more pessimistic of them counteracts the tendency of a single learned Q-function to be systematically optimistic about actions it has seen little of.</li>
+<li>A <strong>stochastic policy</strong> <span class="math inline">\(\pi_\theta(u\mid x)\)</span>, typically Gaussian with learned mean and covariance – the same parameterisation as Unit 13’s mountain car notebooks, where the collapse of that covariance was the failure. Here the entropy term is what prevents it.</li>
+<li><strong>Replay buffers</strong>, as in deep Q-learning in Unit 12. This is possible because SAC is off-policy, unlike TRPO and PPO, and it is the main reason SAC is far more sample-efficient than they are.</li>
+<li><strong>Stochastic gradient</strong> for the critic update, the intermezzo of Units 12 and 13 once again.</li>
+</ul>
+<p>The contrast with the first half of the unit is worth naming. TRPO and PPO are on-policy methods that make a conservative update from fresh data; SAC is an off-policy method that makes an aggressive update from stored data and keeps itself out of trouble by refusing to stop exploring. Both are answers to the same underlying difficulty, from opposite directions.</p>
+</section>
+<section id="example-ball-balancing" class="level3" data-number="5.4">
+<h3 data-number="5.4" class="anchored" data-anchor-id="example-ball-balancing"><span class="header-section-number">5.4</span> Example: ball balancing</h3>
+<p>The toolbox’s worked example for SAC is <a href="https://nl.mathworks.com/help/releases/R2025a/reinforcement-learning/ug/train-sac-agent-for-ball-balance-control.html">Train SAC Agent for Ball Balance Control</a>, which trains an agent to control a robot arm balancing a ball on a plate. Only the final two joints are actuated, and the ball has six degrees of freedom and can move freely in space; contact forces between ball and plate are modelled with the Spatial Contact Force block. The control inputs are the torque signals for the actuated joints, and the simulation ends when the ball falls off the plate.</p>
+<p>The reward is the sum of three terms,</p>
+<p><span class="math display">\[r_t=r_{\text{ball}}+r_{\text{plate}}+r_{\text{action}}, \qquad r_{\text{ball}}=e^{-0.001(x^2+y^2)}, \qquad r_{\text{plate}}=-0.1\big(\phi^2+\theta^2+\psi^2\big), \qquad r_{\text{action}}=-0.05\big(\tau_1^2+\tau_2^2\big),\]</span></p>
+<p>where <span class="math inline">\(x,y\)</span> is the position of the ball in the plane, ideally zero; <span class="math inline">\(\phi,\theta,\psi\)</span> are the end-effector roll, pitch and yaw; and <span class="math inline">\(\tau_1,\tau_2\)</span> are the torques. (These are MathWorks’ symbols for that example, and they collide with the critic parameters <span class="math inline">\(\phi\)</span> and the policy parameters <span class="math inline">\(\theta\)</span> used above. They are kept so that the notes match the documentation.)</p>
+<p>The structure is worth reading, because it is the same structure as the mountain car. There is a term that rewards being where you should be, and two terms that penalise effort – on the plate’s orientation and on the torques. As in the mountain car, doing nothing scores better than flailing, and an agent that stops exploring early will find the do-nothing policy and stay there. The difference is that SAC is paid to keep exploring, which is the entire reason this example is the one chosen to illustrate it.</p>
+</section>
+</section>
+<section id="summary" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="summary"><span class="header-section-number">6</span> Summary</h2>
+<p>The algorithms of Units 10 to 13 are correct; this unit is about what has to be added to make them work.</p>
+<p><strong>TRPO</strong> solves an explicit optimization problem each time it improves the policy: maximise the advantage of the new policy on the old policy’s data, reweighted by the importance sampling ratio, subject to a bound on the Kullback-Leibler divergence between the two policies. The constraint is not decoration – it bounds exactly the quantity whose variance would otherwise make the reweighted objective meaningless. In practice the problem is approximated, the direction is <span class="math inline">\(-\alpha F^{-1}g\)</span>, and a line search guarantees that the step actually improves things.</p>
+<p>That problem is hard, and in practice it is replaced by the simpler one used by <strong>PPO</strong>, which drops the constraint and clips the importance ratio instead. The clipping removes the gradient exactly when a further step would push the ratio further outside <span class="math inline">\([1-\epsilon,1+\epsilon]\)</span> in the direction the advantage favours, while leaving it intact for steps that come back. Because the objective degrades gracefully rather than becoming invalid, the same batch can be reused for several epochs – and PPO is ordinary stochastic gradient descent throughout. It is widely used in applications; TRPO rarely is.</p>
+<p>The idea behind both is the same: ensure the learning policy does not take big steps away from the previous one.</p>
+<p><strong>Soft actor-critic</strong> attacks the other failure. It adds a reward for the policy’s entropy – a subtraction from the cost – so that remaining random is worth something. As the policy approaches determinism the marginal cost of becoming more deterministic diverges, which makes the collapse that Unit 13 measured expensive rather than free. Around that objective SAC assembles devices already met: two critics, a Gaussian policy with learned covariance, a replay buffer, and stochastic gradient for the critic.</p>
+<p>The entropy idea is used and combined in many other methods, and the two halves of this unit are complementary rather than competing. TRPO and PPO are on-policy and conservative in how far they move; SAC is off-policy and aggressive, and stays safe by refusing to stop exploring. Between them they name the two things that a textbook policy gradient method leaves out.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
