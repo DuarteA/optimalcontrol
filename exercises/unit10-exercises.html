@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>Unit 10 Exercises</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="unit10-exercises_files/libs/clipboard/clipboard.min.js"></script>
+<script src="unit10-exercises_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="unit10-exercises_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="unit10-exercises_files/libs/quarto-html/popper.min.js"></script>
+<script src="unit10-exercises_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="unit10-exercises_files/libs/quarto-html/anchor.min.js"></script>
+<link href="unit10-exercises_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="unit10-exercises_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="unit10-exercises_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="unit10-exercises_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="unit10-exercises_files/libs/bootstrap/bootstrap-5f5514ab72c605193d28bd5ace4a0252.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      // NOTE: these must stay 0-argument, matching \newcommand{\argmin}
+      // in macros.tex. They used to be declared here as taking one
+      // argument ("\\operatorname*{argmin}_{#1}", 1), so \argmin{...}
+      // rendered in html but produced garbage in pdf, and \argmin_{...}
+      // rendered in pdf but produced garbage in html. Use \argmin_{x}.
+      argmin: "\\operatorname*{argmin}",
+      argmax: "\\operatorname*{argmax}",
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#core-exercises" id="toc-core-exercises" class="nav-link active" data-scroll-target="#core-exercises"><span class="header-section-number">1</span> Core exercises</a></li>
+  <li><a href="#additional-exercises" id="toc-additional-exercises" class="nav-link" data-scroll-target="#additional-exercises"><span class="header-section-number">2</span> Additional exercises</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="unit10-exercises.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Unit 10 Exercises</h1>
+<p class="subtitle lead">4SC000 Optimal Control and Reinforcement Learning</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Source: Solved Exercises/3/PS3.tex (problems) and
+Solved Exercises/3/Solutions/SolutionsPS3.tex (solutions).
+
+Two batches. The first, added 2026-10-21, is section 1 "Infinite
+horizon problems and Q-Functions" -- originally Problems 1.1-1.4. The
+second, added 2026-10-25, is the Q-learning part of section 3
+"Q-Learning and SARSA" -- originally Problems 3.1, 3.2 and 3.3, which
+Duarte pointed to explicitly (3.4 is the SARSA version of 3.1 and
+belongs to Unit 11, where SARSA is introduced).
+
+NUMBERING. Renumbered so that Core runs 10.1-10.5 and Additional
+10.6-10.7, which required moving the old 10.4 to 10.6:
+
+  10.1 = 1.1  finite horizon -> shortest path, by augmenting the state
+              with the clock; then its Bellman equation
+  10.2 = 1.2  discounted -> shortest path, by the twin construction;
+              then its Bellman equation
+  10.3 = 1.3  optimal Q-function of a 3-state shortest path problem,
+              given the optimal policy
+  10.4 = 3.1  Q-learning by hand on a 10-step data table, finite
+              horizon inventory control
+  10.5 = 3.3  asset selling: show that Q-learning collapses to a
+              scalar recursion
+  10.6 = 1.4  (Additional) the Q-function computation of 10.3 again,
+              for a discounted problem with no terminal state
+  10.7 = 3.2  (Additional) the Q-learning table of 10.4 again, for the
+              discounted infinite-horizon version
+
+The two Additional problems are there not because they are harder but
+because each exercises exactly the technique of a Core problem a second
+time: a student who has done 10.3 and 10.4 learns little new from them,
+while one who wants the drill gets it. Core 10.1-10.3 cover the two
+reductions to shortest path and the Q-factor computation; 10.4 and 10.5
+cover Q-learning itself, once numerically and once structurally.
+
+TRANSPOSED TRANSITION MATRICES. PS3 defines the transition matrices as
+P_{ji}(l) = Prob[x_{k+1}=j | x_k=i, u_k=l], i.e. COLUMN-stochastic -- the
+transpose of the p_{ij}(u) convention used in the notes and slides. Both
+P(1) and P(2) in 10.3 and 10.6 have columns summing to one, confirming
+it. This is the single most likely source of a wrong answer in these
+problems, so it is flagged in the preamble below rather than left for
+the student to discover.
+
+VERIFICATION. Every number in every solution here was recomputed from
+the problem data (numpy: direct linear solves for the Bellman
+equations, a literal replay of the update rule for the Q-learning
+tables) rather than copied from the solutions manual. All of the
+source's values are confirmed except two rounding slips in 1.3, which
+are corrected here and noted in the solution text:
+  Q(1,2): source 5.1109, exact 5.1111
+  Q(2,2): source 4.7998, exact 4.8000
+
+ERRORS IN THE SOURCE STATEMENTS, corrected here.
+Problem 1.1's cost is printed as "sum_{k=0}^2 g(x_k,u_k)+g_3(x_h)" with
+h undefined at that point; it means g_3(x_3).
+Problem 1.4's solution writes the Q-function as
+"i^2+u^2+alpha*(sum_j P_{ji}(u) J(i))" -- the J(i) should be J(j); the
+subsequent numeric lines use the correct form, so it is a typo.
+Problem 3.1 (-> 10.4) has four:
+  - the control constraint set is printed as U_k(x_{k+1}); it is
+    U_k(x_k) = {0,...,N-x_k}, as the rest of the problem uses;
+  - "d_0 = 1, d_2 = 1" is left over from Problem 2.3 and contradicts the
+    sentence that follows it (and the data table, where d_0 = 2 and
+    d_2 = 0): in 3.1 every demand is random;
+  - the terminal update is printed with g(x_h, u_{h-1}, d_{h-1}) and
+    g_{h-1}(x_h); it should be g(x_{h-1}, u_{h-1}, d_{h-1}) and
+    g_h(x_h);
+  - the step size is called gamma^k in the prose and gamma^l in the
+    formula; it is gamma^l, constant at 0.5.
+Problem 3.3 (-> 10.5) is printed as a minimisation with
+g(x_k,1) = x_k and g(x_k,0) = x_k. Both are slips: waiting earns
+nothing, so g(x_k,0) = 0, and one wants the sale price to be as LARGE as
+possible -- which is why the update written in the problem itself
+carries a max. It is stated here as a maximisation of the discounted
+sale price, consistently with the asset-selling example in the notes.
+Its data (p_0 = 0.01 against p_1..p_5 summing to 0.95) is also
+inconsistent, but 3.3 asks only for the structure and never uses the
+numbers, so nothing turns on it. See Unit 11's Problem 11.10 for the
+version where it matters.
+Problem 3.2 (-> 10.7) asks for "the estimates after 9 iterations,
+Q_9(i,u)", which are two different things: Q_9 is the result of the
+updates l = 1..8. Both readings are given in the solution.
+-->
+<p>These exercises accompany <a href="../notes/unit10-notes.html">Unit 10</a> and its <a href="../lectures/lecture10-rl-infinite-horizon-q-learning.html">slides</a>.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="Note on the transition matrices">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Note on the transition matrices
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In Problems 10.3 and 10.6 the transition matrices are defined by</p>
+<p><span class="math display">\[P_{ji}(\ell)=\text{Prob}[x_{k+1}=j\mid x_k=i,\ u_k=\ell],\]</span></p>
+<p>so the entry in row <span class="math inline">\(j\)</span>, column <span class="math inline">\(i\)</span> is the probability of moving <strong>from <span class="math inline">\(i\)</span> to <span class="math inline">\(j\)</span></strong>. Each <strong>column</strong> of <span class="math inline">\(P(\ell)\)</span> therefore sums to one. This is the transpose of the convention <span class="math inline">\(p_{ij}(u)\)</span> used in the notes and the slides. When you write the Bellman equation</p>
+<p><span class="math display">\[J(i)=\min_{u}\ g(i,u)+\alpha\sum_{j}p_{ij}(u)J(j),\]</span></p>
+<p>the sum <span class="math inline">\(\sum_j p_{ij}(u)J(j)\)</span> is the inner product of the <span class="math inline">\(i\)</span>-th <strong>column</strong> of <span class="math inline">\(P(u)\)</span> with the vector of values – not the <span class="math inline">\(i\)</span>-th row. Getting this backwards is the commonest way to lose these problems.</p>
+</div>
+</div>
+<section id="core-exercises" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="core-exercises"><span class="header-section-number">1</span> Core exercises</h2>
+<p><strong>Problem 10.1</strong> Consider the following finite horizon optimal control problem</p>
+<p><span class="math display">\[\min_{u_k=\mu_k(x_k)}\mathbb{E}\left[\sum_{k=0}^{2}g(x_k,u_k)+g_3(x_3)\right]\]</span></p>
+<p><span class="math display">\[x_{k+1}=\min(\max(x_k+u_k+w_k,0),3)\]</span></p>
+<p>with <span class="math inline">\(g(x_k,u_k)=x_k+u_k\)</span> and <span class="math inline">\(g_3(x_3)=x_3\)</span>, and <span class="math inline">\(x_k\in\{0,1,2,3\}\)</span>, <span class="math inline">\(u_k\in\{-1,0,1\}\)</span>, <span class="math inline">\(w_k\in\{-1,0,1\}\)</span>, <span class="math inline">\(\text{Prob}[w_k=-1]=\text{Prob}[w_k=0]=\text{Prob}[w_k=1]=\frac{1}{3}\)</span>.</p>
+<ol type="i">
+<li><p>Write it as a shortest path problem.</p></li>
+<li><p>Write the Bellman equation for the shortest path problem and show that the solution of the Bellman equation provides the optimal cost-to-go for every <span class="math inline">\(k\in\{0,1,2\}\)</span> for the original problem.</p></li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(i)</strong> Augment the state with the clock. Let <span class="math inline">\(\bar x_k=(x_{1,k},x_{2,k})=(x_k,k)\)</span> for <span class="math inline">\(k\in\{0,1,2,3\}\)</span>, so that <span class="math inline">\(\bar x_k\in\{0,1,2,3\}\times\{0,1,2,3\}\)</span>. (One could index <span class="math inline">\(\bar x_k\)</span> by a single <span class="math inline">\(\hat x_k\in\{1,2,\dots,4\times4\}\)</span> to put the state in canonical form; nothing below depends on it.) The cost and the model become</p>
+<p><span class="math display">\[\min_{u_k=\mu(\bar x_k)}\mathbb{E}\left[\sum_{k=0}^{\infty}\bar g(\bar x_k,u_k,w_k)\right]\]</span></p>
+<p>with</p>
+<p><span class="math display">\[\bar g(\bar x_k,u_k,w_k)=\begin{cases} x_{1,k}+u_k &amp; \text{if } k\in\{0,1\}\\ x_{1,2}+u_2+\min(\max(x_{1,2}+u_2+w_2,0),3) &amp; \text{if } k=2\\ 0 &amp; \text{if } k\geq3\end{cases}\]</span></p>
+<p><span class="math display">\[\bar x_{k+1}=(x_{1,k+1},x_{2,k+1})=\big(\min(\max(x_{1,k}+u_k+w_k,0),3),\ x_{2,k}+1\big):=\bar f(\bar x_k,u_k,w_k).\]</span></p>
+<p>The states with <span class="math inline">\(x_{2,k}\geq3\)</span> are absorbing and cost-free, so this is a shortest path problem. Note that the terminal cost <span class="math inline">\(g_3\)</span> has been folded into the stage cost at <span class="math inline">\(k=2\)</span>: at that stage the running cost accounts both for the decision taken and for the state it leads to.</p>
+<p><strong>(ii)</strong> The Bellman equation for the shortest path problem is</p>
+<p><span class="math display">\[\bar J(\bar x)=\min_{u\in\{-1,0,1\}}\mathbb{E}_{w\in\{-1,0,1\}}\big[\bar g(\bar x,u,w)+\bar J(\bar f(\bar x,u,w))\big].\]</span></p>
+<p>Write <span class="math inline">\(J_k(x_k)=\bar J(\bar x_k)=J_{x_{2,k}}(x_{1,k})\)</span>, i.e.&nbsp;use the clock component as a subscript. For states <span class="math inline">\(\bar x_0=(x_{1,0},0)\)</span>,</p>
+<p><span class="math display">\[\begin{aligned} J_0(x_0)=\bar J(\bar x_0)&amp;=\min_{u\in\{-1,0,1\}}\mathbb{E}_{w_0}\big[\bar g(\bar x_0,u,w)+\bar J\big(\min(\max(x_{1,0}+u+w,0),3),\ \underbrace{x_{2,0}}_{=0}+1\big)\big]\\ &amp;=\min_{u_0\in\{-1,0,1\}} x_0+u_0+\mathbb{E}_{w_0}\big[J_1(\min(\max(x_0+u_0+w_0,0),3))\big],\end{aligned}\]</span></p>
+<p>for states <span class="math inline">\(\bar x_1=(x_1,1)\)</span>,</p>
+<p><span class="math display">\[\begin{aligned} J_1(x_1)&amp;=\min_{u_1\in\{-1,0,1\}} x_1+u_1+\mathbb{E}_{w_1}\big[J_2(\min(\max(x_1+u_1+w_1,0),3))\big],\end{aligned}\]</span></p>
+<p>and for states <span class="math inline">\(\bar x_2=(x_2,2)\)</span>,</p>
+<p><span class="math display">\[\begin{aligned} J_2(x_2)&amp;=\min_{u_2\in\{-1,0,1\}}\mathbb{E}_{w_2}\big[x_2+u_2+\min(\max(x_2+u_2+w_2,0),3)+J_3(\min(\max(x_2+u_2+w_2,0),3))\big].\end{aligned}\]</span></p>
+<p>Since <span class="math inline">\(\bar g((i,k),u)=0\)</span> for <span class="math inline">\(k\geq3\)</span>, we have <span class="math inline">\(\bar J((i,3))=\bar J((i,4))=\dots=0\)</span>, that is <span class="math inline">\(J_3(i)=J_4(i)=\dots=0\)</span> for every <span class="math inline">\(i\)</span>. Substituting <span class="math inline">\(J_3\equiv0\)</span> into the last equation leaves exactly the dynamic programming recursion of the original finite horizon problem, run backwards from the terminal cost <span class="math inline">\(g_3(x_3)=x_3\)</span>. So the solution of the single, time-invariant Bellman equation provides the optimal cost-to-go <span class="math inline">\(J_k\)</span> for every <span class="math inline">\(k\in\{0,1,2\}\)</span> of the original problem – the time indices that were stages there are state components here.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 10.2</strong> Consider the following discounted cost optimal control problem</p>
+<p><span class="math display">\[\min_{u_k=\mu_k(x_k)}\sum_{k=0}^{\infty}\mathbb{E}\left[\alpha^kg(x_k,u_k)\right]\]</span></p>
+<p><span class="math display">\[x_{k+1}=\min(\max(x_k+u_k+w_k,0),3)\]</span></p>
+<p>with <span class="math inline">\(\alpha=0.6\)</span>, <span class="math inline">\(g(x_k,u_k)=x_k+u_k\)</span> and <span class="math inline">\(x_k\in\{0,1,2,3\}\)</span>, <span class="math inline">\(u_k\in\{-1,0,1\}\)</span>, <span class="math inline">\(w_k\in\{-1,0,1\}\)</span>, <span class="math inline">\(\text{Prob}[w_k=-1]=\text{Prob}[w_k=0]=\text{Prob}[w_k=1]=\frac{1}{3}\)</span>.</p>
+<ol type="i">
+<li><p>Write it as a shortest path problem.</p></li>
+<li><p>Write the Bellman equation for the shortest path problem and show that it coincides with the Bellman equation for the original discounted cost problem.</p></li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(i)</strong> Follow the twin construction: multiply all transition probabilities by <span class="math inline">\(\alpha=0.6\)</span> and route the remaining mass to a terminal state. Equivalently, enlarge the disturbance alphabet and set</p>
+<p><span class="math display">\[\text{Prob}[w_k=-1]=\text{Prob}[w_k=0]=\text{Prob}[w_k=1]=\frac{\alpha}{3},\qquad \text{Prob}[w_k=2]=1-\alpha,\]</span></p>
+<p>with the convention that <span class="math inline">\(w_k=2\)</span> sends the state to a terminal state <span class="math inline">\(t\)</span>:</p>
+<p><span class="math display">\[x_{k+1}=\bar f(x_k,u_k,w_k)=\begin{cases}\min(\max(x_k+u_k+w_k,0),3) &amp; \text{if } w_k\in\{-1,0,1\}\\ t &amp; \text{if } w_k=2.\end{cases}\]</span></p>
+<p>The equivalent shortest path problem is then</p>
+<p><span class="math display">\[\min_{u_k=\mu_k(x_k)}\sum_{k=0}^{\infty}\mathbb{E}\left[\bar g(x_k,u_k)\right], \qquad \bar g(x_k,u_k)=\begin{cases}x_k+u_k &amp; \text{if } x_k\neq t\\ 0 &amp; \text{if } x_k=t,\end{cases}\]</span></p>
+<p>with terminal state <span class="math inline">\(t\)</span>, and <span class="math inline">\(x_k\in\{0,1,2,3,t\}\)</span>, <span class="math inline">\(u_k\in\{-1,0,1\}\)</span>, <span class="math inline">\(w_k\in\{-1,0,1,2\}\)</span>.</p>
+<p><strong>(ii)</strong> The Bellman equation for the shortest path problem is</p>
+<p><span class="math display">\[J(i)=\min_{u\in\{-1,0,1\}}\bar g(i,u)+\mathbb{E}_{w\in\{-1,0,1,2\}}\big[J(\bar f(i,u,w))\big], \qquad i\in\{0,1,2,3,t\}.\]</span></p>
+<p>Since <span class="math inline">\(\bar g(t,\cdot)=0\)</span> we have <span class="math inline">\(J(t)=0\)</span>, so the <span class="math inline">\(w=2\)</span> branch contributes nothing to the expectation and</p>
+<p><span class="math display">\[\begin{aligned}\mathbb{E}_{w\in\{-1,0,1,2\}}\big[J(\bar f(i,u,w))\big]&amp;=\mathbb{E}_{w\in\{-1,0,1\}}\big[J(\bar f(i,u,w))\big]\\ &amp;=\tfrac{\alpha}{3}J(\min(\max(i+u-1,0),3))+\tfrac{\alpha}{3}J(\min(\max(i+u,0),3))+\tfrac{\alpha}{3}J(\min(\max(i+u+1,0),3)).\end{aligned}\]</span></p>
+<p>Hence, for <span class="math inline">\(i\in\{0,1,2,3\}\)</span>,</p>
+<p><span class="math display">\[J(i)=\min_{u\in\{-1,0,1\}}g(i,u)+\alpha\underbrace{\Big(\tfrac{1}{3}J(\min(\max(i+u-1,0),3))+\tfrac{1}{3}J(\min(\max(i+u,0),3))+\tfrac{1}{3}J(\min(\max(i+u+1,0),3))\Big)}_{=\ \mathbb{E}_{w\in\{-1,0,1\}}\left[J(\min(\max(i+u+w,0),3))\right]},\]</span></p>
+<p>which is exactly the Bellman equation for the discounted cost problem. The discount factor has reappeared not as a weight on future costs but as the probability <span class="math inline">\(\alpha\)</span> of <em>not</em> terminating – which is the content of the twin construction.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 10.3</strong> Consider the following shortest path optimal control problem</p>
+<p><span class="math display">\[\min_{u_k=\mu_k(x_k)}\sum_{k=0}^{\infty}\mathbb{E}\left[g(x_k,u_k)\right], \qquad \text{Prob}[x_{k+1}=j\mid x_k=i,\ u_k=\ell]=P_{ji}(\ell),\]</span></p>
+<p>for <span class="math inline">\(i,j\in\{1,2,3\}\)</span> and <span class="math inline">\(\ell\in\{1,2\}\)</span>, where <span class="math inline">\(g(i,\ell)=1\)</span> for every <span class="math inline">\(i\in\{1,2\}\)</span> and <span class="math inline">\(\ell\in\{1,2\}\)</span>, and <span class="math inline">\(g(3,\ell)=0\)</span> for every <span class="math inline">\(\ell\in\{1,2\}\)</span>, and</p>
+<p><span class="math display">\[P(1)=\begin{bmatrix}0.1&amp;0.5&amp;0\\0.9&amp;0&amp;0\\0&amp;0.5&amp;1\end{bmatrix}, \qquad P(2)=\begin{bmatrix}0.9&amp;0.9&amp;0\\0.1&amp;0&amp;0\\0&amp;0.1&amp;1\end{bmatrix}.\]</span></p>
+<p>The initial condition is either <span class="math inline">\(x_0=1\)</span> or <span class="math inline">\(x_0=2\)</span>, and the terminal condition is <span class="math inline">\(x_k=3\)</span>. The optimal policy is <span class="math inline">\(\mu(1)=1\)</span>, <span class="math inline">\(\mu(2)=1\)</span>, <span class="math inline">\(\mu(3)=-\)</span> (no control action is needed). Compute the optimal Q-function.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Start from the value function, using the Bellman equation with the optimal policy already supplied (so the <span class="math inline">\(\min\)</span> can be dropped and the known minimiser substituted):</p>
+<p><span class="math display">\[J(1)=\min_{u\in\{1,2\}}g(1,u)+\sum_{j}p_{1j}(u)J(j)=g(1,1)+\sum_{j}P_{j1}(1)J(j)=1+0.1J(1)+0.9J(2)\]</span></p>
+<p><span class="math display">\[J(2)=\min_{u\in\{1,2\}}g(2,u)+\sum_{j}p_{2j}(u)J(j)=g(2,1)+\sum_{j}P_{j2}(1)J(j)=1+0.5J(1)+0.5J(3)\]</span></p>
+<p><span class="math display">\[J(3)=0\]</span></p>
+<p>(state <span class="math inline">\(3\)</span> is terminal and free). Substituting the second equation into the first gives <span class="math inline">\(J(1)=1.9+0.55J(1)\)</span>, so</p>
+<p><span class="math display">\[J(1)=\frac{1.9}{0.45}=4.2222, \qquad J(2)=1+0.5(4.2222)=3.1111, \qquad J(3)=0.\]</span></p>
+<p>The optimal Q-function is <span class="math inline">\(Q(i,u)=g(i,u)+\sum_{j}P_{ji}(u)J(j)\)</span>, i.e. the cost of taking <span class="math inline">\(u\)</span> once and behaving optimally thereafter. Reading the columns of <span class="math inline">\(P(1)\)</span> and <span class="math inline">\(P(2)\)</span>:</p>
+<p><span class="math display">\[\begin{aligned} Q(1,1)&amp;=1+0.1J(1)+0.9J(2)=4.2222 &amp; Q(1,2)&amp;=1+0.9J(1)+0.1J(2)=5.1111\\ Q(2,1)&amp;=1+0.5J(1)+0.5J(3)=3.1111 &amp; Q(2,2)&amp;=1+0.9J(1)+0.1J(3)=4.8000\\ Q(3,1)&amp;=0 &amp; Q(3,2)&amp;=0\end{aligned}\]</span></p>
+<p>The optimal policy is <span class="math inline">\(\mu(i)=\arg\min_{u\in U(i)}Q(i,u)\)</span>. At state <span class="math inline">\(1\)</span>, <span class="math inline">\(Q(1,1)&lt;Q(1,2)\)</span>; at state <span class="math inline">\(2\)</span>, <span class="math inline">\(Q(2,1)&lt;Q(2,2)\)</span>; and <span class="math inline">\(Q(3,1)=Q(3,2)=0\)</span>, so no action matters there. This recovers exactly the policy given in the problem statement, which is the consistency check worth making: the Q-function was computed <em>assuming</em> that policy, so if its own minimisers disagreed with it, the assumed policy would not have been optimal.</p>
+<p>Observe also that <span class="math inline">\(Q(i,\mu(i))=J(i)\)</span> for each <span class="math inline">\(i\)</span> – taking the optimal action and then behaving optimally is simply behaving optimally.</p>
+<p>(The source solutions manual gives <span class="math inline">\(Q(1,2)=5.1109\)</span> and <span class="math inline">\(Q(2,2)=4.7998\)</span>; the exact values are <span class="math inline">\(5.1111\)</span> and <span class="math inline">\(4.8000\)</span>. The difference is rounding in the intermediate value of <span class="math inline">\(J(1)\)</span> and changes nothing.)</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 10.4</strong> Consider an inventory control problem where the number of items of a given product over <span class="math inline">\(h\)</span> stages is described by</p>
+<p><span class="math display">\[x_{k+1}=\max\{x_k+u_k-d_k,0\}, \qquad k\in\{0,\dots,h-1\},\]</span></p>
+<p>where <span class="math inline">\(x_k\in\{0,\dots,N\}\)</span>, <span class="math inline">\(u_k\in U_k(x_k):=\{0,\dots,N-x_k\}\)</span> and <span class="math inline">\(d_k\)</span> denote the number of items, the supply and the demand at time <span class="math inline">\(k\)</span>, and <span class="math inline">\(N\)</span> denotes the capacity. The objective is to minimise</p>
+<p><span class="math display">\[\sum_{k=0}^{h-1}\big(c_1(x_k)+c_2(u_k)-p\min\{x_k+u_k,d_k\}\big)+g_h(x_h),\]</span></p>
+<p>where <span class="math inline">\(c_1(i)=i\)</span> is the storage cost,</p>
+<p><span class="math display">\[c_2(j)=\begin{cases}5j+0.9 &amp; \text{if } j&gt;0\\ 0 &amp; \text{if } j=0,\end{cases}\]</span></p>
+<p>is the cost of ordering <span class="math inline">\(j\)</span> items, <span class="math inline">\(p=9\)</span> is the selling price per item, and <span class="math inline">\(g_h(i)=-4i\)</span> is the terminal cost. Suppose <span class="math inline">\(h=3\)</span>, <span class="math inline">\(N=2\)</span>, and that the demand is uncertain at every stage, with <span class="math inline">\(\text{Prob}[d_k=0]=\text{Prob}[d_k=1]=\text{Prob}[d_k=2]=1/3\)</span>.</p>
+<p>Suppose Q-learning is used to obtain the optimal policy. The estimate at iteration <span class="math inline">\(\ell\)</span> — the iterations coinciding with the successive state/control pairs visited — for state <span class="math inline">\(i\in\{0,1,\dots,N\}\)</span> at stage <span class="math inline">\(k\in\{0,1,\dots,h-1\}\)</span> using control <span class="math inline">\(u\in\{0,\dots,N-i\}\)</span> is denoted <span class="math inline">\(Q_\ell(k,i,u)\)</span>. A random policy with random initial conditions generates the trajectories summarised in the table below. All estimates are initialised to zero, <span class="math inline">\(Q_1(k,i,u)=0\)</span> for every <span class="math inline">\(k\)</span>, <span class="math inline">\(i\)</span>, <span class="math inline">\(u\)</span>.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"><span class="math inline">\(\ell\)</span></th>
+<th style="text-align: right;">1</th>
+<th style="text-align: right;">2</th>
+<th style="text-align: right;">3</th>
+<th style="text-align: right;">4</th>
+<th style="text-align: right;">5</th>
+<th style="text-align: right;">6</th>
+<th style="text-align: right;">7</th>
+<th style="text-align: right;">8</th>
+<th style="text-align: right;">9</th>
+<th style="text-align: right;">10</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(k\)</span></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(x_k\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(u_k\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(d_k\)</span></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+<p>Provide the estimates after <span class="math inline">\(L=10\)</span> iterations, <span class="math inline">\(Q_{11}(k,i,u)\)</span> for every <span class="math inline">\(k\)</span>, <span class="math inline">\(i\)</span>, <span class="math inline">\(u\)</span>. Assume the step sizes are constant, <span class="math inline">\(\gamma^\ell=0.5\)</span>, in the update equations</p>
+<p><span class="math display">\[Q_{\ell+1}(k,x_k,u_k)=(1-\gamma^\ell)Q_\ell(k,x_k,u_k)+\gamma^\ell\Big(g(x_k,u_k,d_k)+\min_{v\in U_{k+1}(x_{k+1})}Q_\ell(k+1,x_{k+1},v)\Big),\quad k\neq h-1,\]</span></p>
+<p><span class="math display">\[Q_{\ell+1}(h-1,x_{h-1},u_{h-1})=(1-\gamma^\ell)Q_\ell(h-1,x_{h-1},u_{h-1})+\gamma^\ell\big(g(x_{h-1},u_{h-1},d_{h-1})+g_h(x_h)\big),\]</span></p>
+<p>where <span class="math inline">\(g(x_k,u_k,d_k)=c_1(x_k)+c_2(u_k)-p\min\{x_k+u_k,d_k\}\)</span>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The running cost is <span class="math inline">\(g(x_k,u_k,d_k)=x_k+c_2(u_k)-9\min\{x_k+u_k,d_k\}\)</span>. Two things to read off the table before starting. The rows with <span class="math inline">\(k=3=h\)</span> carry no control: the process has reached the terminal stage, there is nothing to decide and no pair <span class="math inline">\((k,i,u)\)</span> to update. And stage <span class="math inline">\(k=2=h-1\)</span> uses the <em>second</em> update equation, where the bootstrap is the known terminal cost <span class="math inline">\(g_h\)</span> rather than a stored estimate.</p>
+<p>Taking the ten iterations in turn:</p>
+<table class="caption-top table">
+<caption>The Q-learning pass, iteration by iteration.</caption>
+<colgroup>
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><span class="math inline">\(\ell\)</span></th>
+<th style="text-align: right;">1</th>
+<th style="text-align: right;">2</th>
+<th style="text-align: right;">3</th>
+<th style="text-align: right;">4</th>
+<th style="text-align: right;">5</th>
+<th style="text-align: right;">6</th>
+<th style="text-align: right;">7</th>
+<th style="text-align: right;">8</th>
+<th style="text-align: right;">9</th>
+<th style="text-align: right;">10</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(k\)</span></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(x_k\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(u_k\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(d_k\)</span></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(g(x_k,u_k,d_k)\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-11.1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(10.9\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2\)</span></td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;"><span class="math inline">\(-3.1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1.9\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-11.1\)</span></td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;"><span class="math inline">\(5.9\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-2.1\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(Q_{\ell+1}(k,x_k,u_k)\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-5.55\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(5.45\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-3\)</span></td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;"><span class="math inline">\(-1.55\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(3.675\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-5.55\)</span></td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;"><span class="math inline">\(2.175\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-3.825\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>At <span class="math inline">\(\ell=1\)</span>, with <span class="math inline">\(x_1=\max\{1+1-2,0\}=0\)</span> and every estimate still zero,</p>
+<p><span class="math display">\[Q_2(0,1,1)=0.5\,g(1,1,2)+0.5\min_{v\in\{0,1,2\}}Q_1(1,0,v)=0.5(1+5.9-18)=-5.55.\]</span></p>
+<p>At <span class="math inline">\(\ell=2\)</span>, <span class="math inline">\(x_2=\max\{0+2-0,0\}=2\)</span>, where the only admissible control is <span class="math inline">\(v=0\)</span>:</p>
+<p><span class="math display">\[Q_3(1,0,2)=0.5\,g(0,2,0)+0.5\min_{v\in\{0\}}Q_2(2,2,v)=0.5(0+10.9-0)=5.45.\]</span></p>
+<p>At <span class="math inline">\(\ell=3\)</span> we are at <span class="math inline">\(k=2=h-1\)</span>, so the second update applies with <span class="math inline">\(x_3=2\)</span> and <span class="math inline">\(g_3(2)=-8\)</span>:</p>
+<p><span class="math display">\[Q_4(2,2,0)=0.5\,g(2,0,0)+0.5\,g_3(2)=0.5(2)+0.5(-8)=-3.\]</span></p>
+<p>At <span class="math inline">\(\ell=4\)</span> the process is in the terminal stage: nothing to update.</p>
+<p>At <span class="math inline">\(\ell=5\)</span>, <span class="math inline">\(x_1=\max\{0+1-1,0\}=0\)</span>:</p>
+<p><span class="math display">\[Q_6(0,0,1)=0.5\,g(0,1,1)+0.5\min_{v\in\{0,1,2\}}Q_5(1,0,v)=0.5(-3.1)=-1.55.\]</span></p>
+<p>Note the minimisation. Iteration <span class="math inline">\(\ell=2\)</span> pushed <span class="math inline">\(Q(1,0,2)\)</span> up to <span class="math inline">\(5.45\)</span>, but <span class="math inline">\(Q(1,0,0)\)</span> and <span class="math inline">\(Q(1,0,1)\)</span> are still <span class="math inline">\(0\)</span>, so the minimum over <span class="math inline">\(v\)</span> is <span class="math inline">\(0\)</span>, not <span class="math inline">\(5.45\)</span>. An optimistic initialisation of the untried controls keeps them winning the <span class="math inline">\(\min\)</span> — which is exactly how the <span class="math inline">\(\min\)</span> drives exploration of the <em>bootstrap</em>, independently of how the data were generated.</p>
+<p>At <span class="math inline">\(\ell=6\)</span>, <span class="math inline">\(x_2=\max\{0+2-1,0\}=1\)</span>, and this is the second visit to <span class="math inline">\((1,0,2)\)</span>, so the old estimate enters with weight <span class="math inline">\(1-\gamma=0.5\)</span>:</p>
+<p><span class="math display">\[Q_7(1,0,2)=0.5\underbrace{Q_6(1,0,2)}_{=5.45}+0.5\Big(\underbrace{g(0,2,1)}_{=1.9}+\min_{v\in\{0,1\}}Q_6(2,1,v)\Big)=0.5(5.45)+0.5(1.9+0)=3.675.\]</span></p>
+<p>At <span class="math inline">\(\ell=7\)</span>, again <span class="math inline">\(k=h-1\)</span>, with <span class="math inline">\(x_3=\max\{1+1-2,0\}=0\)</span> and <span class="math inline">\(g_3(0)=0\)</span>:</p>
+<p><span class="math display">\[Q_8(2,1,1)=0.5\underbrace{g(1,1,2)}_{=-11.1}+0.5\,g_3(0)=-5.55.\]</span></p>
+<p>At <span class="math inline">\(\ell=8\)</span> the process is terminal again: nothing to update.</p>
+<p>At <span class="math inline">\(\ell=9\)</span>, <span class="math inline">\(x_1=\max\{0+1-0,0\}=1\)</span>, second visit to <span class="math inline">\((0,0,1)\)</span>:</p>
+<p><span class="math display">\[Q_{10}(0,0,1)=0.5\underbrace{Q_9(0,0,1)}_{=-1.55}+0.5\Big(\underbrace{g(0,1,0)}_{=5.9}+\min_{v\in\{0,1\}}Q_9(1,1,v)\Big)=-0.775+2.95=2.175.\]</span></p>
+<p>At <span class="math inline">\(\ell=10\)</span>, the successor state is not printed in the table but is determined by it: <span class="math inline">\(x_{11}=x_{10}+u_{10}-d_{10}=1+1-1=1\)</span> at stage <span class="math inline">\(2\)</span>. Now the bootstrap is <em>not</em> zero — <span class="math inline">\(\ell=7\)</span> pushed <span class="math inline">\(Q(2,1,1)\)</span> down to <span class="math inline">\(-5.55\)</span>, while <span class="math inline">\(Q(2,1,0)\)</span> is still <span class="math inline">\(0\)</span>, so the minimum is <span class="math inline">\(-5.55\)</span>:</p>
+<p><span class="math display">\[Q_{11}(1,1,1)=0.5\underbrace{g(1,1,1)}_{=-2.1}+0.5\min_{v\in\{0,1\}}Q_{10}(2,1,v)=0.5(-2.1-5.55)=-3.825.\]</span></p>
+<p>The pairs <span class="math inline">\((1,0,2)\)</span> and <span class="math inline">\((0,0,1)\)</span> were visited twice, the pairs <span class="math inline">\((0,1,1)\)</span>, <span class="math inline">\((2,1,1)\)</span>, <span class="math inline">\((2,2,0)\)</span> and <span class="math inline">\((1,1,1)\)</span> once. Collecting:</p>
+<p><span class="math display">\[\begin{aligned} Q_{11}(0,0,1)&amp;=2.175 &amp; Q_{11}(0,1,1)&amp;=-5.55\\ Q_{11}(1,0,2)&amp;=3.675 &amp; Q_{11}(1,1,1)&amp;=-3.825\\ Q_{11}(2,1,1)&amp;=-5.55 &amp; Q_{11}(2,2,0)&amp;=-3\end{aligned}\]</span></p>
+<p>and <span class="math inline">\(Q_{11}(k,i,u)=0\)</span> for every other triple.</p>
+<p>Ten iterations have touched six of the eighteen state-action pairs, two of them twice, and the estimates they carry are still a long way from the true Q-factors. That is the honest picture of Q-learning on a small budget, and it is worth comparing against <code>A_10_StochInventoryControlQLearning.ipynb</code>, which runs the same problem to convergence and prints the exact answer alongside.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 10.5</strong> Suppose that we wish to sell a used car by finding an optimal policy for accepting offers. The car is exactly two years old, and the offer for cars of this model and age in the initial month of the sale follows a distribution modelled by a random variable <span class="math inline">\(w_0\)</span> taking values in <span class="math inline">\(\{c_1,c_2,\dots,c_C\}\)</span>, with <span class="math inline">\(\text{Prob}[w_0=c_i]=p_i\)</span> and <span class="math inline">\(\sum_{i=1}^Cp_i=1-p_0\)</span>, where <span class="math inline">\(p_0\)</span> is the probability that there is no offer. The car depreciates at a rate <span class="math inline">\(\alpha\)</span> every month after the initial one: if <span class="math inline">\(\bar x_k\)</span> is the offer at month <span class="math inline">\(k\)</span>, then <span class="math inline">\(\bar x_k/\alpha^k\)</span> has the same distribution as <span class="math inline">\(w_0\)</span>.</p>
+<p>After ten years the residual value of the car is almost zero, so we maximise</p>
+<p><span class="math display">\[\sum_{k=0}^{\infty}\alpha^kg(x_k,u_k),\]</span></p>
+<p>where <span class="math inline">\(u_k\in\{0,1\}\)</span> is the decision at time <span class="math inline">\(k\)</span> either to sell (<span class="math inline">\(u_k=1\)</span>) or not (<span class="math inline">\(u_k=0\)</span>). The state <span class="math inline">\(x_k\)</span> takes either a numerical value or one of two non-numerical values: <span class="math inline">\(x_k=\text{N}\)</span> if there is no offer, and <span class="math inline">\(x_k=T\)</span> if an offer has already been accepted. Otherwise <span class="math inline">\(x_k=\bar x_k/\alpha^k\in\{c_1,\dots,c_C\}\)</span> is the offer at month <span class="math inline">\(k\)</span> rescaled, so that</p>
+<p><span class="math display">\[x_k=w_{k-1}\ \text{ if } x_k\neq\text{N},\ x_{k-1}\neq T\ \text{ and } u_{k-1}=0, \qquad x_k=T\ \text{ if } u_{k-1}=1 \text{ or } x_{k-1}=T,\]</span></p>
+<p>where the <span class="math inline">\(w_k\)</span> are independent and identically distributed with the same distribution as <span class="math inline">\(w_0\)</span>. The reward is <span class="math inline">\(g(\text{N},u_k)=0\)</span> and <span class="math inline">\(g(T,u_k)=0\)</span> for every <span class="math inline">\(u_k\)</span>, and</p>
+<p><span class="math display">\[g(x_k,1)=x_k, \qquad g(x_k,0)=0.\]</span></p>
+<p>Suppose the model parameters are not available — in particular the probabilities <span class="math inline">\(p_i\)</span> of the distribution of <span class="math inline">\(w_k\)</span> — and we want to use a learning technique to compute the optimal policy. Show that the general Q-learning algorithm, with constant step size <span class="math inline">\(\gamma^\ell=\bar\alpha\)</span>,</p>
+<p><span class="math display">\[Q^{\ell+1}(x_k,0)=(1-\bar\alpha)Q^\ell(x_k,0)+\bar\alpha\,\alpha\max\{Q^\ell(x_{k+1},0),Q^\ell(x_{k+1},1)\},\]</span></p>
+<p>simplifies greatly, and that all the Q-functions can be computed from scalars <span class="math inline">\(\beta_\ell\)</span> satisfying</p>
+<p><span class="math display">\[\beta_{\ell+1}=(1-\bar\alpha)\beta_\ell+\bar\alpha\,\alpha\max\{\beta_\ell,x_{\ell+1}\}.\]</span></p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Two observations do all the work.</p>
+<p><strong>The “sell” Q-factor is known in closed form and needs no learning.</strong> Selling at an offer <span class="math inline">\(x\)</span> collects <span class="math inline">\(g(x,1)=x\)</span> and sends the state to <span class="math inline">\(T\)</span>, which is absorbing and pays nothing from then on. So</p>
+<p><span class="math display">\[Q(x,1)=x+\alpha\cdot 0=x\]</span></p>
+<p>for every numerical <span class="math inline">\(x\)</span>, exactly, with no expectation and no unknown probabilities in it. Half of the table is free. (At <span class="math inline">\(x=\text{N}\)</span> selling is not available, and <span class="math inline">\(Q(\text{N},\cdot)\)</span> is handled by the next observation.)</p>
+<p><strong>The “wait” Q-factor does not depend on the state.</strong> Waiting collects <span class="math inline">\(g(x,0)=0\)</span> and lands on <span class="math inline">\(x_{k+1}=w_k\)</span>, whose distribution is the same whatever the current offer is — the offers are i.i.d. So</p>
+<p><span class="math display">\[Q(x,0)=\alpha\,\mathbb{E}\big[\max\{Q(w,0),Q(w,1)\}\big]\]</span></p>
+<p>and the right-hand side contains no <span class="math inline">\(x\)</span> at all. Write <span class="math inline">\(\beta\)</span> for this common value, so that <span class="math inline">\(Q(x,0)=\beta\)</span> for every <span class="math inline">\(x\)</span>, including <span class="math inline">\(x=\text{N}\)</span>, where waiting is the only option.</p>
+<p>Substituting both into the stated update is now immediate. The bootstrap term is</p>
+<p><span class="math display">\[\max\{Q^\ell(x_{k+1},0),Q^\ell(x_{k+1},1)\}=\max\{\beta_\ell,x_{k+1}\},\]</span></p>
+<p>and since the left-hand side <span class="math inline">\(Q^{\ell+1}(x_k,0)\)</span> is the same scalar <span class="math inline">\(\beta_{\ell+1}\)</span> whatever <span class="math inline">\(x_k\)</span> was, the whole algorithm collapses to</p>
+<p><span class="math display">\[\beta_{\ell+1}=(1-\bar\alpha)\beta_\ell+\bar\alpha\,\alpha\max\{\beta_\ell,x_{\ell+1}\},\]</span></p>
+<p>which is the claimed recursion. When the sampled month has no offer, <span class="math inline">\(x_{\ell+1}=\text{N}\)</span> and selling is unavailable, so the <span class="math inline">\(\max\)</span> is just <span class="math inline">\(\beta_\ell\)</span> — the update then only shrinks <span class="math inline">\(\beta\)</span> towards <span class="math inline">\(\alpha\beta\)</span>, which is the correct effect of a month spent waiting.</p>
+<p>Three things are worth drawing out.</p>
+<p><em>What has been learned.</em> The algorithm maintains <strong>one number</strong> instead of <span class="math inline">\(2C\)</span> Q-factors, and that number is the value of waiting. Because <span class="math inline">\(Q(x,1)=x\)</span> is known, the greedy policy reads</p>
+<p><span class="math display">\[\mu(x)=\arg\max_{u}Q(x,u)=\begin{cases}1 &amp; \text{if } x\geq\beta\\ 0 &amp; \text{if } x&lt;\beta,\end{cases}\]</span></p>
+<p>so <span class="math inline">\(\beta\)</span> <em>is</em> the selling threshold. Learning the scalar is learning the policy, and the threshold structure is not an assumption here but a consequence of the two observations above.</p>
+<p><em>Why the collapse happened.</em> Not because the problem is small, but because of two structural facts: the action “sell” is terminating with a known immediate reward, and the uncontrolled part of the dynamics is i.i.d., so the post-decision state carries no information. Either property alone would help; together they reduce the Q-table to a scalar.</p>
+<p><em>What it is.</em> The recursion is a Robbins–Monro scheme for the fixed point <span class="math inline">\(\beta=\alpha\,\mathbb{E}[\max\{\beta,w\}]\)</span>, which is the Bellman equation of the problem written in one line. It is exactly what <code>A_10_stoppingtimeQLearning.ipynb</code> implements, and Unit 11’s <code>A_11_stoppingtimeSimPI.ipynb</code> runs the same recursion with the <span class="math inline">\(\max\)</span> removed — a <em>fixed</em> threshold instead of the optimal one — which is the difference between policy iteration’s two halves in a single example.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="additional-exercises" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="additional-exercises"><span class="header-section-number">2</span> Additional exercises</h2>
+<p><strong>Problem 10.6</strong> Consider the following discounted cost optimal control problem</p>
+<p><span class="math display">\[\min_{u_k=\mu_k(x_k)}\sum_{k=0}^{\infty}\mathbb{E}\left[\alpha^kg(x_k,u_k)\right], \qquad \text{Prob}[x_{k+1}=j\mid x_k=i,\ u_k=\ell]=P_{ji}(\ell),\]</span></p>
+<p>where <span class="math inline">\(\alpha=0.9\)</span> and <span class="math inline">\(g(i,\ell)=i^2+\ell^2\)</span> for every <span class="math inline">\(i\in\{1,2,3\}\)</span> and <span class="math inline">\(\ell\in\{1,2\}\)</span>, and</p>
+<p><span class="math display">\[P(1)=\begin{bmatrix}0.3&amp;0.4&amp;0.8\\0.7&amp;0&amp;0\\0&amp;0.6&amp;0.2\end{bmatrix}, \qquad P(2)=\begin{bmatrix}0.1&amp;0.5&amp;0.6\\0.9&amp;0&amp;0\\0&amp;0.5&amp;0.4\end{bmatrix}.\]</span></p>
+<p>The initial condition is arbitrary, <span class="math inline">\(x_0\in\{1,2,3\}\)</span>. The optimal policy is <span class="math inline">\(\mu(1)=1\)</span>, <span class="math inline">\(\mu(2)=1\)</span>, <span class="math inline">\(\mu(3)=1\)</span>. Compute the optimal Q-function.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>As in Problem 10.3, begin from the Bellman equation with the optimal policy substituted. There is no terminal state now, so all three equations are coupled:</p>
+<p><span class="math display">\[J(1)=g(1,1)+\alpha\sum_{j}P_{j1}(1)J(j)=1^2+1^2+0.9\big(0.3J(1)+0.7J(2)\big)\]</span></p>
+<p><span class="math display">\[J(2)=g(2,1)+\alpha\sum_{j}P_{j2}(1)J(j)=2^2+1^2+0.9\big(0.4J(1)+0.6J(3)\big)\]</span></p>
+<p><span class="math display">\[J(3)=g(3,1)+\alpha\sum_{j}P_{j3}(1)J(j)=3^2+1^2+0.9\big(0.8J(1)+0.2J(3)\big)\]</span></p>
+<p>This is a linear system <span class="math inline">\((I-\alpha P(1)^\intercal)J=g(\cdot,1)\)</span>, whose solution is</p>
+<p><span class="math display">\[\begin{bmatrix}J(1)\\J(2)\\J(3)\end{bmatrix}=\begin{bmatrix}45.4735\\49.5169\\52.1231\end{bmatrix}.\]</span></p>
+<p>The optimal Q-function is <span class="math inline">\(Q(i,u)=i^2+u^2+\alpha\sum_{j}P_{ji}(u)J(j)\)</span>. For <span class="math inline">\(u=1\)</span>:</p>
+<p><span class="math display">\[Q(1,1)=2+\alpha\begin{bmatrix}0.3&amp;0.7&amp;0\end{bmatrix}J=45.4735, \qquad Q(2,1)=5+\alpha\begin{bmatrix}0.4&amp;0&amp;0.6\end{bmatrix}J=49.5169,\]</span></p>
+<p><span class="math display">\[Q(3,1)=10+\alpha\begin{bmatrix}0.8&amp;0&amp;0.2\end{bmatrix}J=52.1231,\]</span></p>
+<p>and for <span class="math inline">\(u=2\)</span>:</p>
+<p><span class="math display">\[Q(1,2)=2+\alpha\begin{bmatrix}0.1&amp;0.9&amp;0\end{bmatrix}J=49.2013, \qquad Q(2,2)=8+\alpha\begin{bmatrix}0.5&amp;0&amp;0.5\end{bmatrix}J=51.9185,\]</span></p>
+<p><span class="math display">\[Q(3,2)=13+\alpha\begin{bmatrix}0.6&amp;0&amp;0.4\end{bmatrix}J=56.3200.\]</span></p>
+<p>At each state the optimal action is the minimiser of <span class="math inline">\(Q(i,u)\)</span>, and <span class="math inline">\(Q(i,1)&lt;Q(i,2)\)</span> for all three states, confirming the policy given in the problem statement. As in Problem 10.3, <span class="math inline">\(Q(i,1)=J(i)\)</span> for every <span class="math inline">\(i\)</span>, because action <span class="math inline">\(1\)</span> is the optimal one everywhere.</p>
+<p>Note the row vectors above: each is a <strong>column</strong> of <span class="math inline">\(P(u)\)</span>, written horizontally. For instance <span class="math inline">\(\begin{bmatrix}0.4&amp;0&amp;0.6\end{bmatrix}\)</span> is the second column of <span class="math inline">\(P(1)\)</span>, the distribution of the next state given <span class="math inline">\(x_k=2\)</span>, <span class="math inline">\(u_k=1\)</span>.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 10.7</strong> Consider an inventory control problem where the number of items of a given product is described by</p>
+<p><span class="math display">\[x_{k+1}=\max\{x_k+u_k-d_k,0\}, \qquad k\in\{0,1,\dots\},\]</span></p>
+<p>where <span class="math inline">\(x_k\in\{0,\dots,N\}\)</span>, <span class="math inline">\(u_k\in\{0,\dots,N-x_k\}\)</span> and <span class="math inline">\(d_k\)</span> denote the number of items, the supply and the demand at time <span class="math inline">\(k\)</span>, and <span class="math inline">\(N\)</span> denotes the capacity. Suppose <span class="math inline">\(N=2\)</span>. The objective is to minimise</p>
+<p><span class="math display">\[\mathbb{E}\left[\sum_{k=0}^{\infty}\alpha^k\big(c_1(x_k)+c_2(u_k)-p\min\{x_k+u_k,d_k\}\big)\right]\]</span></p>
+<p>for <span class="math inline">\(\alpha=0.9\)</span>, where <span class="math inline">\(c_1(i)=i\)</span> is the storage cost, <span class="math inline">\(c_2(j)=5j+0.9\)</span> for <span class="math inline">\(j&gt;0\)</span> and <span class="math inline">\(c_2(0)=0\)</span> is the cost of ordering <span class="math inline">\(j\)</span> items, and <span class="math inline">\(p=9\)</span> is the selling price per item.</p>
+<p>Suppose Q-learning is used to obtain the optimal policy. The estimate at iteration <span class="math inline">\(\ell\)</span> for state <span class="math inline">\(i\)</span> using control <span class="math inline">\(u\in\{0,\dots,N-i\}\)</span> is denoted <span class="math inline">\(Q_\ell(i,u)\)</span> — there is no stage index now. A random policy with random initial conditions generates the data below. All estimates are initialised to zero.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"><span class="math inline">\(\ell\)</span></th>
+<th style="text-align: right;">1</th>
+<th style="text-align: right;">2</th>
+<th style="text-align: right;">3</th>
+<th style="text-align: right;">4</th>
+<th style="text-align: right;">5</th>
+<th style="text-align: right;">6</th>
+<th style="text-align: right;">7</th>
+<th style="text-align: right;">8</th>
+<th style="text-align: right;">9</th>
+<th style="text-align: right;">10</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(k\)</span></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">9</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(x_k\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(u_k\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(d_k\)</span></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+<p>Provide the estimates <span class="math inline">\(Q_9(i,u)\)</span> for every <span class="math inline">\(i\)</span>, <span class="math inline">\(u\)</span>. Assume the step sizes are constant, <span class="math inline">\(\gamma^\ell=0.6\)</span>, in the update</p>
+<p><span class="math display">\[Q_{\ell+1}(x_k,u_k)=(1-\gamma^\ell)Q_\ell(x_k,u_k)+\gamma^\ell\Big(g(x_k,u_k,d_k)+\alpha\min_{v\in U(x_{k+1})}Q_\ell(x_{k+1},v)\Big),\]</span></p>
+<p>where <span class="math inline">\(g(x_k,u_k,d_k)=c_1(x_k)+c_2(u_k)-p\min\{x_k+u_k,d_k\}\)</span>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-8" class="callout-8-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Three differences from Problem 10.4 are worth naming before computing. There is no stage index, so a single table <span class="math inline">\(Q(i,u)\)</span> of six entries is maintained rather than one table per stage. The discount factor appears explicitly in the bootstrap, where in 10.4 it was hidden in the finite horizon. And there is no terminal stage, so every row of the data uses the same update — the single row of the table is one long trajectory, not three short ones. (The successor states are consistent with it: <span class="math inline">\(\max\{x_k+u_k-d_k,0\}\)</span> always equals the next column’s <span class="math inline">\(x_{k+1}\)</span>.)</p>
+<p>Replaying the ten updates:</p>
+<table class="caption-top table">
+<caption>Ten Q-learning updates. Each row’s last column replaces the previous estimate of that pair.</caption>
+<colgroup>
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span class="math inline">\(\ell\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(x_k\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(u_k\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(d_k\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(g(x_k,u_k,d_k)\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(x_{k+1}\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(\min_vQ_\ell(x_{k+1},v)\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(Q_{\ell+1}(x_k,u_k)\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><span class="math inline">\(-11.1\)</span></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(1,1)=-6.66\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><span class="math inline">\(10.9\)</span></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(0,2)=6.54\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><span class="math inline">\(2\)</span></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(2,0)=1.20\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><span class="math inline">\(-16\)</span></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(2,0)=-9.12\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><span class="math inline">\(-3.1\)</span></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(0,1)=-1.86\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><span class="math inline">\(1.9\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><span class="math inline">\(-6.66\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(0,2)=0.1596\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><span class="math inline">\(-11.1\)</span></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><span class="math inline">\(-1.86\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(1,1)=-10.3284\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><span class="math inline">\(-7.1\)</span></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><span class="math inline">\(-1.86\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(0,2)=-5.2006\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><span class="math inline">\(5.9\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><span class="math inline">\(-10.3284\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(0,1)=-2.7813\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><span class="math inline">\(-2.1\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><span class="math inline">\(-10.3284\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(1,1)=-10.9687\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>A sample, for the arithmetic. At <span class="math inline">\(\ell=6\)</span> the state-action pair <span class="math inline">\((0,2)\)</span> is revisited, so its old estimate enters with weight <span class="math inline">\(1-\gamma=0.4\)</span>, and the successor <span class="math inline">\(x_6=\max\{0+2-1,0\}=1\)</span> has <span class="math inline">\(Q_6(1,1)=-6.66\)</span> from <span class="math inline">\(\ell=1\)</span> against <span class="math inline">\(Q_6(1,0)=0\)</span>, so the minimum is <span class="math inline">\(-6.66\)</span>:</p>
+<p><span class="math display">\[Q_7(0,2)=0.4(6.54)+0.6\big(1.9+0.9(-6.66)\big)=2.616+0.6(-4.094)=0.1596.\]</span></p>
+<p>At <span class="math inline">\(\ell=4\)</span> the pair <span class="math inline">\((2,0)\)</span> is revisited one step after being set, and the demand <span class="math inline">\(d=2\)</span> makes the running cost <span class="math inline">\(2-9\cdot2=-16\)</span>, so the estimate swings from <span class="math inline">\(+1.20\)</span> to <span class="math inline">\(-9.12\)</span> in a single update. A step size of <span class="math inline">\(0.6\)</span> keeps only <span class="math inline">\(40\%\)</span> of what was learned, which is why these early estimates move so violently.</p>
+<p><strong>The answer, and a word on the indexing.</strong> The question asks for “the estimates after <span class="math inline">\(9\)</span> iterations, <span class="math inline">\(Q_9(i,u)\)</span>”, and those are two different things, because <span class="math inline">\(Q_\ell\)</span> is the estimate <em>before</em> update <span class="math inline">\(\ell\)</span>. Taken literally, <span class="math inline">\(Q_9\)</span> is the result of updates <span class="math inline">\(\ell=1,\dots,8\)</span>:</p>
+<p><span class="math display">\[Q_9(0,1)=-1.86, \quad Q_9(0,2)=-5.2006, \quad Q_9(1,1)=-10.3284, \quad Q_9(2,0)=-9.12,\]</span></p>
+<p>with <span class="math inline">\(Q_9(0,0)=Q_9(1,0)=0\)</span>. After all ten updates, matching the convention of Problem 10.4, where <span class="math inline">\(L=10\)</span> iterations gave <span class="math inline">\(Q_{11}\)</span>:</p>
+<p><span class="math display">\[Q_{11}(0,1)=-2.7813, \quad Q_{11}(0,2)=-5.2006, \quad Q_{11}(1,1)=-10.9687, \quad Q_{11}(2,0)=-9.12.\]</span></p>
+<p>Only the two pairs touched at <span class="math inline">\(\ell=9,10\)</span> differ between the two readings.</p>
+<p>Two pairs, <span class="math inline">\((0,0)\)</span> and <span class="math inline">\((1,0)\)</span> — order nothing, from an empty or a single-item shop — are never visited, so they keep their initial value of zero. Since the true Q-factors here are all negative (the shop makes money), a stored zero is an <em>over</em>estimate of a cost, so those two actions would never be chosen by a greedy policy, and the data would never correct them. That is the exploration problem of Unit 10 in its smallest form, and the same effect is visible — with real numbers — in the unvisited high-stock entries of <code>A_11_StochInventoryControlSimBasedPI.ipynb</code>.</p>
+</div>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

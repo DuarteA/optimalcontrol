@@ -1,0 +1,2071 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>Unit 11 Exercises</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="unit11-exercises_files/libs/clipboard/clipboard.min.js"></script>
+<script src="unit11-exercises_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="unit11-exercises_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="unit11-exercises_files/libs/quarto-html/popper.min.js"></script>
+<script src="unit11-exercises_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="unit11-exercises_files/libs/quarto-html/anchor.min.js"></script>
+<link href="unit11-exercises_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="unit11-exercises_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="unit11-exercises_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="unit11-exercises_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="unit11-exercises_files/libs/bootstrap/bootstrap-5f5514ab72c605193d28bd5ace4a0252.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      // NOTE: these must stay 0-argument, matching \newcommand{\argmin}
+      // in macros.tex. They used to be declared here as taking one
+      // argument ("\\operatorname*{argmin}_{#1}", 1), so \argmin{...}
+      // rendered in html but produced garbage in pdf, and \argmin_{...}
+      // rendered in pdf but produced garbage in html. Use \argmin_{x}.
+      argmin: "\\operatorname*{argmin}",
+      argmax: "\\operatorname*{argmax}",
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#core-exercises" id="toc-core-exercises" class="nav-link active" data-scroll-target="#core-exercises"><span class="header-section-number">1</span> Core exercises</a></li>
+  <li><a href="#additional-exercises" id="toc-additional-exercises" class="nav-link" data-scroll-target="#additional-exercises"><span class="header-section-number">2</span> Additional exercises</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="unit11-exercises.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Unit 11 Exercises</h1>
+<p class="subtitle lead">4SC000 Optimal Control and Reinforcement Learning</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Source: Solved Exercises/3/PS3.tex (problems) and
+Solved Exercises/3/Solutions/SolutionsPS3.tex (solutions). Added
+2026-10-25, on Duarte's instruction: section 2 "Policy iteration"
+(Problems 2.1-2.5), Problem 3.4 from "Q-Learning and SARSA" (the SARSA
+version of 3.1, which is Unit 10's Problem 10.4), section 4 "TD and
+Monte-Carlo" (4.1, 4.2) and section 5 "Importance sampling and
+off-policy learning" (5.1-5.3). Section 1 went to Unit 10 along with
+3.1-3.3; section 6 (policy gradient) belongs to a later unit.
+
+NUMBERING, and why this order. The unit's spine is: exact policy
+iteration -> simulation-based policy evaluation -> SARSA -> off-policy
+learning. The Core problems follow it:
+
+  11.1 = 2.1  PI on a 2-state discounted problem, to convergence
+  11.2 = 2.2  PI on a 2-state finite-horizon problem
+  11.3 = 2.4  one PE + one PI step on the infinite-horizon inventory
+              problem (the course's running example)
+  11.4 = 3.4  SARSA by hand on the data table of Problem 10.4
+  11.5 = 4.1  TD and Monte-Carlo on a trajectory of data
+  11.6 = 4.2  the MC error as a discounted sum of TD errors
+  11.7 = 5.1  importance sampling for the mean of a discrete r.v.
+  11.8 = 5.3  off-policy evaluation with a deterministic target policy
+
+  11.9  = 2.3 (Additional) the finite-horizon version of 11.3
+  11.10 = 2.5 (Additional) asset selling by policy iteration
+  11.11 = 5.2 (Additional) importance sampling and its variance
+
+11.9 is Additional because it repeats 11.3's technique in the setting
+11.2 already establishes; it is the longest arithmetic in the set and
+the one whose answer is drawn as a lattice on the slides, so it earns
+its place but not a Core slot. 11.10 is Additional because its data is
+inconsistent as printed and it needs a value of alpha the statement
+never supplies (see the solution). 11.11 is Additional because it makes
+the same point as 11.7 about ordinary vs weighted importance sampling,
+with heights instead of a die.
+
+SIGN CONVENTIONS. PS3's sections 2 and 4 minimise costs, as Units 1-10
+do. Problem 2.5 (-> 11.10) is printed as a minimisation but is a
+maximisation of the sale price; see its solution and Unit 10's Problem
+10.5, which has the same slip.
+
+TRANSPOSED TRANSITION MATRICES. As in Unit 10's Problems 10.3 and 10.6,
+PS3 writes P_{ji}(l) = Prob[x_{k+1}=j | x_k=i, u_k=l], i.e.
+COLUMN-stochastic. It matters in 11.1 and 11.2 and is flagged in the
+preamble below.
+
+VERIFICATION. Every number in every solution was recomputed from the
+problem data (numpy: direct linear solves for the policy-evaluation
+steps, a literal replay of the update rules for the SARSA, TD and MC
+passes, and a full policy-iteration loop where the source stops after
+one round) rather than copied from the solutions manual. Every value
+the manual gives for 2.1, 2.2, 2.3, 2.4, 4.1, 5.1 and 5.2 is confirmed.
+Three solutions were worked out here because the manual does not
+provide them: 3.4 (-> 11.4), 2.5 (-> 11.10) and the extra remarks noted
+below.
+
+WHAT IS NEW RELATIVE TO THE MANUAL.
+  11.4  no solution in the manual. Computed here. The data table of
+        Problem 3.1 is one column SHORT for SARSA -- at l=10 the
+        bootstrap needs the action taken at l=11, which is not printed
+        -- so both branches are given. This is not a defect to paper
+        over; it is the cleanest possible statement of what separates
+        the two algorithms.
+  11.5  the manual's MC table stops at k=10 and does not apply the
+        stated update to the last sample. Applying it gives
+        J(1) = 1.1329 instead of 2.3285. Both are reported.
+  11.7  the manual computes the plain mean and ordinary IS. Weighted IS
+        is added, because it lands on 2.9713 against the true mean
+        2.96, while ordinary IS gives 3.8775 -- which is the Unit 11
+        point the problem is positioned to make.
+  11.9  the manual stops after one improvement step, as the problem
+        asks. A remark records that the improved policy is NOT yet
+        optimal here (exact DP gives a different one), which is worth
+        knowing before a student concludes that one round suffices.
+  11.11 weighted IS added for the same reason as 11.7: in part (i) it
+        gives 1.9118 where ordinary IS gives 1.6824, which identifies
+        the cause of the discrepancy the manual only describes.
+
+ERRORS IN THE SOURCE STATEMENTS, corrected here.
+  2.3  the cost is labelled with g_h(x_h) and then g_3 is used; h = 3,
+       so they agree, but the statement also carries "the demand d_1 is
+       uncertain" while naming d_0 and d_2 deterministic, which is
+       consistent only if read carefully. Spelled out here.
+  4.2  prints R_k = sum_l alpha^{l-k} g(x_k) and delta(x_k) on the
+       right-hand side; both summands must be indexed by l, not k. The
+       manual's own first line also writes alpha^l for alpha^{l-k}.
+  5.3  writes "pi_mu(i) = (1-eps)" where it means mu_1(i) = 1-eps, and
+       "E[s^1] = (1-eps)^2" where it means E[s^1] = s(1-eps)^2.
+  2.5  see SIGN CONVENTIONS above, and the solution to 11.10 for its
+       numerical data.
+-->
+<p>These exercises accompany <a href="../notes/unit11-notes.html">Unit 11</a> and its <a href="../lectures/lecture11-policy-iteration-sarsa.html">slides</a>, with companion <a href="../code/unit11/notebooks.html">Jupyter notebooks</a>.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="Note on the transition matrices">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Note on the transition matrices
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In Problems 11.1 and 11.2 the transition matrices are defined by</p>
+<p><span class="math display">\[P_{ji}(\ell)=\text{Prob}[x_{k+1}=j\mid x_k=i,\ u_k=\ell],\]</span></p>
+<p>so the entry in row <span class="math inline">\(j\)</span>, column <span class="math inline">\(i\)</span> is the probability of moving <strong>from <span class="math inline">\(i\)</span> to <span class="math inline">\(j\)</span></strong>, and each <strong>column</strong> of <span class="math inline">\(P(\ell)\)</span> sums to one. This is the transpose of the convention <span class="math inline">\(p_{ij}(u)\)</span> used in the notes and slides. In the policy evaluation step</p>
+<p><span class="math display">\[J_\mu(i)=g(i,\mu(i))+\alpha\sum_jp_{ij}(\mu(i))J_\mu(j),\]</span></p>
+<p>the sum is the inner product of the <span class="math inline">\(i\)</span>-th <strong>column</strong> of <span class="math inline">\(P(\mu(i))\)</span> with the vector of values — not the <span class="math inline">\(i\)</span>-th row. Equivalently, in matrix form the evaluation step is <span class="math inline">\(J_\mu=g_\mu+\alpha P_\mu^\intercal J_\mu\)</span>, with the transpose. Getting this backwards is the commonest way to lose these problems.</p>
+</div>
+</div>
+<section id="core-exercises" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="core-exercises"><span class="header-section-number">1</span> Core exercises</h2>
+<p><strong>Problem 11.1</strong> Consider the following discounted cost optimal control problem</p>
+<p><span class="math display">\[\min_{u_k=\mu_k(x_k)}\sum_{k=0}^{\infty}\mathbb{E}\left[\alpha^kg(x_k,u_k)\right], \qquad \text{Prob}[x_{k+1}=j\mid x_k=i,\ u_k=\ell]=P_{ji}(\ell),\]</span></p>
+<p>where <span class="math inline">\(\alpha=0.8\)</span> and <span class="math inline">\(g(i,\ell)=|i|+|\ell|\)</span> for every <span class="math inline">\(i\in\{1,2\}\)</span> and <span class="math inline">\(\ell\in\{1,2\}\)</span>, and</p>
+<p><span class="math display">\[P(1)=\begin{bmatrix}0.7&amp;0.4\\0.3&amp;0.6\end{bmatrix}, \qquad P(2)=\begin{bmatrix}0.3&amp;0.6\\0.7&amp;0.4\end{bmatrix}.\]</span></p>
+<p>Compute the optimal policy using policy iteration with initial policy <span class="math inline">\(\mu(1)=2\)</span>, <span class="math inline">\(\mu(2)=2\)</span>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Alternate policy evaluation and policy improvement until the improvement step returns the policy it was given. There are only four policies here, so the loop is short enough to do by hand.</p>
+<p><strong>Policy evaluation of <span class="math inline">\(\mu^1=(2,2)\)</span>.</strong> With the policy fixed there is no minimisation left, only a linear system. The costs are <span class="math inline">\(g(1,2)=3\)</span> and <span class="math inline">\(g(2,2)=4\)</span>, and the transition matrix of the closed loop is <span class="math inline">\(P(2)\)</span>:</p>
+<p><span class="math display">\[\begin{bmatrix}J_{\mu^1}(1)\\J_{\mu^1}(2)\end{bmatrix}=\begin{bmatrix}1+2\\2+2\end{bmatrix}+0.8\,P(2)^\intercal\begin{bmatrix}J_{\mu^1}(1)\\J_{\mu^1}(2)\end{bmatrix} \quad\Longrightarrow\quad \begin{bmatrix}J_{\mu^1}(1)\\J_{\mu^1}(2)\end{bmatrix}=\begin{bmatrix}17.2581\\18.0645\end{bmatrix}.\]</span></p>
+<p><strong>Policy improvement.</strong> Compute the Q-factors against these values. The ones for the current action are free, <span class="math inline">\(Q^1(i,\mu^1(i))=J_{\mu^1}(i)\)</span>, so only the alternative needs work:</p>
+<p><span class="math display">\[Q^1(1,1)=2+0.8\big(0.7J_{\mu^1}(1)+0.3J_{\mu^1}(2)\big)=16.0000, \qquad Q^1(2,1)=3+0.8\big(0.4J_{\mu^1}(1)+0.6J_{\mu^1}(2)\big)=17.1935.\]</span></p>
+<p>Both beat <span class="math inline">\(17.2581\)</span> and <span class="math inline">\(18.0645\)</span>, so</p>
+<p><span class="math display">\[\mu^2(i)=\arg\min_{u\in\{1,2\}}Q^1(i,u)=1, \qquad i\in\{1,2\}.\]</span></p>
+<p><strong>Policy evaluation of <span class="math inline">\(\mu^2=(1,1)\)</span>.</strong> Now <span class="math inline">\(g(1,1)=2\)</span>, <span class="math inline">\(g(2,1)=3\)</span> and the closed loop is <span class="math inline">\(P(1)\)</span>:</p>
+<p><span class="math display">\[\begin{bmatrix}J_{\mu^2}(1)\\J_{\mu^2}(2)\end{bmatrix}=\begin{bmatrix}2\\3\end{bmatrix}+0.8\,P(1)^\intercal\begin{bmatrix}J_{\mu^2}(1)\\J_{\mu^2}(2)\end{bmatrix} \quad\Longrightarrow\quad \begin{bmatrix}J_{\mu^2}(1)\\J_{\mu^2}(2)\end{bmatrix}=\begin{bmatrix}11.5789\\12.8947\end{bmatrix}.\]</span></p>
+<p>Both values have dropped by about a third — the improvement step delivered a genuinely better policy, not a marginal one.</p>
+<p><strong>Policy improvement.</strong> Again only the alternative action needs computing:</p>
+<p><span class="math display">\[Q^2(1,2)=3+0.8\big(0.3J_{\mu^2}(1)+0.7J_{\mu^2}(2)\big)=13.0000, \qquad Q^2(2,2)=4+0.8\big(0.6J_{\mu^2}(1)+0.4J_{\mu^2}(2)\big)=13.6842,\]</span></p>
+<p>against <span class="math inline">\(Q^2(1,1)=11.5789\)</span> and <span class="math inline">\(Q^2(2,1)=12.8947\)</span>. The minimisers are unchanged,</p>
+<p><span class="math display">\[\mu^3(i)=\arg\min_{u\in\{1,2\}}Q^2(i,u)=1=\mu^2(i),\]</span></p>
+<p>so the policy cannot be improved and is therefore optimal: <span class="math inline">\(\mu^\star(1)=\mu^\star(2)=1\)</span>, with optimal cost <span class="math inline">\(J^\star=(11.5789,\,12.8947)\)</span>.</p>
+<p>Two rounds, and the stopping test is exact rather than a tolerance: the improvement step returned its own input. That is the structural advantage of policy iteration over value iteration, which would approach these same numbers from below without ever certifying that it had arrived.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 11.2</strong> Consider the following finite-horizon optimal control problem</p>
+<p><span class="math display">\[\min_{u_k=\mu_k(x_k)}\mathbb{E}\left[\sum_{k=0}^{1}g(x_k,u_k)\right], \qquad \text{Prob}[x_{k+1}=j\mid x_k=i,\ u_k=\ell]=P_{ji}(\ell),\]</span></p>
+<p>where <span class="math inline">\(g(i,\ell)=|i|+2|\ell|\)</span> for every <span class="math inline">\(i\in\{1,2\}\)</span> and <span class="math inline">\(\ell\in\{1,2\}\)</span>, and</p>
+<p><span class="math display">\[P(1)=\begin{bmatrix}0.5&amp;0.2\\0.5&amp;0.8\end{bmatrix}, \qquad P(2)=\begin{bmatrix}0.3&amp;0.5\\0.7&amp;0.5\end{bmatrix}.\]</span></p>
+<p>Compute the optimal policy using policy iteration with initial policy <span class="math inline">\(\mu_k(1)=1\)</span>, <span class="math inline">\(\mu_k(2)=2\)</span> for every <span class="math inline">\(k\in\{0,1\}\)</span>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The problem could be turned into a stochastic shortest path problem by augmenting the state with the clock, as in Unit 10’s Problem 10.1, and then run through infinite-horizon policy iteration. The simpler route is to work directly in the finite horizon: a policy is now a pair of maps, one per stage, and policy evaluation is a backward sweep rather than a linear solve.</p>
+<p><strong>Policy evaluation of <span class="math inline">\(\mu^0\)</span>.</strong> Evaluation is dynamic programming with only one action available per state and stage — the one the policy prescribes — so no minimisation is involved, only propagation. There is no terminal cost, so at the last stage</p>
+<p><span class="math display">\[J^0_1(1)=g(1,\mu_1(1))=1+2(1)=3, \qquad J^0_1(2)=g(2,\mu_1(2))=2+2(2)=6,\]</span></p>
+<p>and then, reading the columns of the appropriate matrix for each state,</p>
+<p><span class="math display">\[J^0_0(1)=3+0.5(3)+0.5(6)=7.5, \qquad J^0_0(2)=6+0.5(3)+0.5(6)=10.5.\]</span></p>
+<p><strong>Policy improvement.</strong> At stage <span class="math inline">\(k=1\)</span> the Q-factors involve no future, so <span class="math inline">\(Q^0_1(1,1)=J^0_1(1)=3\)</span>, <span class="math inline">\(Q^0_1(2,2)=J^0_1(2)=6\)</span>, and</p>
+<p><span class="math display">\[Q^0_1(1,2)=1+2(2)=5, \qquad Q^0_1(2,1)=2+2(1)=4.\]</span></p>
+<p>The improved policy at the last stage is <span class="math inline">\(\mu^1_1(1)=1\)</span>, <span class="math inline">\(\mu^1_1(2)=1\)</span>. At stage <span class="math inline">\(k=0\)</span>, with <span class="math inline">\(Q^0_0(1,1)=7.5\)</span> and <span class="math inline">\(Q^0_0(2,2)=10.5\)</span>,</p>
+<p><span class="math display">\[Q^0_0(1,2)=5+0.3(3)+0.7(6)=10.1, \qquad Q^0_0(2,1)=4+0.2(3)+0.8(6)=9.4,\]</span></p>
+<p>so <span class="math inline">\(\mu^1_0(1)=1\)</span>, <span class="math inline">\(\mu^1_0(2)=1\)</span>. The policy changed at state <span class="math inline">\(2\)</span> in both stages.</p>
+<p><strong>Policy evaluation of <span class="math inline">\(\mu^1\)</span>.</strong> At the last stage the values are already computed — they are the Q-factors of the chosen actions:</p>
+<p><span class="math display">\[J^1_1(1)=Q^0_1(1,1)=3, \qquad J^1_1(2)=Q^0_1(2,1)=4.\]</span></p>
+<p>At stage <span class="math inline">\(0\)</span>,</p>
+<p><span class="math display">\[J^1_0(1)=3+0.5(3)+0.5(4)=6.5, \qquad J^1_0(2)=4+0.2(3)+0.8(4)=7.8.\]</span></p>
+<p><strong>Policy improvement.</strong> The stage-<span class="math inline">\(1\)</span> policy cannot change: its Q-factors depend only on the (absent) terminal cost, which has not moved. The stage-<span class="math inline">\(0\)</span> policy can, because <span class="math inline">\(J_1\)</span> has. With <span class="math inline">\(Q^1_0(1,1)=J^1_0(1)=6.5\)</span> and <span class="math inline">\(Q^1_0(2,1)=J^1_0(2)=7.8\)</span>,</p>
+<p><span class="math display">\[Q^1_0(1,2)=5+0.3(3)+0.7(4)=8.7, \qquad Q^1_0(2,2)=6+0.5(3)+0.5(4)=9.5.\]</span></p>
+<p>The minimisers are unchanged, so the policy is optimal:</p>
+<p><span class="math display">\[\mu^\star_0(1)=\mu^\star_0(2)=\mu^\star_1(1)=\mu^\star_1(2)=1,\]</span></p>
+<p>with <span class="math inline">\(J^\star_0=(6.5,\,7.8)\)</span> and <span class="math inline">\(J^\star_1=(3,\,4)\)</span>.</p>
+<p>Worth noting what the finite horizon does to the loop. Policy iteration converges here in two rounds, where plain backward dynamic programming would have produced the same answer in <em>one</em> sweep. Policy iteration is not the method of choice for finite-horizon problems; the exercise is here because the two steps are easiest to see in a setting where both can be done exactly by hand, and because the way information propagates — the last stage settling first, then freezing — is the pattern simulation-based policy iteration will have to reproduce without a model.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 11.3</strong> Consider an inventory control problem where the number of items of a given product is described by</p>
+<p><span class="math display">\[x_{k+1}=\max\{x_k+u_k-d_k,0\}, \qquad k\in\{0,1,\dots\},\]</span></p>
+<p>where <span class="math inline">\(x_k\in\{0,\dots,N\}\)</span>, <span class="math inline">\(u_k\in\{0,\dots,N-x_k\}\)</span> and <span class="math inline">\(d_k\)</span> denote the number of items, the supply and the demand at time <span class="math inline">\(k\)</span>, and <span class="math inline">\(N\)</span> denotes the capacity. Suppose <span class="math inline">\(N=2\)</span> and that the demand is uncertain with <span class="math inline">\(\text{Prob}[d_k=0]=\text{Prob}[d_k=1]=\text{Prob}[d_k=2]=1/3\)</span> for every <span class="math inline">\(k\)</span>. The objective is to find a policy minimising</p>
+<p><span class="math display">\[\mathbb{E}\left[\sum_{k=0}^{\infty}\alpha^k\big(c_1(x_k)+c_2(u_k)-p\min\{x_k+u_k,d_k\}\big)\right]\]</span></p>
+<p>for <span class="math inline">\(\alpha=0.9\)</span>, where <span class="math inline">\(c_1(i)=i\)</span> is the storage cost, <span class="math inline">\(c_2(j)=5j+0.9\)</span> for <span class="math inline">\(j&gt;0\)</span> and <span class="math inline">\(c_2(0)=0\)</span> is the cost of ordering <span class="math inline">\(j\)</span> items, and <span class="math inline">\(p=9\)</span> is the selling price per item.</p>
+<ol type="i">
+<li>Run one step of policy evaluation, i.e.&nbsp;compute the cost function of the initial policy <span class="math inline">\(\mu_0(i)=0\)</span> for every <span class="math inline">\(i\in\{0,1,\dots,N\}\)</span>,</li>
+</ol>
+<p><span class="math display">\[J_{\mu_0}(i)=\mathbb{E}\left[\sum_{k=0}^{\infty}\alpha^k\big(c_1(x_k)+c_2(\mu_0(x_k))-p\min\{x_k+\mu_0(x_k),d_k\}\big)\ \Big|\ x_0=i\right].\]</span></p>
+<ol start="2" type="i">
+<li>Run one step of policy improvement, obtaining an improved policy <span class="math inline">\(\mu_1(i)\)</span>, <span class="math inline">\(i\in\{0,1,2\}\)</span>.</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(i) Policy evaluation.</strong> With the policy fixed at “order nothing” the cost function solves the linear system</p>
+<p><span class="math display">\[J_{\mu_0}(i)=\mathbb{E}\big[c_1(i)+c_2(\mu_0(i))-p\min\{i+\mu_0(i),d_k\}+\alpha J_{\mu_0}(\max\{i+\mu_0(i)-d_k,0\})\big], \qquad i\in\{0,1,2\}.\]</span></p>
+<p>Two ingredients. The expected one-step cost under <span class="math inline">\(\mu_0\)</span>: nothing is ordered, so <span class="math inline">\(c_2=0\)</span> and</p>
+<p><span class="math display">\[\mathbb{E}[g(0,0,d)]=0, \qquad \mathbb{E}[g(1,0,d)]=1-9\left(\tfrac{0+1+1}{3}\right)=-5, \qquad \mathbb{E}[g(2,0,d)]=2-9\left(\tfrac{0+1+2}{3}\right)=-7.\]</span></p>
+<p>And the closed-loop transition matrix, with <span class="math inline">\(x'=\max\{i-d,0\}\)</span>: from stock <span class="math inline">\(0\)</span> the shop stays at <span class="math inline">\(0\)</span>; from <span class="math inline">\(1\)</span> it goes to <span class="math inline">\(1\)</span> with probability <span class="math inline">\(1/3\)</span> and to <span class="math inline">\(0\)</span> with probability <span class="math inline">\(2/3\)</span>; from <span class="math inline">\(2\)</span> it goes to each of <span class="math inline">\(0,1,2\)</span> with probability <span class="math inline">\(1/3\)</span>. Hence</p>
+<p><span class="math display">\[\begin{bmatrix}J_{\mu_0}(0)\\J_{\mu_0}(1)\\J_{\mu_0}(2)\end{bmatrix}=\begin{bmatrix}0\\-5\\-7\end{bmatrix}+0.9\begin{bmatrix}1&amp;0&amp;0\\2/3&amp;1/3&amp;0\\1/3&amp;1/3&amp;1/3\end{bmatrix}\begin{bmatrix}J_{\mu_0}(0)\\J_{\mu_0}(1)\\J_{\mu_0}(2)\end{bmatrix} \quad\Longrightarrow\quad \begin{bmatrix}J_{\mu_0}(0)\\J_{\mu_0}(1)\\J_{\mu_0}(2)\end{bmatrix}=\begin{bmatrix}0\\-7.1429\\-13.0612\end{bmatrix}.\]</span></p>
+<p>The system is lower triangular, so it can be solved by hand from the top down: <span class="math inline">\(J(0)=0.9J(0)\)</span> gives <span class="math inline">\(J(0)=0\)</span> — an empty shop that never orders stays empty and earns nothing forever — then <span class="math inline">\(0.7J(1)=-5\)</span> and <span class="math inline">\(0.7J(2)=-7+0.3J(1)\)</span>.</p>
+<p><strong>(ii) Policy improvement.</strong> Compute</p>
+<p><span class="math display">\[\mu_1(i)=\arg\min_{u\in\{0,\dots,2-i\}}\mathbb{E}\big[g(i,u,d_k)+\alpha J_{\mu_0}(\max\{i+u-d_k,0\})\big].\]</span></p>
+<p>At <span class="math inline">\(i=2\)</span> there is only one admissible control, so <span class="math inline">\(\mu_1(2)=0\)</span>.</p>
+<p>At <span class="math inline">\(i=1\)</span> there are two. For <span class="math inline">\(u=0\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span class="math inline">\(d_k=0\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(d_k=1\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(d_k=2\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">\(1+0.9(-7.1429)=-5.4286\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1-9+0=-8\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1-9+0=-8\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>with expected value <span class="math inline">\(-7.1429\)</span> — which is <span class="math inline">\(J_{\mu_0}(1)\)</span> again, as it must be. For <span class="math inline">\(u=1\)</span>:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span class="math inline">\(d_k=0\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(d_k=1\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(d_k=2\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">\(1+5.9+0.9(-13.0612)=-4.8551\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1+5.9-9+0.9(-7.1429)=-8.5286\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1+5.9-18+0=-11.1\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>with expected value <span class="math inline">\(-8.1612\)</span>. So <span class="math inline">\(\mu_1(1)=1\)</span>.</p>
+<p>At <span class="math inline">\(i=0\)</span> there are three. For <span class="math inline">\(u=0\)</span> every outcome costs <span class="math inline">\(0\)</span>. For <span class="math inline">\(u=1\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span class="math inline">\(d_k=0\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(d_k=1\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(d_k=2\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">\(5.9+0.9(-7.1429)=-0.5286\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(5.9-9=-3.1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(5.9-9=-3.1\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>and for <span class="math inline">\(u=2\)</span>:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span class="math inline">\(d_k=0\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(d_k=1\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(d_k=2\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">\(10.9+0.9(-13.0612)=-0.8551\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(10.9-9+0.9(-7.1429)=-4.5286\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(10.9-18=-7.1\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The expected costs of <span class="math inline">\(u=0,1,2\)</span> are <span class="math inline">\(0\)</span>, <span class="math inline">\(-2.2429\)</span> and <span class="math inline">\(-4.1612\)</span>, so <span class="math inline">\(\mu_1(0)=2\)</span>. Collecting,</p>
+<p><span class="math display">\[\big(\mu_1(0),\mu_1(1),\mu_1(2)\big)=(2,1,0).\]</span></p>
+<p>The pattern is the natural one: fill the shop when it is empty, top it up by one when it holds one, and do nothing when it is full.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Where the loop goes next">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Where the loop goes next
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>The exercise stops after one round, but it is worth knowing that one more round finishes the job. Evaluating <span class="math inline">\((2,1,0)\)</span> gives <span class="math inline">\(J=(-19.70,\,-23.70,\,-28.60)\)</span>, whose improvement step returns <span class="math inline">\((2,0,0)\)</span>; evaluating <em>that</em> gives <span class="math inline">\(J=(-20.39,\,-24.62,\,-29.29)\)</span> and the improvement step returns <span class="math inline">\((2,0,0)\)</span> again. So the optimal policy is “order two when empty, otherwise nothing”, reached in three policy evaluations.</p>
+<p>Note what changed between rounds: <span class="math inline">\(\mu_1(1)=1\)</span> was an improvement on <span class="math inline">\(\mu_0\)</span>, but once the shop’s value is computed under a policy that actually orders, holding one item becomes good enough on its own and the top-up is not worth its <span class="math inline">\(0.9\)</span> transaction cost. An improvement step is greedy with respect to the <em>current</em> policy’s value, and being an improvement is not the same as being optimal.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p><strong>Problem 11.4</strong> Repeat Unit 10’s <a href="unit10-exercises.html">Problem 10.4</a> — Q-learning by hand on the ten-step data table for the three-stage inventory problem — but now with SARSA, i.e.&nbsp;with the update</p>
+<p><span class="math display">\[Q_{\ell+1}(k,x_k,u_k)=(1-\gamma^\ell)Q_\ell(k,x_k,u_k)+\gamma^\ell\big(g(x_k,u_k,d_k)+Q_\ell(k+1,x_{k+1},u_{k+1})\big), \qquad k\neq h-1,\]</span></p>
+<p>the terminal update and all the problem data being unchanged. Recall <span class="math inline">\(h=3\)</span>, <span class="math inline">\(N=2\)</span>, <span class="math inline">\(\gamma^\ell=0.5\)</span>, <span class="math inline">\(g(x_k,u_k,d_k)=x_k+c_2(u_k)-9\min\{x_k+u_k,d_k\}\)</span> with <span class="math inline">\(c_2(j)=5j+0.9\)</span> for <span class="math inline">\(j&gt;0\)</span>, <span class="math inline">\(g_h(i)=-4i\)</span>, and the data</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"><span class="math inline">\(\ell\)</span></th>
+<th style="text-align: right;">1</th>
+<th style="text-align: right;">2</th>
+<th style="text-align: right;">3</th>
+<th style="text-align: right;">4</th>
+<th style="text-align: right;">5</th>
+<th style="text-align: right;">6</th>
+<th style="text-align: right;">7</th>
+<th style="text-align: right;">8</th>
+<th style="text-align: right;">9</th>
+<th style="text-align: right;">10</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(k\)</span></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(x_k\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(u_k\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(d_k\)</span></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>One symbol changes: the <span class="math inline">\(\min_v Q_\ell(k+1,x_{k+1},v)\)</span> of Q-learning becomes <span class="math inline">\(Q_\ell(k+1,x_{k+1},u_{k+1})\)</span>, the estimate for the action the behaviour policy <em>actually took</em> at the next step. Everything else — step size, running costs, terminal updates — is as in Problem 10.4.</p>
+<p>That one symbol has a consequence for the data, and it is the point of the exercise. Q-learning’s update needs only <span class="math inline">\((x_k,u_k,d_k,x_{k+1})\)</span>, all of which the table provides. SARSA needs <span class="math inline">\(u_{k+1}\)</span> as well, so the next row of the table is part of the current update. The table has ten rows, so the last update cannot be completed from it — more on that below.</p>
+<table class="caption-top table">
+<caption>The SARSA pass. The bootstrap column is what replaces Q-learning’s minimum.</caption>
+<colgroup>
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span class="math inline">\(\ell\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(k\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(x_k\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(u_k\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(d_k\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(g\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(x_{k+1}\)</span></th>
+<th style="text-align: left;">bootstrap</th>
+<th style="text-align: right;"><span class="math inline">\(Q_{\ell+1}(k,x_k,u_k)\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><span class="math inline">\(-11.1\)</span></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;"><span class="math inline">\(Q(1,0,2)=0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(0,1,1)=-5.55\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><span class="math inline">\(10.9\)</span></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;"><span class="math inline">\(Q(2,2,0)=0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(1,0,2)=5.45\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><span class="math inline">\(2\)</span></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;"><span class="math inline">\(g_3(2)=-8\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(2,2,0)=-3\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: left;">terminal</td>
+<td style="text-align: right;">no update</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><span class="math inline">\(-3.1\)</span></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;"><span class="math inline">\(Q(1,0,2)=5.45\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(0,0,1)=1.175\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><span class="math inline">\(1.9\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;"><span class="math inline">\(Q(2,1,1)=0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(1,0,2)=3.675\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><span class="math inline">\(-11.1\)</span></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;"><span class="math inline">\(g_3(0)=0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(2,1,1)=-5.55\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: left;">terminal</td>
+<td style="text-align: right;">no update</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><span class="math inline">\(5.9\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;"><span class="math inline">\(Q(1,1,1)=0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(Q(0,0,1)=3.5375\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><span class="math inline">\(-2.1\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;"><span class="math inline">\(u_{11}\)</span> unknown</td>
+<td style="text-align: right;">see below</td>
+</tr>
+</tbody>
+</table>
+<p>Three of the updates differ numerically from Problem 10.4, and each difference is instructive.</p>
+<p>At <span class="math inline">\(\ell=5\)</span> the successor is state <span class="math inline">\(0\)</span> at stage <span class="math inline">\(1\)</span>, where the action actually taken next (row <span class="math inline">\(\ell=6\)</span>) is <span class="math inline">\(u=2\)</span>, and <span class="math inline">\(Q(1,0,2)\)</span> has already been raised to <span class="math inline">\(5.45\)</span> by <span class="math inline">\(\ell=2\)</span>. SARSA must use that <span class="math inline">\(5.45\)</span>:</p>
+<p><span class="math display">\[Q_6(0,0,1)=0.5(-3.1)+0.5(5.45)=1.175,\]</span></p>
+<p>against Q-learning’s <span class="math inline">\(-1.55\)</span>. Q-learning took the minimum over <span class="math inline">\(v\in\{0,1,2\}\)</span> and found two untried actions still sitting at <span class="math inline">\(0\)</span>, so it bootstrapped on <span class="math inline">\(0\)</span> and ignored the one piece of evidence it had. SARSA cannot ignore it: the behaviour policy chose <span class="math inline">\(u=2\)</span>, and <span class="math inline">\(u=2\)</span> is what gets evaluated. The gap of <span class="math inline">\(2.725\)</span> between the two answers is the whole off-policy/on-policy distinction, in one update.</p>
+<p>At <span class="math inline">\(\ell=9\)</span> the successor is state <span class="math inline">\(1\)</span> at stage <span class="math inline">\(1\)</span>, where row <span class="math inline">\(\ell=10\)</span> takes <span class="math inline">\(u=1\)</span> and <span class="math inline">\(Q(1,1,1)\)</span> is still <span class="math inline">\(0\)</span>:</p>
+<p><span class="math display">\[Q_{10}(0,0,1)=0.5(1.175)+0.5(5.9+0)=3.5375,\]</span></p>
+<p>against Q-learning’s <span class="math inline">\(2.175\)</span> — this time the difference comes from the estimate the two algorithms carry into the update, not from the bootstrap itself.</p>
+<p><strong>The last update cannot be done.</strong> At <span class="math inline">\(\ell=10\)</span> the successor is <span class="math inline">\(x_{11}=1+1-1=1\)</span> at stage <span class="math inline">\(2\)</span>, and SARSA needs <span class="math inline">\(u_{11}\)</span>, the action taken there. The table stops at <span class="math inline">\(\ell=10\)</span>, so it is not given. Both branches:</p>
+<p><span class="math display">\[u_{11}=0:\quad Q_{11}(1,1,1)=0.5(-2.1)+0.5\,Q_{10}(2,1,0)=0.5(-2.1+0)=-1.05,\]</span></p>
+<p><span class="math display">\[u_{11}=1:\quad Q_{11}(1,1,1)=0.5(-2.1)+0.5\,Q_{10}(2,1,1)=0.5(-2.1-5.55)=-3.825.\]</span></p>
+<p>The second coincides with Q-learning’s answer, because <span class="math inline">\(Q(2,1,1)=-5.55\)</span> happens to be the minimum over the two admissible controls at that state. That is the general relationship: SARSA agrees with Q-learning exactly when the behaviour policy happens to pick the greedy action, and an <span class="math inline">\(\epsilon\)</span>-greedy behaviour policy does so most of the time — which is why the two produce similar policies in practice, and why <code>A_11_FrozenLakeQLearningSARSA.ipynb</code> has to look at the arrow grids rather than the win rates to tell them apart.</p>
+<p>So the estimates after nine iterations, which is as far as the data takes SARSA, are</p>
+<p><span class="math display">\[\begin{aligned} Q_{10}(0,0,1)&amp;=3.5375 &amp; Q_{10}(0,1,1)&amp;=-5.55 &amp; Q_{10}(1,0,2)&amp;=3.675\\ Q_{10}(2,1,1)&amp;=-5.55 &amp; Q_{10}(2,2,0)&amp;=-3 &amp; Q_{10}(1,1,1)&amp;=0\end{aligned}\]</span></p>
+<p>with every other triple zero.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Why the data table is one column short">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Why the data table is one column short
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>The missing <span class="math inline">\(u_{11}\)</span> is not a defect in the problem; it is the cleanest possible statement of what separates the two algorithms. Q-learning learns the Q-factors of the <em>optimal</em> policy from data generated by any policy, so a transition <span class="math inline">\((x_k,u_k,g,x_{k+1})\)</span> is a self-contained training example and the data set is a <em>set</em>. SARSA learns the Q-factors of the policy that <em>generated</em> the data, so its training example is <span class="math inline">\((x_k,u_k,g,x_{k+1},u_{k+1})\)</span> — the quintuple the algorithm is named after — and the data set is a <em>sequence</em> that cannot be cut anywhere without losing one example.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p><strong>Problem 11.5</strong> The following data was obtained for a discounted cost infinite horizon problem with <span class="math inline">\(3\)</span> states and discount factor <span class="math inline">\(\alpha=0.9\)</span>.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">time <span class="math inline">\(k\)</span></th>
+<th style="text-align: right;">1</th>
+<th style="text-align: right;">2</th>
+<th style="text-align: right;">3</th>
+<th style="text-align: right;">4</th>
+<th style="text-align: right;">5</th>
+<th style="text-align: right;">6</th>
+<th style="text-align: right;">7</th>
+<th style="text-align: right;">8</th>
+<th style="text-align: right;">9</th>
+<th style="text-align: right;">10</th>
+<th style="text-align: right;">11</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">state <span class="math inline">\(x\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">cost <span class="math inline">\(g(x_k)\)</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+<p>Compute value estimates <span class="math inline">\(\hat J(1)\)</span>, <span class="math inline">\(\hat J(2)\)</span>, <span class="math inline">\(\hat J(3)\)</span>, assuming these are initially zero, with TD and with Monte-Carlo, using <span class="math inline">\(\gamma=0.9\)</span>:</p>
+<ul>
+<li>TD: <span class="math inline">\(\hat J(x_k)\leftarrow\hat J(x_k)+\gamma\big(g(x_k)+\alpha\hat J(x_{k+1})-\hat J(x_k)\big)\)</span></li>
+<li>Monte-Carlo: <span class="math inline">\(\hat J(x_k)\leftarrow\hat J(x_k)+\gamma\big(R_k-\hat J(x_k)\big)\)</span>, with <span class="math inline">\(R_k=\sum_{\ell=k}^{T}\alpha^{\ell-k}g(x_\ell)\)</span> and <span class="math inline">\(T=11\)</span></li>
+</ul>
+<p>Note that the Monte-Carlo method approximates the infinite-horizon returns by finite-horizon ones, truncated at the end of the data.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-8" class="callout-8-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>TD.</strong> Each sample updates one state, using the current estimate of its successor. The estimates after processing each time step:</p>
+<table class="caption-top table">
+<caption>TD estimates. The last row is the answer; <span class="math inline">\(k=11\)</span> has no successor, so there is no eleventh update.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">after <span class="math inline">\(k\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(\hat J(1)\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(\hat J(2)\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(\hat J(3)\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><span class="math inline">\(0.9000\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><span class="math inline">\(0.9000\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(3.6000\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;"><span class="math inline">\(0.9000\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(3.6000\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(8.8290\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;"><span class="math inline">\(3.9060\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(3.6000\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(8.8290\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: right;"><span class="math inline">\(3.9060\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(7.1239\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(8.8290\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;"><span class="math inline">\(4.4545\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(7.1239\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(8.8290\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: right;"><span class="math inline">\(4.9536\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(7.1239\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(8.8290\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: right;"><span class="math inline">\(7.1657\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(7.1239\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(8.8290\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: right;"><span class="math inline">\(7.1657\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(10.1166\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(8.8290\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: right;"><span class="math inline">\(\mathbf{7.4208}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(\mathbf{10.1166}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(\mathbf{8.8290}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>This is a direct application of the formula. For instance at <span class="math inline">\(k=3\)</span>, with <span class="math inline">\(x_3=3\)</span>, <span class="math inline">\(x_4=1\)</span> and <span class="math inline">\(\hat J(1)=0.9\)</span> at that moment,</p>
+<p><span class="math display">\[\hat J(3)\leftarrow\underbrace{\hat J(3)}_{=0}+0.9\big(9+0.9\underbrace{\hat J(1)}_{=0.9}-\underbrace{\hat J(3)}_{=0}\big)=0.9(9.81)=8.8290.\]</span></p>
+<p>State <span class="math inline">\(3\)</span> is visited once, so this single value is also TD’s final answer for it — and it was computed when <span class="math inline">\(\hat J(1)\)</span> was still <span class="math inline">\(0.9\)</span> rather than its final <span class="math inline">\(7.42\)</span>. TD’s estimates are only as good as the estimates they bootstrapped on at the time.</p>
+<p><strong>Monte-Carlo.</strong> First the truncated returns, computed backwards from <span class="math inline">\(R_{11}=g(x_{11})=1\)</span> via <span class="math inline">\(R_k=g(x_k)+\alpha R_{k+1}\)</span>:</p>
+<table class="caption-top table">
+<caption>Truncated returns.</caption>
+<colgroup>
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><span class="math inline">\(k\)</span></th>
+<th style="text-align: right;">1</th>
+<th style="text-align: right;">2</th>
+<th style="text-align: right;">3</th>
+<th style="text-align: right;">4</th>
+<th style="text-align: right;">5</th>
+<th style="text-align: right;">6</th>
+<th style="text-align: right;">7</th>
+<th style="text-align: right;">8</th>
+<th style="text-align: right;">9</th>
+<th style="text-align: right;">10</th>
+<th style="text-align: right;">11</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(R_k\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(19.3016\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(20.3351\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(18.1501\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(10.1668\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(10.1853\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(6.8726\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(6.5251\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(6.1390\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(5.7100\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1.9000\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1.0000\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Then the updates:</p>
+<table class="caption-top table">
+<caption>Monte-Carlo estimates.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">after <span class="math inline">\(k\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(\hat J(1)\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(\hat J(2)\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(\hat J(3)\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><span class="math inline">\(17.3714\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><span class="math inline">\(17.3714\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(18.3016\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;"><span class="math inline">\(17.3714\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(18.3016\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(16.3351\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;"><span class="math inline">\(10.8873\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(18.3016\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(16.3351\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: right;"><span class="math inline">\(10.8873\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(10.9970\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(16.3351\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;"><span class="math inline">\(7.2741\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(10.9970\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(16.3351\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: right;"><span class="math inline">\(6.6000\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(10.9970\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(16.3351\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: right;"><span class="math inline">\(6.1851\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(10.9970\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(16.3351\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: right;"><span class="math inline">\(6.1851\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(6.2387\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(16.3351\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: right;"><span class="math inline">\(\mathbf{2.3285}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(6.2387\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(16.3351\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">11</td>
+<td style="text-align: right;"><span class="math inline">\(1.1329\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(\mathbf{6.2387}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(\mathbf{16.3351}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Again a direct application, <span class="math inline">\(\hat J(x_k)\leftarrow\hat J(x_k)+\gamma(R_k-\hat J(x_k))\)</span>. For example at <span class="math inline">\(k=9\)</span>, where <span class="math inline">\(R_9=4+\alpha+\alpha^2=5.71\)</span>,</p>
+<p><span class="math display">\[\hat J(2)\leftarrow\underbrace{\hat J(2)}_{=10.9970}+0.9\big(5.71-\underbrace{\hat J(2)}_{=10.9970}\big)=6.2387.\]</span></p>
+<p>The solutions manual stops the Monte-Carlo pass at <span class="math inline">\(k=10\)</span> and reports <span class="math inline">\(\hat J(1)=2.3285\)</span>. Applying the stated rule to the last sample as well, with <span class="math inline">\(R_{11}=1\)</span>, gives <span class="math inline">\(\hat J(1)=1.1329\)</span>. Either is a defensible reading of the recipe — the question is whether a return truncated to a single term counts as a sample — and nothing below depends on which is taken.</p>
+<p><strong>Two things worth reading off these tables.</strong></p>
+<p><em>The estimates are not averages.</em> With <span class="math inline">\(\gamma=0.9\)</span> each update discards <span class="math inline">\(90\%\)</span> of what was there, so the final number for a state is dominated by the <em>last</em> sample that touched it. Monte-Carlo’s <span class="math inline">\(\hat J(1)\)</span> falls monotonically, <span class="math inline">\(17.37\to10.89\to7.27\to6.60\to6.19\to2.33\)</span>, not because state <span class="math inline">\(1\)</span> is getting cheaper but because later returns are truncated harder: <span class="math inline">\(R_{10}=1.9\)</span> contains two terms where <span class="math inline">\(R_1\)</span> contains eleven. A step size this large is appropriate for a <em>demonstration</em> of the two updates and wrong for estimation; the convergence theorem asks for <span class="math inline">\(\sum\gamma^\ell=\infty\)</span> with <span class="math inline">\(\sum(\gamma^\ell)^2&lt;\infty\)</span>, and a constant <span class="math inline">\(0.9\)</span> satisfies neither.</p>
+<p><em>The two methods disagree, and systematically.</em> TD ends at <span class="math inline">\((7.42,\,10.12,\,8.83)\)</span> and Monte-Carlo at <span class="math inline">\((2.33,\,6.24,\,16.34)\)</span>. TD’s numbers are the more sensible ones here, for a reason specific to this data: TD bootstraps on a stored estimate, which carries information from the whole history, while Monte-Carlo’s return stops dead at <span class="math inline">\(k=11\)</span> and therefore systematically <em>underestimates</em> an infinite-horizon cost — badly, for the samples near the end. Monte-Carlo pays no bias for bootstrapping on wrong values, but it does pay for truncation, and with <span class="math inline">\(\alpha=0.9\)</span> an eleven-step window captures only <span class="math inline">\(1-0.9^{11}\approx69\%\)</span> of the discount mass. The usual summary — TD biased but low variance, MC unbiased but high variance — assumes complete episodes, which this data does not provide.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 11.6</strong> Show that for an infinite-horizon discounted problem the Monte-Carlo error used for the update can be computed as a weighted sum of TD errors, provided TD does not update these values along the trajectory, i.e.&nbsp;show that</p>
+<p><span class="math display">\[R_k-\hat J(x_k)=\sum_{\ell=k}^{\infty}\alpha^{\ell-k}\delta(x_\ell),\]</span></p>
+<p>where</p>
+<p><span class="math display">\[R_k=\sum_{\ell=k}^{\infty}\alpha^{\ell-k}g(x_\ell), \qquad \delta(x_\ell)=g(x_\ell)+\alpha\hat J(x_{\ell+1})-\hat J(x_\ell).\]</span></p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-9-contents" aria-controls="callout-9" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-9" class="callout-9-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Substitute the definition of <span class="math inline">\(\delta\)</span> and split the sum into three:</p>
+<p><span class="math display">\[\begin{aligned} \sum_{\ell=k}^{\infty}\alpha^{\ell-k}\delta(x_\ell) &amp;=\sum_{\ell=k}^{\infty}\alpha^{\ell-k}\big(g(x_\ell)+\alpha\hat J(x_{\ell+1})-\hat J(x_\ell)\big)\\ &amp;=\underbrace{\sum_{\ell=k}^{\infty}\alpha^{\ell-k}g(x_\ell)}_{=\,R_k}+\sum_{\ell=k}^{\infty}\alpha^{\ell-k+1}\hat J(x_{\ell+1})-\sum_{\ell=k}^{\infty}\alpha^{\ell-k}\hat J(x_\ell).\end{aligned}\]</span></p>
+<p>Reindex the middle sum with <span class="math inline">\(m=\ell+1\)</span>, so that <span class="math inline">\(\alpha^{\ell-k+1}=\alpha^{m-k}\)</span>:</p>
+<p><span class="math display">\[\sum_{\ell=k}^{\infty}\alpha^{\ell-k+1}\hat J(x_{\ell+1})=\sum_{m=k+1}^{\infty}\alpha^{m-k}\hat J(x_m).\]</span></p>
+<p>The last two sums are now the same series except that the first starts at <span class="math inline">\(m=k+1\)</span> and the second at <span class="math inline">\(\ell=k\)</span>, so everything cancels except the single term <span class="math inline">\(\alpha^0\hat J(x_k)\)</span> of the second:</p>
+<p><span class="math display">\[\sum_{m=k+1}^{\infty}\alpha^{m-k}\hat J(x_m)-\sum_{\ell=k}^{\infty}\alpha^{\ell-k}\hat J(x_\ell)=-\hat J(x_k).\]</span></p>
+<p>Hence <span class="math inline">\(\sum_{\ell=k}^{\infty}\alpha^{\ell-k}\delta(x_\ell)=R_k-\hat J(x_k)\)</span>, which is the claim. (The telescoping is legitimate provided the series converge absolutely, which they do when <span class="math inline">\(g\)</span> and <span class="math inline">\(\hat J\)</span> are bounded and <span class="math inline">\(\alpha&lt;1\)</span>.)</p>
+<p><strong>Why the proviso matters.</strong> The cancellation uses the <em>same</em> function <span class="math inline">\(\hat J\)</span> at every <span class="math inline">\(\ell\)</span> — the <span class="math inline">\(\hat J(x_{m})\)</span> coming out of one TD error must be the <span class="math inline">\(\hat J(x_m)\)</span> going into the next. If TD updates <span class="math inline">\(\hat J\)</span> as it walks the trajectory, as it does in Problem 11.5, the two are different numbers and the identity holds only approximately.</p>
+<p><strong>What it buys.</strong> The identity says Monte-Carlo and TD are the two ends of one family rather than two unrelated algorithms: a Monte-Carlo update is the sum of all the TD errors along the trajectory, discounted, and a TD update is its first term. Truncating the sum after <span class="math inline">\(n\)</span> terms gives <span class="math inline">\(n\)</span>-step TD; weighting the truncations geometrically gives TD(<span class="math inline">\(\lambda\)</span>), with <span class="math inline">\(\lambda=0\)</span> recovering TD and <span class="math inline">\(\lambda=1\)</span> recovering Monte-Carlo. It also explains the bias/variance trade-off structurally: Monte-Carlo accumulates every sampled <span class="math inline">\(\delta\)</span> and therefore every sample’s noise, while TD keeps only the first and absorbs the rest into a stored estimate.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 11.7</strong> Consider a random variable <span class="math inline">\(X\in\{x_1,\dots,x_m\}\)</span> distributed according to <span class="math inline">\(p_i=\text{Prob}[X=x_i]\)</span>. Suppose we sample it instead according to a different distribution <span class="math inline">\(q_i\)</span>. The distributions are</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"><span class="math inline">\(x_i\)</span></th>
+<th style="text-align: right;">1</th>
+<th style="text-align: right;">2</th>
+<th style="text-align: right;">3</th>
+<th style="text-align: right;">4</th>
+<th style="text-align: right;">5</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(p_i\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.03\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.15\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.7\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.07\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.05\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(q_i\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.3\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.2\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.2\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.2\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Suppose the following data was obtained by sampling with distribution <span class="math inline">\(q\)</span>. Compute mean estimates of <span class="math inline">\(X\)</span> with and without importance sampling.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">sample</th>
+<th style="text-align: right;">1</th>
+<th style="text-align: right;">2</th>
+<th style="text-align: right;">3</th>
+<th style="text-align: right;">4</th>
+<th style="text-align: right;">5</th>
+<th style="text-align: right;">6</th>
+<th style="text-align: right;">7</th>
+<th style="text-align: right;">8</th>
+<th style="text-align: right;">9</th>
+<th style="text-align: right;">10</th>
+<th style="text-align: right;">11</th>
+<th style="text-align: right;">12</th>
+<th style="text-align: right;">13</th>
+<th style="text-align: right;">14</th>
+<th style="text-align: right;">15</th>
+<th style="text-align: right;">16</th>
+<th style="text-align: right;">17</th>
+<th style="text-align: right;">18</th>
+<th style="text-align: right;">19</th>
+<th style="text-align: right;">20</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">value</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-10-contents" aria-controls="callout-10" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-10" class="callout-10-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The twenty samples contain the value <span class="math inline">\(1\)</span> seven times, <span class="math inline">\(2\)</span> three times, <span class="math inline">\(3\)</span> three times, <span class="math inline">\(4\)</span> four times and <span class="math inline">\(5\)</span> three times.</p>
+<p><strong>Without importance sampling,</strong> just average them:</p>
+<p><span class="math display">\[\frac{7(1)+3(2)+3(3)+4(4)+3(5)}{20}=\frac{53}{20}=2.65.\]</span></p>
+<p>This estimates <span class="math inline">\(\mathbb{E}_q[X]=2.8\)</span>, not the quantity asked for.</p>
+<p><strong>With importance sampling,</strong> weight each sample by <span class="math inline">\(p_i/q_i\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"><span class="math inline">\(x_i\)</span></th>
+<th style="text-align: right;">1</th>
+<th style="text-align: right;">2</th>
+<th style="text-align: right;">3</th>
+<th style="text-align: right;">4</th>
+<th style="text-align: right;">5</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(p_i/q_i\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.75\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(7\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.35\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.25\)</span></td>
+</tr>
+</tbody>
+</table>
+<p><span class="math display">\[\hat{\mathbb{E}}[X]=\frac{0.1(7)(1)+0.75(3)(2)+7(3)(3)+0.35(4)(4)+0.25(3)(5)}{20}=\frac{77.55}{20}=3.8775.\]</span></p>
+<p>The true answer is <span class="math inline">\(\mathbb{E}_p[X]=0.03(1)+0.15(2)+0.7(3)+0.07(4)+0.05(5)=2.96\)</span>, so the naive average is off by <span class="math inline">\(-0.31\)</span> and ordinary importance sampling by <span class="math inline">\(+0.92\)</span> — three times worse, in the opposite direction.</p>
+<p><strong>Why, and the fix.</strong> Look at the weights: <span class="math inline">\(q\)</span> puts only <span class="math inline">\(0.1\)</span> on the value <span class="math inline">\(3\)</span>, which carries <span class="math inline">\(0.7\)</span> of <span class="math inline">\(p\)</span>’s mass, so every sampled <span class="math inline">\(3\)</span> comes in with weight <span class="math inline">\(7\)</span>. Three <span class="math inline">\(3\)</span>s arrived in twenty draws, where <span class="math inline">\(p\)</span> would have produced about fourteen; the weights are supposed to correct for exactly that, but with so few draws of the dominant value the correction is applied to a sample that barely contains it. The sum of the weights makes the problem visible:</p>
+<p><span class="math display">\[\sum_{r=1}^{20}\frac{p_{i_r}}{q_{i_r}}=26.1 \quad\text{against}\quad N=20.\]</span></p>
+<p>In expectation that sum is <span class="math inline">\(N\)</span> (each weight has mean <span class="math inline">\(\sum_iq_i(p_i/q_i)=1\)</span>), and here it overshoots by <span class="math inline">\(31\%\)</span>. Dividing by its actual value instead of by <span class="math inline">\(N\)</span> gives the <strong>weighted</strong> importance sampling estimate:</p>
+<p><span class="math display">\[\hat{\mathbb{E}}_{\text{w}}[X]=\frac{77.55}{26.1}=2.9713,\]</span></p>
+<p>against the true <span class="math inline">\(2.96\)</span>. The same twenty samples, the same weights, a different normaliser, and essentially the right answer.</p>
+<p>That is the trade recorded on the unit’s slides. Ordinary importance sampling is unbiased and, on a small sample, can be far off. Weighted importance sampling is biased — the ratio of two random quantities is not the ratio of their means — and has much lower variance, which is usually the better deal. The effect is visible with real numbers in <code>A_11_BlackjackOnOffPolicy.ipynb</code>, where the two estimators are run side by side against a Q-factor known exactly.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 11.8</strong> Suppose we want to estimate the value of a deterministic policy for a finite horizon optimal control problem, using as behaviour policy an <span class="math inline">\(\epsilon\)</span>-soft version of it. For simplicity take <span class="math inline">\(n=2\)</span> states, <span class="math inline">\(h=2\)</span> decision stages and two decisions per state:</p>
+<p><span class="math display">\[J_0(x_0)=g(x_0,u_0)+g(x_1,u_1)+g_2(x_2),\]</span></p>
+<p>the model being the same at stages <span class="math inline">\(0\)</span> and <span class="math inline">\(1\)</span>, characterised by <span class="math inline">\(p_{i'i}(j)=\text{Prob}[x_{k+1}=i'\mid x_k=i,\ u_k=j]\)</span> for <span class="math inline">\(i,i'\in\{1,2\}\)</span>, <span class="math inline">\(j\in\{1,2\}\)</span>, <span class="math inline">\(k\in\{0,1\}\)</span>. Suppose the initial state is <span class="math inline">\(1\)</span> and the target policy is <span class="math inline">\(\pi(i)=1\)</span> for every <span class="math inline">\(i\)</span>.</p>
+<ol type="1">
+<li>Explain how to compute the estimated value of <span class="math inline">\(J_0(1)\)</span> from data with importance sampling, writing its expression explicitly.</li>
+<li>Can you find an alternative, simpler method that performs better — and in what sense better?</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-11-contents" aria-controls="callout-11" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-11" class="callout-11-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>1.</strong> Importance sampling estimates <span class="math inline">\(J_0(1)\)</span> as</p>
+<p><span class="math display">\[\hat J_0(1)=\frac{1}{s}\sum_{r=1}^{s}\rho_rR_r,\]</span></p>
+<p>where <span class="math inline">\(s\)</span> is the number of simulated trajectories, <span class="math inline">\(R_r=g(x_0,u_0)+g(x_1,u_1)+g_2(x_2)\)</span> is the return of trajectory <span class="math inline">\(r\)</span>, and <span class="math inline">\(\rho_r\)</span> is its importance ratio</p>
+<p><span class="math display">\[\rho_r=\frac{\pi(u_0\mid x_0)}{\mu(u_0\mid x_0)}\cdot\frac{\pi(u_1\mid x_1)}{\mu(u_1\mid x_1)}.\]</span></p>
+<p>Note that only the <em>policy</em> probabilities appear: the transition probabilities are identical under both policies and cancel, which is what makes the method usable without a model.</p>
+<p>The target policy is deterministic, <span class="math inline">\(\pi(1\mid i)=1\)</span> and <span class="math inline">\(\pi(2\mid i)=0\)</span>, and the behaviour policy is its <span class="math inline">\(\epsilon\)</span>-soft version, <span class="math inline">\(\mu(1\mid i)=1-\epsilon\)</span> and <span class="math inline">\(\mu(2\mid i)=\epsilon\)</span>. So <span class="math inline">\(\rho_r=0\)</span> unless the trajectory took <span class="math inline">\(u_0=1\)</span> <em>and</em> <span class="math inline">\(u_1=1\)</span>, in which case</p>
+<p><span class="math display">\[\rho_r=\frac{1}{(1-\epsilon)^2}.\]</span></p>
+<p>Every trajectory that ever deviated from the target contributes nothing. Writing <span class="math inline">\(R^1_r\)</span> for the return of a trajectory with <span class="math inline">\(u_0=u_1=1\)</span> and <span class="math inline">\(s^1\)</span> for the number of such trajectories,</p>
+<p><span class="math display">\[\hat J_0(1)=\frac{1}{s}\sum_{r:\,u_0=u_1=1}\frac{1}{(1-\epsilon)^2}R^1_r=\frac{1}{(1-\epsilon)^2}\cdot\frac{s^1}{s}\cdot\frac{1}{s^1}\sum_{r:\,u_0=u_1=1}R^1_r.\]</span></p>
+<p>Since <span class="math inline">\(\mathbb{E}[s^1]=s(1-\epsilon)^2\)</span>, the first two factors have expectation <span class="math inline">\(1\)</span> and</p>
+<p><span class="math display">\[\mathbb{E}\big[\hat J_0(1)\big]=\mathbb{E}\big[R^1_r\big]=J_0(1),\]</span></p>
+<p>so the estimator is unbiased.</p>
+<p><strong>2.</strong> The displayed identity suggests its own improvement. The factor <span class="math inline">\(1/(1-\epsilon)^2\)</span> exists only to undo the thinning that discarded the deviating trajectories, and <span class="math inline">\(s^1/s\)</span> is a random quantity whose mean is precisely <span class="math inline">\((1-\epsilon)^2\)</span>. Replace the two by nothing at all: keep the trajectories that followed the target policy and average them without weights,</p>
+<p><span class="math display">\[\hat J_0^{\text{alt}}(1)=\frac{1}{s^1}\sum_{r:\,u_0=u_1=1}R^1_r.\]</span></p>
+<p>This is still unbiased — conditional on <span class="math inline">\(s^1\)</span>, each kept <span class="math inline">\(R^1_r\)</span> has mean <span class="math inline">\(J_0(1)\)</span> — and has strictly smaller variance, because it has removed a source of randomness that carried no information: the <em>number</em> of usable trajectories. The first estimator’s value moves when <span class="math inline">\(s^1\)</span> happens to come out high or low; the second’s does not.</p>
+<p><strong>In what sense better, and the general lesson.</strong> Better in variance at equal bias, from the same data, at lower cost. And note what <span class="math inline">\(\hat J^{\text{alt}}\)</span> is: since every non-zero weight here equals <span class="math inline">\(1/(1-\epsilon)^2\)</span>, dividing by the sum of the weights instead of by <span class="math inline">\(s\)</span> gives exactly this estimator. So for a <em>deterministic</em> target policy, weighted importance sampling degenerates to “discard the trajectories that deviated and average the rest”, and no importance ratios need to be computed at all. The machinery of importance sampling earns its keep when the target policy is stochastic, or when the trajectories are long enough that discarding every imperfect one would leave nothing — which, with <span class="math inline">\(h\)</span> stages and a deterministic target, happens at the rate <span class="math inline">\((1-\epsilon)^h\)</span>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="additional-exercises" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="additional-exercises"><span class="header-section-number">2</span> Additional exercises</h2>
+<p><strong>Problem 11.9</strong> Consider an inventory control problem where the number of items of a given product over <span class="math inline">\(h\)</span> stages is described by</p>
+<p><span class="math display">\[x_{k+1}=\max\{x_k+u_k-d_k,0\}, \qquad k\in\{0,\dots,h-1\},\]</span></p>
+<p>where <span class="math inline">\(x_k\in\{0,\dots,N\}\)</span>, <span class="math inline">\(u_k\in\{0,\dots,N-x_k\}\)</span> and <span class="math inline">\(d_k\)</span> denote the number of items, the supply and the demand at time <span class="math inline">\(k\)</span>, and <span class="math inline">\(N\)</span> denotes the capacity. The objective is to minimise</p>
+<p><span class="math display">\[\sum_{k=0}^{h-1}\big(c_1(x_k)+c_2(u_k)-p\min\{x_k+u_k,d_k\}\big)+g_h(x_h),\]</span></p>
+<p>where <span class="math inline">\(c_1(i)=i\)</span> is the storage cost, <span class="math inline">\(c_2(j)=5j+0.9\)</span> for <span class="math inline">\(j&gt;0\)</span> and <span class="math inline">\(c_2(0)=0\)</span> is the cost of ordering <span class="math inline">\(j\)</span> items, <span class="math inline">\(p=9\)</span> is the selling price per item, and <span class="math inline">\(g_h(i)=-4i\)</span> is the terminal cost. Suppose <span class="math inline">\(h=3\)</span>, <span class="math inline">\(N=2\)</span>, that <span class="math inline">\(d_0=1\)</span> and <span class="math inline">\(d_2=1\)</span> are known, and that only the middle demand <span class="math inline">\(d_1\)</span> is uncertain, with <span class="math inline">\(\text{Prob}[d_1=0]=\text{Prob}[d_1=1]=\text{Prob}[d_1=2]=1/3\)</span>.</p>
+<p>Run one step of policy evaluation, i.e.&nbsp;compute the cost-to-go of the initial policy <span class="math inline">\(\mu^0_k(i)=0\)</span> for every <span class="math inline">\(k\)</span>, <span class="math inline">\(i\)</span>, and one step of policy improvement, obtaining an improved policy <span class="math inline">\(\mu^1_k(x_k)\)</span>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-13-contents" aria-controls="callout-13" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-13" class="callout-13-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The finite-horizon problem could be converted to a shortest path problem by augmenting the state with the clock; as in Problem 11.2 it is simpler to work directly with the stage-indexed cost-to-go.</p>
+<p><strong>Policy evaluation.</strong> Evaluating <span class="math inline">\(\mu^0\)</span> is dynamic programming with exactly one action available per state-stage pair — the one the policy prescribes — so there is no minimisation, only propagation:</p>
+<p><span class="math display">\[J_k(x_k)=\mathbb{E}\big[g(x_k,\mu^0_k(x_k),d_k)+J_{k+1}(\max\{x_k+\mu^0_k(x_k)-d_k,0\})\big].\]</span></p>
+<p>With <span class="math inline">\(\mu^0_k\equiv0\)</span> this is</p>
+<p><span class="math display">\[J_k(x_k)=\mathbb{E}\big[x_k-9\min\{x_k,d_k\}+J_{k+1}(\max\{x_k-d_k,0\})\big],\]</span></p>
+<p>which, stage by stage with <span class="math inline">\(d_0=d_2=1\)</span> and <span class="math inline">\(d_1\)</span> uniform, reads</p>
+<p><span class="math display">\[J_2(x_2)=x_2-9\min\{x_2,1\}+g_3(\max\{x_2-1,0\}),\]</span></p>
+<p><span class="math display">\[J_1(x_1)=x_1+\tfrac{1}{3}\sum_{d\in\{0,1,2\}}\big(-9\min\{x_1,d\}+J_2(\max\{x_1-d,0\})\big), \qquad J_0(x_0)=x_0-9\min\{x_0,1\}+J_1(\max\{x_0-1,0\}).\]</span></p>
+<p>Working backwards from <span class="math inline">\(g_3=(0,-4,-8)\)</span>:</p>
+<table class="caption-top table">
+<caption>Cost-to-go of the do-nothing policy — the first lattice on the slides.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">stock</th>
+<th style="text-align: right;"><span class="math inline">\(J^{\mu^0}_0\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(J^{\mu^0}_1\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(J^{\mu^0}_2\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(g_3\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-8\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-7.6667\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-8\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-4\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">\(2\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-14.6667\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-13.3333\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-11\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-8\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Three of these are worth doing in full. At stage <span class="math inline">\(2\)</span>, <span class="math inline">\(J_2(1)=1-9+g_3(0)=-8\)</span> and <span class="math inline">\(J_2(2)=2-9+g_3(1)=-11\)</span>. At stage <span class="math inline">\(1\)</span>,</p>
+<p><span class="math display">\[J_1(1)=1+\tfrac{1}{3}\Big(\underbrace{J_2(1)}_{-8}+\underbrace{(-9+J_2(0))}_{-9}+\underbrace{(-9+J_2(0))}_{-9}\Big)=1-\tfrac{26}{3}=-7.6667,\]</span></p>
+<p><span class="math display">\[J_1(2)=2+\tfrac{1}{3}\Big(\underbrace{J_2(2)}_{-11}+\underbrace{(-9+J_2(1))}_{-17}+\underbrace{(-18+J_2(0))}_{-18}\Big)=2-\tfrac{46}{3}=-13.3333,\]</span></p>
+<p>and at stage <span class="math inline">\(0\)</span>, <span class="math inline">\(J_0(1)=1-9+J_1(0)=-8\)</span> and <span class="math inline">\(J_0(2)=2-9+J_1(1)=-7-7.6667=-14.6667\)</span>. An empty shop that never orders has <span class="math inline">\(J_k(0)=0\)</span> at every stage: it never holds anything, never sells anything, and never pays anything.</p>
+<p><strong>Policy improvement.</strong> Compute <span class="math inline">\(\mu^1_k(x_k)=\arg\min_u\mathbb{E}[g(x_k,u,d_k)+J^{\mu^0}_{k+1}(\cdot)]\)</span>, one stage at a time. At <span class="math inline">\(x_k=2\)</span> the only admissible control is <span class="math inline">\(0\)</span> at every stage.</p>
+<p><em>Stage <span class="math inline">\(k=2\)</span></em>, where the continuation is the terminal cost and <span class="math inline">\(d_2=1\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span class="math inline">\(x_2\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(u=0\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(u=1\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(u=2\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(\mu^1_2\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-3.1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-2.1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-8\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-6.1\)</span></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">\(2\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-11\)</span></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>For instance <span class="math inline">\(x_2=1\)</span>, <span class="math inline">\(u=1\)</span> gives <span class="math inline">\(1+5.9-9\min\{2,1\}+g_3(1)=-6.1\)</span>, worse than the <span class="math inline">\(-8\)</span> of ordering nothing.</p>
+<p><em>Stage <span class="math inline">\(k=1\)</span></em>, where the demand is random and the continuation is <span class="math inline">\(J^{\mu^0}_2\)</span>. For <span class="math inline">\(x_1=1\)</span>, <span class="math inline">\(u=0\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span class="math inline">\(d_1=0\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(d_1=1\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(d_1=2\)</span></th>
+<th style="text-align: right;">mean</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">\(1-8=-7\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1-9+0=-8\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1-9+0=-8\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-7.6667\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>and for <span class="math inline">\(u=1\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span class="math inline">\(d_1=0\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(d_1=1\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(d_1=2\)</span></th>
+<th style="text-align: right;">mean</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">\(1+5.9-11=-4.1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1+5.9-9-8=-10.1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1+5.9-18=-11.1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-8.4333\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>so <span class="math inline">\(\mu^1_1(1)=1\)</span>. For <span class="math inline">\(x_1=0\)</span> the three options give <span class="math inline">\(0\)</span>, <span class="math inline">\(-2.7667\)</span> and <span class="math inline">\(-4.4333\)</span>, so <span class="math inline">\(\mu^1_1(0)=2\)</span>.</p>
+<p><em>Stage <span class="math inline">\(k=0\)</span></em>, with <span class="math inline">\(d_0=1\)</span> known and the continuation <span class="math inline">\(J^{\mu^0}_1\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span class="math inline">\(x_0\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(u=0\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(u=1\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(u=2\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(\mu^1_0\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-3.1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-5.7667\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-8\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-9.7667\)</span></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><span class="math inline">\(1\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">\(2\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-14.6667\)</span></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Collecting the improved policy:</p>
+<table class="caption-top table">
+<caption>The improved policy <span class="math inline">\(\mu^1\)</span> — the second lattice on the slides.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">stock</th>
+<th style="text-align: right;"><span class="math inline">\(\mu^1_0\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(\mu^1_1\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(\mu^1_2\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">\(2\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-tip callout-titled" title="One round is not enough here">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-12-contents" aria-controls="callout-12" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>One round is not enough here
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-12" class="callout-12-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Unlike Problem 11.1, where two rounds sufficed, <span class="math inline">\(\mu^1\)</span> is <strong>not</strong> yet optimal. Exact backward dynamic programming on the same problem gives</p>
+<p><span class="math display">\[J^\star_0=(-8.5667,\,-13.4667,\,-16.7333), \qquad J^\star_1=(-5.4667,\,-9.7333,\,-14.3667), \qquad J^\star_2=(-3.1,\,-8,\,-11),\]</span></p>
+<p>with optimal policies <span class="math inline">\(\mu^\star_0=(1,0,0)\)</span>, <span class="math inline">\(\mu^\star_1=(2,0,0)\)</span> and <span class="math inline">\(\mu^\star_2=(1,0,0)\)</span>. Only the last stage agrees with <span class="math inline">\(\mu^1\)</span>, which is no accident: the last stage’s Q-factors are computed against the exact terminal cost, so they are right the first time, while the earlier stages were greedy with respect to the do-nothing policy’s values. Improvement propagates backwards one stage per round, which is why policy iteration on an <span class="math inline">\(h\)</span>-stage problem can need up to <span class="math inline">\(h\)</span> rounds to do what one backward sweep does directly. The exercise asks for one round; it is worth knowing that one round is a step, not an answer.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p><strong>Problem 11.10</strong> Suppose that we wish to sell a used car by finding an optimal policy for accepting offers. The car is exactly two years old, and the offer for cars of this model and age in the initial month of the sale follows a distribution modelled by a random variable <span class="math inline">\(w_0\)</span> taking values in <span class="math inline">\(\{c_1,\dots,c_C\}\)</span>, with <span class="math inline">\(c_i=10000+(i-1)1000\)</span> euros and <span class="math inline">\(C=5\)</span>, and <span class="math inline">\(\text{Prob}[w_0=c_i]=p_i\)</span>, <span class="math inline">\(\sum_{i=1}^Cp_i=1-p_0\)</span>, where <span class="math inline">\(p_0\)</span> is the probability of no offer. Assume <span class="math inline">\(p_1=0.05\)</span>, <span class="math inline">\(p_2=0.2\)</span>, <span class="math inline">\(p_3=0.3\)</span>, <span class="math inline">\(p_4=0.3\)</span>, <span class="math inline">\(p_5=0.1\)</span>. The car depreciates at a rate <span class="math inline">\(\alpha\)</span> every month after the initial one: if <span class="math inline">\(\bar x_k\)</span> is the offer at month <span class="math inline">\(k\)</span>, then <span class="math inline">\(\bar x_k/\alpha^k\)</span> has the same distribution as <span class="math inline">\(w_0\)</span>.</p>
+<p>After ten years the residual value is almost zero, so consider</p>
+<p><span class="math display">\[\sum_{k=0}^{\infty}\alpha^kg(x_k,u_k),\]</span></p>
+<p>where <span class="math inline">\(u_k\in\{0,1\}\)</span> is the decision to sell (<span class="math inline">\(u_k=1\)</span>) or not (<span class="math inline">\(u_k=0\)</span>), <span class="math inline">\(x_k=\text{N}\)</span> if there is no offer, <span class="math inline">\(x_k=T\)</span> if an offer was already accepted, and otherwise <span class="math inline">\(x_k=\bar x_k/\alpha^k\)</span>. The reward is <span class="math inline">\(g(\text{N},u_k)=g(T,u_k)=0\)</span> and</p>
+<p><span class="math display">\[g(x_k,1)=x_k, \qquad g(x_k,0)=0.\]</span></p>
+<p>Compute the optimal policy using policy iteration, starting from the policy “do not sell” in every state.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-15-contents" aria-controls="callout-15" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-15" class="callout-15-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="callout callout-style-default callout-warning callout-titled" title="Two things to settle before computing">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Two things to settle before computing
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>The objective is a maximisation.</strong> As in Unit 10’s Problem 10.5, the source prints a minimisation with <span class="math inline">\(g(x_k,1)=x_k\)</span>, which would make “never sell” optimal. One wants the discounted sale price to be as <em>large</em> as possible, so the problem is read here as maximising it.</p>
+<p><strong>The data is inconsistent as printed.</strong> The statement requires <span class="math inline">\(\sum_ip_i=1-p_0\)</span> with <span class="math inline">\(p_0=0.01\)</span>, i.e.&nbsp;<span class="math inline">\(0.99\)</span>, but the five listed values sum to <span class="math inline">\(0.95\)</span>. The repair with the fewest changes is to take the five <span class="math inline">\(p_i\)</span> as given and set <span class="math inline">\(p_0=0.05\)</span>, which is what is used below. (A value of <span class="math inline">\(\alpha\)</span> is also never supplied; <span class="math inline">\(\alpha=0.99\)</span> is used, the monthly figure the asset-selling scripts in <code>code/unit10/</code> and <code>code/unit11/</code> use. The last remark below says what changes if these choices are made differently.)</p>
+</div>
+</div>
+<p><strong>The structure first.</strong> Two observations — the same two as in Problem 10.5 — reduce the whole problem to a single scalar.</p>
+<p>Selling at an offer <span class="math inline">\(x\)</span> collects <span class="math inline">\(x\)</span> and moves to the absorbing state <span class="math inline">\(T\)</span>, so for any policy that sells at <span class="math inline">\(x\)</span>,</p>
+<p><span class="math display">\[J(x)=x,\]</span></p>
+<p>exactly. And waiting collects nothing and lands on the next offer, whose distribution does not depend on the current one, so the value of waiting is the same number <span class="math inline">\(\theta\)</span> at every state, including <span class="math inline">\(\text{N}\)</span>:</p>
+<p><span class="math display">\[\theta=\alpha\,\mathbb{E}\big[J(w)\big]=\alpha\left(p_0\theta+\sum_{i=1}^{5}p_iJ(c_i)\right).\]</span></p>
+<p>A policy is therefore described by the set of offers it accepts, and evaluating it means solving one scalar linear equation for <span class="math inline">\(\theta\)</span>. If the policy accepts the offers in a set <span class="math inline">\(S\)</span> and waits on the rest,</p>
+<p><span class="math display">\[\theta=\alpha\left(\Big(p_0+\sum_{i\notin S}p_i\Big)\theta+\sum_{i\in S}p_ic_i\right) \quad\Longrightarrow\quad \theta=\frac{\alpha\sum_{i\in S}p_ic_i}{1-\alpha\big(p_0+\sum_{i\notin S}p_i\big)}.\]</span></p>
+<p>Improvement is equally simple: accept <span class="math inline">\(c_i\)</span> when <span class="math inline">\(c_i\geq\theta\)</span>, wait otherwise. So policy iteration here is a scalar fixed-point iteration on a threshold.</p>
+<p><strong>The loop.</strong> Start from <span class="math inline">\(\mu^0=\)</span> “never sell”, whose value is <span class="math inline">\(\theta^0=0\)</span>: a car that is never sold earns nothing.</p>
+<p><em>Round 1 — improvement.</em> Against <span class="math inline">\(\theta^0=0\)</span> every offer clears the threshold, so <span class="math inline">\(\mu^1\)</span> sells at the first offer, <span class="math inline">\(S=\{c_1,\dots,c_5\}\)</span>.</p>
+<p><em>Round 1 — evaluation.</em> With <span class="math inline">\(\sum_ip_ic_i=0.05(10000)+0.2(11000)+0.3(12000)+0.3(13000)+0.1(14000)=11600\)</span> and nothing waited on,</p>
+<p><span class="math display">\[\theta^1=\frac{0.99(11600)}{1-0.99(0.05)}=\frac{11484}{0.9505}=12082.06.\]</span></p>
+<p>The jump from <span class="math inline">\(0\)</span> is the whole difference between a policy that sells and one that does not.</p>
+<p><em>Round 2 — improvement.</em> Now <span class="math inline">\(12082.06\)</span> beats <span class="math inline">\(c_1=10000\)</span>, <span class="math inline">\(c_2=11000\)</span> and <span class="math inline">\(c_3=12000\)</span>, so <span class="math inline">\(\mu^2\)</span> waits on those three and sells only at <span class="math inline">\(13000\)</span> or <span class="math inline">\(14000\)</span>: <span class="math inline">\(S=\{c_4,c_5\}\)</span>.</p>
+<p><em>Round 2 — evaluation.</em> With <span class="math inline">\(\sum_{i\in S}p_ic_i=0.3(13000)+0.1(14000)=5300\)</span> and waiting mass <span class="math inline">\(p_0+p_1+p_2+p_3=0.6\)</span>,</p>
+<p><span class="math display">\[\theta^2=\frac{0.99(5300)}{1-0.99(0.6)}=\frac{5247}{0.406}=12923.65.\]</span></p>
+<p><em>Round 3 — improvement.</em> Against <span class="math inline">\(12923.65\)</span> the offer <span class="math inline">\(c_3=12000\)</span> still does not clear, and <span class="math inline">\(c_4=13000\)</span> still does, so the accepted set is again <span class="math inline">\(\{c_4,c_5\}\)</span>. The improvement step returned its input, so the policy is optimal:</p>
+<p><span class="math display">\[\mu^\star(x)=\begin{cases}1 \ (\text{sell}) &amp; \text{if } x\geq13000\\ 0 \ (\text{wait}) &amp; \text{otherwise},\end{cases} \qquad \theta^\star=12923.65.\]</span></p>
+<p>Two evaluations and three improvements. As a check, the Bellman equation <span class="math inline">\(\theta=\alpha\,\mathbb{E}[\max\{\theta,w\}]\)</span> holds at <span class="math inline">\(\theta^\star\)</span> to machine precision.</p>
+<p><strong>What the answer says.</strong> The optimal reservation price <span class="math inline">\(12923.65\)</span> is <em>above</em> the mean offer of <span class="math inline">\(11600\)</span> (and above the mean conditional on there being an offer, <span class="math inline">\(12210.53\)</span>) — a seller with <span class="math inline">\(\alpha=0.99\)</span> can afford to wait for the top two of five possible offers, because waiting a month costs only <span class="math inline">\(1\%\)</span> of the value and <span class="math inline">\(40\%\)</span> of offers clear the bar. It is also, note, not equal to any offer: the threshold is a value, and the policy it induces is a partition of the five offers into accept and wait.</p>
+<p><strong>Sensitivity to the two choices.</strong> The threshold depends on <span class="math inline">\(\alpha\)</span> exactly as patience should:</p>
+<table class="caption-top table">
+<caption>The optimal threshold as a function of the monthly depreciation rate.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><span class="math inline">\(\alpha\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(0.99\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(0.95\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(0.9\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(0.8\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">sell at or above</td>
+<td style="text-align: right;"><span class="math inline">\(13000\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(12000\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(11000\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(10000\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(\theta^\star\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(12923.65\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(11825.17\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(10978.02\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(9666.67\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>At <span class="math inline">\(\alpha=0.8\)</span> depreciation is severe enough that the first offer should be taken. Repairing the data the other way — keeping <span class="math inline">\(p_0=0.01\)</span> and rescaling <span class="math inline">\(p_1,\dots,p_5\)</span> to sum to <span class="math inline">\(0.99\)</span> — changes nothing at <span class="math inline">\(\alpha=0.99\)</span> (threshold <span class="math inline">\(13000\)</span>, <span class="math inline">\(\theta^\star=12936.52\)</span>), though at <span class="math inline">\(\alpha=0.9\)</span> the two repairs do straddle a boundary (<span class="math inline">\(11000\)</span> against <span class="math inline">\(12000\)</span>), which is a fair warning about how little slack a threshold policy has near a tie.</p>
+<p>Finally, note that <span class="math inline">\(\alpha\)</span> plays two roles at once and that this is the trick of the formulation: it is both the monthly depreciation rate and the discount factor. Rescaling the offer by <span class="math inline">\(\alpha^{-k}\)</span> turns a shrinking asset with undiscounted value into a stationary offer distribution with a discounted objective, which is what makes a single state-independent <span class="math inline">\(\theta\)</span> possible.</p>
+</div>
+</div>
+</div>
+<p><strong>Problem 11.11</strong> Suppose we would like to estimate the average height of a Mechanical Engineering TU/e student from <span class="math inline">\(N\)</span> samples. The percentage of female students is significantly smaller, say <span class="math inline">\(20\%\)</span>, so the average height is</p>
+<p><span class="math display">\[0.2\times H_1+0.8\times H_2,\]</span></p>
+<p>where <span class="math inline">\(H_1\)</span> and <span class="math inline">\(H_2\)</span> are the (unknown) average heights of female and male students. Both height distributions are discretised with the same number of bins <span class="math inline">\(n\)</span>, so that <span class="math inline">\(h_1,\dots,h_n\)</span> and <span class="math inline">\(g_1,\dots,g_n\)</span> are the possible heights of females and males, and assume all the <span class="math inline">\(h_i\)</span> are equally likely and all the <span class="math inline">\(g_i\)</span> are equally likely.</p>
+<ol type="i">
+<li>Suppose one takes <span class="math inline">\(N=10\)</span> randomly picked male and female students with male probability <span class="math inline">\(\alpha\)</span>. With <span class="math inline">\(\alpha=0.5\)</span> and the data in the table, what are the averages with and without importance sampling?</li>
+</ol>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><span class="math inline">\(\ell\)</span></th>
+<th style="text-align: right;">1</th>
+<th style="text-align: right;">2</th>
+<th style="text-align: right;">3</th>
+<th style="text-align: right;">4</th>
+<th style="text-align: right;">5</th>
+<th style="text-align: right;">6</th>
+<th style="text-align: right;">7</th>
+<th style="text-align: right;">8</th>
+<th style="text-align: right;">9</th>
+<th style="text-align: right;">10</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">M or F</td>
+<td style="text-align: right;">F</td>
+<td style="text-align: right;">M</td>
+<td style="text-align: right;">M</td>
+<td style="text-align: right;">F</td>
+<td style="text-align: right;">F</td>
+<td style="text-align: right;">M</td>
+<td style="text-align: right;">F</td>
+<td style="text-align: right;">F</td>
+<td style="text-align: right;">F</td>
+<td style="text-align: right;">M</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">height</td>
+<td style="text-align: right;"><span class="math inline">\(1.80\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.01\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1.90\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1.60\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1.91\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1.94\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1.65\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1.71\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1.59\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.10\)</span></td>
+</tr>
+</tbody>
+</table>
+<ol start="2" type="i">
+<li>Suppose there were two additional male students in the table, of heights <span class="math inline">\(1.90\)</span> and <span class="math inline">\(1.91\)</span>. Recompute both averages and discuss the values obtained in (i) and (ii).</li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-16-contents" aria-controls="callout-16" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-16" class="callout-16-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>(i)</strong> Without importance sampling, average the ten heights:</p>
+<p><span class="math display">\[\frac{1.80+2.01+1.90+1.60+1.91+1.94+1.65+1.71+1.59+2.10}{10}=1.8210.\]</span></p>
+<p>For the importance sampling estimate, note first what the two distributions are. The behaviour policy picks a sex with probability <span class="math inline">\(0.5\)</span> each and then a bin uniformly, so each particular height is drawn with probability <span class="math inline">\(0.5/n\)</span>. The target distribution assigns <span class="math inline">\(0.2/n\)</span> to each female height and <span class="math inline">\(0.8/n\)</span> to each male height. The importance ratios are therefore</p>
+<p><span class="math display">\[\frac{0.2/n}{0.5/n}=\frac{2}{5} \quad\text{for a female sample}, \qquad \frac{0.8/n}{0.5/n}=\frac{8}{5} \quad\text{for a male one},\]</span></p>
+<p>independent of <span class="math inline">\(n\)</span> and of the bin values, as the problem’s footnote promises. The data has six females summing to <span class="math inline">\(10.26\)</span> and four males summing to <span class="math inline">\(7.95\)</span>, so</p>
+<p><span class="math display">\[\frac{1}{10}\Big(\tfrac{2}{5}(10.26)+\tfrac{8}{5}(7.95)\Big)=\frac{16.824}{10}=1.6824.\]</span></p>
+<p><strong>(ii)</strong> With the two extra males the plain average becomes <span class="math inline">\(22.02/12=1.8350\)</span>, and the importance sampling estimate</p>
+<p><span class="math display">\[\frac{1}{12}\Big(\tfrac{2}{5}(10.26)+\tfrac{8}{5}(11.76)\Big)=\frac{22.92}{12}=1.9100.\]</span></p>
+<p><strong>Discussion.</strong> The estimate in (i), <span class="math inline">\(1.6824\)</span>, is far below anything one would expect: the sample contains no height under <span class="math inline">\(1.59\)</span> and the target population is <span class="math inline">\(80\%\)</span> male, yet the estimate comes out below the female average of <span class="math inline">\(1.71\)</span>. In (ii) the estimate is <span class="math inline">\(1.9100\)</span>, which is sensible. Two samples of the same kind, one badly wrong.</p>
+<p>The cause is visible in the sum of the weights, which ought to be <span class="math inline">\(N\)</span>:</p>
+<p><span class="math display">\[\text{(i)}\quad \tfrac{2}{5}(6)+\tfrac{8}{5}(4)=8.8 \quad\text{against}\quad N=10, \qquad \text{(ii)}\quad \tfrac{2}{5}(6)+\tfrac{8}{5}(6)=12 \quad\text{against}\quad N=12.\]</span></p>
+<p>In (ii) the sample happens to contain exactly six females and six males, matching the behaviour probabilities <span class="math inline">\((0.5,0.5)\)</span>, so the weights sum to <span class="math inline">\(N\)</span> exactly and the estimator is on target. In (i) the sample is <span class="math inline">\(6\)</span>–<span class="math inline">\(4\)</span>, the weights fall <span class="math inline">\(12\%\)</span> short of <span class="math inline">\(N\)</span>, and dividing by <span class="math inline">\(N\)</span> scales the whole estimate down by that factor. Nothing is wrong with the weights; the problem is the normaliser.</p>
+<p>Dividing by the sum of the weights instead — <strong>weighted</strong> importance sampling — repairs it:</p>
+<p><span class="math display">\[\text{(i)}\quad\frac{16.824}{8.8}=1.9118, \qquad \text{(ii)}\quad\frac{22.92}{12}=1.9100.\]</span></p>
+<p>The weighted estimate from the <em>ten</em>-sample data is already <span class="math inline">\(1.9118\)</span>, essentially the answer the twelve-sample data gives, and within <span class="math inline">\(0.02\)</span> of the exact mixture of the sample means, <span class="math inline">\(0.2(1.7100)+0.8(1.9875)=1.9320\)</span>. In (ii) the two estimators coincide, because there the weights already summed to <span class="math inline">\(N\)</span>.</p>
+<p>So the lesson of (i) versus (ii) is sharper than “importance sampling has high variance”. The variance is real, but here it enters through one specific channel — the random number of male and female draws — and normalising by the realised weights removes exactly that channel while leaving the reweighting intact. It is the same mechanism as in Problem 11.7 and the same one that separates the two off-policy estimators in <code>A_11_BlackjackOnOffPolicy.ipynb</code>.</p>
+</div>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

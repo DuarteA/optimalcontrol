@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>Unit 9 – Numerical Methods in Optimal Control</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="unit9-notes_files/libs/clipboard/clipboard.min.js"></script>
+<script src="unit9-notes_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="unit9-notes_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="unit9-notes_files/libs/quarto-html/popper.min.js"></script>
+<script src="unit9-notes_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="unit9-notes_files/libs/quarto-html/anchor.min.js"></script>
+<link href="unit9-notes_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="unit9-notes_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="unit9-notes_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="unit9-notes_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="unit9-notes_files/libs/bootstrap/bootstrap-5f5514ab72c605193d28bd5ace4a0252.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      // NOTE: these must stay 0-argument, matching \newcommand{\argmin}
+      // in macros.tex. They used to be declared here as taking one
+      // argument ("\\operatorname*{argmin}_{#1}", 1), so \argmin{...}
+      // rendered in html but produced garbage in pdf, and \argmin_{...}
+      // rendered in pdf but produced garbage in html. Use \argmin_{x}.
+      argmin: "\\operatorname*{argmin}",
+      argmax: "\\operatorname*{argmax}",
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#where-this-unit-sits-in-the-course" id="toc-where-this-unit-sits-in-the-course" class="nav-link active" data-scroll-target="#where-this-unit-sits-in-the-course"><span class="header-section-number">1</span> Where this unit sits in the course</a>
+  <ul class="collapse">
+  <li><a href="#two-philosophies" id="toc-two-philosophies" class="nav-link" data-scroll-target="#two-philosophies"><span class="header-section-number">1.1</span> Two philosophies</a></li>
+  <li><a href="#the-landscape" id="toc-the-landscape" class="nav-link" data-scroll-target="#the-landscape"><span class="header-section-number">1.2</span> The landscape</a></li>
+  <li><a href="#where-this-fits" id="toc-where-this-fits" class="nav-link" data-scroll-target="#where-this-fits"><span class="header-section-number">1.3</span> Where this fits</a></li>
+  <li><a href="#a-word-on-solvers" id="toc-a-word-on-solvers" class="nav-link" data-scroll-target="#a-word-on-solvers"><span class="header-section-number">1.4</span> A word on solvers</a></li>
+  </ul></li>
+  <li><a href="#direct-shooting" id="toc-direct-shooting" class="nav-link" data-scroll-target="#direct-shooting"><span class="header-section-number">2</span> Direct shooting</a>
+  <ul class="collapse">
+  <li><a href="#single-shooting-is-unit-7s-static-optimization" id="toc-single-shooting-is-unit-7s-static-optimization" class="nav-link" data-scroll-target="#single-shooting-is-unit-7s-static-optimization"><span class="header-section-number">2.1</span> Single shooting is Unit 7’s static optimization</a></li>
+  <li><a href="#computing-the-gradient" id="toc-computing-the-gradient" class="nav-link" data-scroll-target="#computing-the-gradient"><span class="header-section-number">2.2</span> Computing the gradient</a></li>
+  <li><a href="#from-a-constraint-to-a-penalty" id="toc-from-a-constraint-to-a-penalty" class="nav-link" data-scroll-target="#from-a-constraint-to-a-penalty"><span class="header-section-number">2.3</span> From a constraint to a penalty</a></li>
+  <li><a href="#example-the-pendulum-swing-up" id="toc-example-the-pendulum-swing-up" class="nav-link" data-scroll-target="#example-the-pendulum-swing-up"><span class="header-section-number">2.4</span> Example: the pendulum swing-up</a></li>
+  <li><a href="#why-single-shooting-struggles" id="toc-why-single-shooting-struggles" class="nav-link" data-scroll-target="#why-single-shooting-struggles"><span class="header-section-number">2.5</span> Why single shooting struggles</a></li>
+  <li><a href="#multiple-shooting" id="toc-multiple-shooting" class="nav-link" data-scroll-target="#multiple-shooting"><span class="header-section-number">2.6</span> Multiple shooting</a></li>
+  <li><a href="#what-shooting-is-good-for" id="toc-what-shooting-is-good-for" class="nav-link" data-scroll-target="#what-shooting-is-good-for"><span class="header-section-number">2.7</span> What shooting is good for</a></li>
+  </ul></li>
+  <li><a href="#direct-collocation" id="toc-direct-collocation" class="nav-link" data-scroll-target="#direct-collocation"><span class="header-section-number">3</span> Direct collocation</a>
+  <ul class="collapse">
+  <li><a href="#direct-transcription" id="toc-direct-transcription" class="nav-link" data-scroll-target="#direct-transcription"><span class="header-section-number">3.1</span> Direct transcription</a></li>
+  <li><a href="#trapezoidal-collocation" id="toc-trapezoidal-collocation" class="nav-link" data-scroll-target="#trapezoidal-collocation"><span class="header-section-number">3.2</span> Trapezoidal collocation</a></li>
+  <li><a href="#hermite-simpson-collocation" id="toc-hermite-simpson-collocation" class="nav-link" data-scroll-target="#hermite-simpson-collocation"><span class="header-section-number">3.3</span> Hermite-Simpson collocation</a></li>
+  <li><a href="#what-the-penalty-weight-actually-controls" id="toc-what-the-penalty-weight-actually-controls" class="nav-link" data-scroll-target="#what-the-penalty-weight-actually-controls"><span class="header-section-number">3.4</span> What the penalty weight actually controls</a></li>
+  <li><a href="#shooting-against-collocation" id="toc-shooting-against-collocation" class="nav-link" data-scroll-target="#shooting-against-collocation"><span class="header-section-number">3.5</span> Shooting against collocation</a></li>
+  <li><a href="#pseudospectral-collocation" id="toc-pseudospectral-collocation" class="nav-link" data-scroll-target="#pseudospectral-collocation"><span class="header-section-number">3.6</span> Pseudospectral collocation</a></li>
+  </ul></li>
+  <li><a href="#differential-dynamic-programming-and-ilqr" id="toc-differential-dynamic-programming-and-ilqr" class="nav-link" data-scroll-target="#differential-dynamic-programming-and-ilqr"><span class="header-section-number">4</span> Differential dynamic programming and iLQR</a>
+  <ul class="collapse">
+  <li><a href="#the-idea" id="toc-the-idea" class="nav-link" data-scroll-target="#the-idea"><span class="header-section-number">4.1</span> The idea</a></li>
+  <li><a href="#the-backward-pass" id="toc-the-backward-pass" class="nav-link" data-scroll-target="#the-backward-pass"><span class="header-section-number">4.2</span> The backward pass</a></li>
+  <li><a href="#the-forward-pass" id="toc-the-forward-pass" class="nav-link" data-scroll-target="#the-forward-pass"><span class="header-section-number">4.3</span> The forward pass</a></li>
+  <li><a href="#how-fast-it-converges" id="toc-how-fast-it-converges" class="nav-link" data-scroll-target="#how-fast-it-converges"><span class="header-section-number">4.4</span> How fast it converges</a></li>
+  <li><a href="#which-optimum-and-why" id="toc-which-optimum-and-why" class="nav-link" data-scroll-target="#which-optimum-and-why"><span class="header-section-number">4.5</span> Which optimum, and why</a></li>
+  <li><a href="#where-this-leads" id="toc-where-this-leads" class="nav-link" data-scroll-target="#where-this-leads"><span class="header-section-number">4.6</span> Where this leads</a></li>
+  <li><a href="#what-ilqr-is-good-for" id="toc-what-ilqr-is-good-for" class="nav-link" data-scroll-target="#what-ilqr-is-good-for"><span class="header-section-number">4.7</span> What iLQR is good for</a></li>
+  </ul></li>
+  <li><a href="#two-case-studies" id="toc-two-case-studies" class="nav-link" data-scroll-target="#two-case-studies"><span class="header-section-number">5</span> Two case studies</a>
+  <ul class="collapse">
+  <li><a href="#energy-optimal-driving" id="toc-energy-optimal-driving" class="nav-link" data-scroll-target="#energy-optimal-driving"><span class="header-section-number">5.1</span> Energy-optimal driving</a></li>
+  <li><a href="#trusting-the-answer" id="toc-trusting-the-answer" class="nav-link" data-scroll-target="#trusting-the-answer"><span class="header-section-number">5.2</span> Trusting the answer</a></li>
+  <li><a href="#time-optimal-driving" id="toc-time-optimal-driving" class="nav-link" data-scroll-target="#time-optimal-driving"><span class="header-section-number">5.3</span> Time-optimal driving</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">6</span> Summary</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="unit9-notes.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Unit 9 – Numerical Methods in Optimal Control</h1>
+<p class="subtitle lead">4SC000 Optimal Control and Reinforcement Learning</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Textbook-prose companion to lectures/lecture09-numerical-methods.qmd,
+intended as a booklet chapter for readers who did not attend the lecture.
+Same content and figures as the slides, but written as connected prose
+rather than bullet points, so it can stand on its own. Figures are the
+deck's own, referenced from ../lectures/figures/lecture9/ rather than
+duplicated.
+
+WRITTEN 2026-10-26, last of the fourteen units. Conventions carried over
+from units 1-14:
+- Prose, not bullets; every equation from the deck is kept.
+- Figure captions are written here (the slides deliberately carry none).
+- Quick-check callouts follow the unit 1-14 pattern: an OPEN
+  {.callout-tip collapse="false"} with the question, immediately followed
+  by a COLLAPSED {.callout-note collapse="true"} with the solution.
+- Per [[feedback-concluding-remarks-no-learning-outcomes]], no "After this
+  lecture you should be able to" block; the deck's Concluding remarks are
+  absorbed into the closing Summary section.
+
+HEADER LINK ROW: Slides and Jupyter notebooks only. Duarte confirmed on
+2026-10-26 that Unit 9 will have no exercise sheet. Add the link here if
+that ever changes.
+
+THREE CORRECTIONS TO THE DECK are made in these notes, all found while
+writing code/unit9's notebooks on 2026-10-26 and all recorded in that
+folder's README.md. The deck itself has NOT been changed; if it is, these
+notes must be revisited together with it.
+
+  1. The deck's cautionary slide says iLQR's trajectory dips backward
+     "unlike every other method here". Single shooting does exactly the
+     same thing, to an identical cost (2.3117). On
+     trajectory_comparison.png the two curves lie on top of one another,
+     which is why only one dipping curve is visible. It is an
+     INITIAL-GUESS effect: single_shooting_solve and ilqr_solve both start
+     from u = 0, while multiple_shooting_solve and the collocation solvers
+     additionally seed a state trajectory from x(0) to x(T). Warm-starting
+     either moves it onto the better optimum, 2.2371 against 2.3117.
+     These notes tell that version, and use the deck's figure for it.
+
+  2. collocation.py's default penalty weight rho = 300 is loose enough
+     that the returned trajectory does not satisfy the dynamics.
+     Simulating its control open-loop leaves the pendulum at theta = 1.38
+     instead of pi, and the reported effort of 2.0300 is the cost of a
+     trajectory that does not swing up. At rho = 3000 the max defect falls
+     from 3.5e-3 to 3.6e-4 and the reported effort rises to 2.2177, which
+     is where multiple_shooting_solve independently lands (2.2194). The
+     deck's "effort 2.14" on the collocation example slide is from the
+     same loose-penalty family of numbers.
+
+  3. collocation_accuracy.png is therefore not a convergence study: the
+     curve falls steadily instead of levelling off, and the two schemes
+     are indistinguishable, because at fixed rho the error floor is set by
+     the penalty weight rather than by the order of the quadrature. The
+     figure is reproduced here and then taken apart, which is a better use
+     of it than quietly dropping it. Redone at rho = 3000 the sweep
+     settles towards 2.22 as it should.
+
+VERIFICATION. Every number in these notes is the measured output of
+code/unit9/, re-run 2026-10-26, not a figure copied from the deck. The
+conditioning numbers are evaluated AT THE SOLUTION (at u = 0 the pendulum
+hangs at its stable equilibrium and nothing is amplified, which gives
+about 1.05 regardless of horizon -- a trap worth one of the quick
+exercises). The case-study numbers are vehicle.py's.
+
+FIRST-PASS CAVEAT: expect a section-by-section refinement round, same as
+every other unit.
+-->
+<p><a href="../lectures/lecture09-numerical-methods.html">Slides</a> · <a href="../code/unit9/notebooks.html">Jupyter notebooks</a></p>
+<section id="where-this-unit-sits-in-the-course" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="where-this-unit-sits-in-the-course"><span class="header-section-number">1</span> Where this unit sits in the course</h2>
+<p>Everything solved exactly so far rested on one of two pieces of good fortune. Units 1 to 4 computed the cost-to-go by dynamic programming over a state space small enough, or discretized finely enough, to enumerate. Units 5 and 6 had dynamics that were <strong>linear</strong> and a cost that was <strong>quadratic</strong>, which is the one nonlinear-looking problem with a closed form: the Riccati recursion. Unit 7 discretized a continuous problem and minimized over the controls by gradient descent, and Unit 8 solved a quadratic program at every step.</p>
+<p>Real systems are usually neither small nor linear. A vehicle, a robot arm, an aircraft: continuous states, nonlinear dynamics, a cost that is whatever the application says it is, and constraints on both states and inputs. The Riccati recursion no longer applies, and the state space is far too large to discretize – Unit 7’s curse of dimensionality, in the form that cannot be argued away.</p>
+<p>This unit builds the general-purpose machinery. Given a nonlinear model and a cost, compute an optimal <strong>trajectory</strong> numerically; and, with DDP/iLQR, a local feedback policy as well. None of it is exact, none of it is guaranteed to find the best answer, and all of it works.</p>
+<section id="two-philosophies" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="two-philosophies"><span class="header-section-number">1.1</span> Two philosophies</h3>
+<p>Every method here is one of two things.</p>
+<p><strong>Direct methods</strong> discretize first and optimize second. The optimal control problem is turned into a finite-dimensional nonlinear program – finitely many decision variables, finitely many constraints – and handed to an NLP solver. What is optimized is an approximation of the original problem.</p>
+<p><strong>Indirect methods</strong> optimize first and discretize second. Pontryagin’s minimum principle gives necessary conditions for optimality: a two-point boundary value problem in the states and the costates. That boundary value problem is then solved numerically. What is optimized is the original problem; what is approximated is the solution of the resulting equations.</p>
+<p>Indirect methods characterize the optimum more sharply, since the necessary conditions are exact. They are also harder to set up – the costate equations must be derived by hand for each problem – and notoriously sensitive to the initial guess for the costates, which are quantities with no physical meaning that one can guess well. Direct methods dominate in practice and take up most of this unit. The last section shows one problem where the indirect route wins outright, and it is worth the wait.</p>
+</section>
+<section id="the-landscape" class="level3" data-number="1.2">
+<h3 data-number="1.2" class="anchored" data-anchor-id="the-landscape"><span class="header-section-number">1.2</span> The landscape</h3>
+<p>Among <strong>direct</strong> methods there are two families: <strong>shooting</strong>, in single and multiple variants, and <strong>collocation</strong>, in trapezoidal, Hermite-Simpson and pseudospectral variants. Among <strong>indirect</strong> methods there is Pontryagin’s minimum principle plus a boundary value problem, itself solved by shooting or collocation applied to the costate system. And standing slightly apart are the <strong>DP-based</strong> methods, differential dynamic programming and its simplification iLQR, which exploit the sequential structure of the problem directly instead of handing it to a solver that knows nothing about it.</p>
+<p>This unit covers direct shooting, direct collocation, and DDP/iLQR, and then puts them to work on two problems that cannot be done by hand.</p>
+</section>
+<section id="where-this-fits" class="level3" data-number="1.3">
+<h3 data-number="1.3" class="anchored" data-anchor-id="where-this-fits"><span class="header-section-number">1.3</span> Where this fits</h3>
+<p>The thread back through the course is worth making explicit:</p>
+<ul>
+<li><strong>Unit 5</strong> gave the exact Riccati recursion, for linear dynamics and quadratic cost only. Section 4 below is that recursion applied over and over to local approximations.</li>
+<li><strong>Unit 7</strong> substituted the dynamics into the cost and minimized over the controls alone. Section 2 shows that this <em>is</em> single shooting, specialized to the linear case.</li>
+<li><strong>Unit 8</strong> solved MPC as a quadratic program, still with linear dynamics – or dynamics re-linearized at every step, in nonlinear MPC. Section 4 shows what that re-linearization looks like from the inside.</li>
+</ul>
+<p>So this unit is not a new direction so much as the general machinery underneath several things the course has already done in special cases.</p>
+</section>
+<section id="a-word-on-solvers" class="level3" data-number="1.4">
+<h3 data-number="1.4" class="anchored" data-anchor-id="a-word-on-solvers"><span class="header-section-number">1.4</span> A word on solvers</h3>
+<p>Once an optimal control problem has been transcribed into a nonlinear program, it is solved by a general-purpose numerical optimization routine. The two standard families are <strong>sequential quadratic programming</strong> (SQP) and <strong>interior-point</strong> methods. Both, at their core, repeatedly build a local model of the problem – quadratic, for SQP – and take a Newton-type step, which is exactly what the Levenberg-Marquardt solver in this unit’s companion code does.</p>
+<p>In practice one uses a mature package. The code accompanying these notes rolls its own, in plain <code>numpy</code>, purely so that nothing of the mechanics is hidden. The one exception is the module behind the two case studies, which needs a real SQP solver for reasons that are themselves part of the lesson.</p>
+</section>
+</section>
+<section id="direct-shooting" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="direct-shooting"><span class="header-section-number">2</span> Direct shooting</h2>
+<section id="single-shooting-is-unit-7s-static-optimization" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="single-shooting-is-unit-7s-static-optimization"><span class="header-section-number">2.1</span> Single shooting is Unit 7’s static optimization</h3>
+<p>Take the controls <span class="math inline">\(u_0,\dots,u_{h-1}\)</span> as the only decision variables. Given them, the states follow by forward simulation, <span class="math inline">\(x_{k+1}=f(x_k,u_k)\)</span> from the known <span class="math inline">\(x_0\)</span>, so each state is a function of the controls that preceded it, <span class="math inline">\(x_k=\phi_k(u_0,\dots,u_{k-1})\)</span>, and the cost becomes a function of <span class="math inline">\(u\)</span> alone:</p>
+<p><span class="math display">\[J(u)=\sum_{k=0}^{h-1}g\big(\phi_k(u),u_k\big)+g_h\big(\phi_h(u)\big).\]</span></p>
+<p>This is <strong>single shooting</strong>: guess a control sequence, shoot a trajectory from <span class="math inline">\(x_0\)</span>, see where it lands, adjust.</p>
+<p>If that sounds familiar, it should. Unit 7 did exactly this for the linear model <span class="math inline">\(x_{k+1}=Ax_k+Bu_k\)</span> with a quadratic cost: substitute the dynamics into the cost, obtain an unconstrained problem in <span class="math inline">\(u\)</span>, and descend. There <span class="math inline">\(\phi_k\)</span> was linear, so <span class="math inline">\(J(u)\)</span> was exactly quadratic and gradient descent behaved beautifully. Here <span class="math inline">\(f\)</span> is general, <span class="math inline">\(\phi_k\)</span> is not linear, <span class="math inline">\(J(u)\)</span> is not quadratic, and even the gradient takes more care.</p>
+</section>
+<section id="computing-the-gradient" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="computing-the-gradient"><span class="header-section-number">2.2</span> Computing the gradient</h3>
+<p>Differentiate through the simulation by the chain rule. Write</p>
+<p><span class="math display">\[A_k=\frac{\partial f}{\partial x}(x_k,u_k), \qquad B_k=\frac{\partial f}{\partial u}(x_k,u_k),\]</span></p>
+<p>which are now state- and time-varying because <span class="math inline">\(f\)</span> is nonlinear. The sensitivity of the states to the controls obeys a recursion that runs alongside the simulation itself,</p>
+<p><span class="math display">\[\frac{\partial x_{k+1}}{\partial u}=A_k\frac{\partial x_k}{\partial u}+B_ke_k^\intercal, \qquad \frac{\partial x_0}{\partial u}=0,\]</span></p>
+<p>where <span class="math inline">\(e_k\)</span> is the <span class="math inline">\(k\)</span>-th standard basis vector. Propagating it forward gives <span class="math inline">\(\partial x_h/\partial u\)</span>, and with it <span class="math inline">\(\nabla J(u)\)</span>. It is Unit 7’s <code>rollout_grad</code> with <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> allowed to vary.</p>
+</section>
+<section id="from-a-constraint-to-a-penalty" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="from-a-constraint-to-a-penalty"><span class="header-section-number">2.3</span> From a constraint to a penalty</h3>
+<p>The swing-up problem used throughout this unit carries a hard terminal condition, <span class="math inline">\(x_h=x_{\text{target}}\)</span>, which makes single shooting a <em>constrained</em> problem. The companion code softens it to a penalty,</p>
+<p><span class="math display">\[J(u)+\rho\|x_h(u)-x_{\text{target}}\|^2,\]</span></p>
+<p>and applies a damped Gauss-Newton (Levenberg-Marquardt) step built directly from the sensitivity above. A production solver would keep the constraint hard and use SQP or an interior-point method. The penalty view is enough to expose the numerical problem that follows – and, as the collocation section shows, it has a sting of its own.</p>
+</section>
+<section id="example-the-pendulum-swing-up" class="level3" data-number="2.4">
+<h3 data-number="2.4" class="anchored" data-anchor-id="example-the-pendulum-swing-up"><span class="header-section-number">2.4</span> Example: the pendulum swing-up</h3>
+<p>The running example of this unit is the minimum-effort swing-up of a torque-driven pendulum,</p>
+<p><span class="math display">\[\dot x=\begin{bmatrix}\dot\theta\\-\sin\theta+u\end{bmatrix}, \qquad x(0)=\begin{bmatrix}0\\0\end{bmatrix}, \qquad x(T)=\begin{bmatrix}\pi\\0\end{bmatrix}, \qquad \min\int_0^Tu^2\,dt,\]</span></p>
+<p>over <span class="math inline">\(T=6\)</span> s with <span class="math inline">\(h=60\)</span> steps. The pendulum starts hanging down at rest and must end inverted at rest, using as little torque as possible. Single shooting reaches <span class="math inline">\(\theta_h=3.138\)</span> against a target of <span class="math inline">\(\pi=3.1416\)</span>, at an effort of <span class="math inline">\(2.31\)</span>.</p>
+<div style="text-align: center;">
+<div id="fig-traj" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-traj-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture9/trajectory_comparison.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:96.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-traj-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;1: The swing-up solved by all five methods of this unit. Two distinct trajectories are visible in the left panel, not five: multiple shooting and both collocation schemes swing the pendulum directly up, while iLQR – and, underneath its curve, single shooting – first swing it backwards. The two dipping curves lie exactly on top of one another, which is why only one of them can be seen.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>That the methods split into two groups rather than agreeing is the first important fact about every method in this unit, and Section 4 returns to it once there is enough machinery to explain it.</p>
+</section>
+<section id="why-single-shooting-struggles" class="level3" data-number="2.5">
+<h3 data-number="2.5" class="anchored" data-anchor-id="why-single-shooting-struggles"><span class="header-section-number">2.5</span> Why single shooting struggles</h3>
+<p>Shooting works by propagating sensitivities forward, which means the per-step Jacobians <span class="math inline">\(A_k\)</span> are multiplied together along the whole horizon. Any growing mode of the linearized dynamics is therefore raised to the power of the number of steps. The pendulum’s <em>upright</em> equilibrium is unstable, and the swing-up trajectory spends much of its horizon near the top, so the sensitivity of the final state to the <em>early</em> controls grows: a nudge at the start is amplified all the way to the end.</p>
+<p>The symptom is the condition number of <span class="math inline">\(\partial x_h/\partial u\)</span>, which grows with the horizon:</p>
+<div style="text-align: center;">
+<div id="fig-cond" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cond-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture9/conditioning.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:72.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cond-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;2: The condition number of the single-shooting sensitivity Jacobian against the horizon length, compared with the same quantity for one segment of a six-segment multiple-shooting discretization. Single shooting’s grows by an order of magnitude; the per-segment number falls towards one, because within a segment the sensitivities have only a sixth as far to propagate.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>An ill-conditioned Jacobian makes Newton-type steps numerically fragile: the solver is trying to invert a matrix that is nearly singular in some directions, and the step it computes is dominated by whatever noise is in the derivatives. This is precisely the failure mode multiple shooting exists to avoid.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: where do you measure the conditioning?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: where do you measure the conditioning?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Suppose you compute the condition number of <span class="math inline">\(\partial x_h/\partial u\)</span> at the <em>zero</em> control sequence rather than at the solution. You will find it is about <span class="math inline">\(1.05\)</span>, essentially independent of the horizon length – no growth at all, apparently contradicting <a href="#fig-cond" class="quarto-xref">Fig.&nbsp;2</a>. Explain the discrepancy, and say which of the two numbers answers the question the figure is asking.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>At <span class="math inline">\(u\equiv0\)</span> the pendulum hangs at <span class="math inline">\(\theta=0\)</span> and never moves. That is its <strong>stable</strong> equilibrium: linearizing there gives <span class="math inline">\(\ddot{\delta\theta}=-\delta\theta\)</span>, an oscillator, whose per-step Jacobians are rotations. Rotations have unit singular values, so multiplying sixty of them together amplifies nothing, and the condition number stays near one no matter how long the horizon.</p>
+<p>Along the <em>solved</em> trajectory the pendulum passes through and settles at <span class="math inline">\(\theta=\pi\)</span>, the <strong>unstable</strong> equilibrium, where linearizing gives <span class="math inline">\(\ddot{\delta\theta}=+\delta\theta\)</span> and perturbations grow like <span class="math inline">\(e^{t}\)</span>. Measured there, the condition numbers are</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"><span class="math inline">\(T\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(6\)</span> s</th>
+<th style="text-align: right;"><span class="math inline">\(9\)</span> s</th>
+<th style="text-align: right;"><span class="math inline">\(12\)</span> s</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">single shooting</td>
+<td style="text-align: right;"><span class="math inline">\(27.3\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(110.1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(104.1\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">one segment of six</td>
+<td style="text-align: right;"><span class="math inline">\(3.4\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.3\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1.7\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>which is <a href="#fig-cond" class="quarto-xref">Fig.&nbsp;2</a>.</p>
+<p>So the second number is the relevant one, and the reason is worth keeping: <strong>conditioning is a property of the trajectory, not of the problem.</strong> The same method, on the same system, is well conditioned in one part of the state space and badly conditioned in another. A diagnostic evaluated at a convenient point rather than at the operating point can reassure you about nothing at all.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="multiple-shooting" class="level3" data-number="2.6">
+<h3 data-number="2.6" class="anchored" data-anchor-id="multiple-shooting"><span class="header-section-number">2.6</span> Multiple shooting</h3>
+<p>The remedy is to stop simulating so far. Break the horizon into <span class="math inline">\(S\)</span> segments of <span class="math inline">\(m=h/S\)</span> steps, and give each segment its <strong>own</strong> free initial state <span class="math inline">\(z_i\)</span> as a decision variable, simulated forward under its own controls. The decision vector becomes <span class="math inline">\(u_0,\dots,u_{h-1}\)</span> together with <span class="math inline">\(z_1,\dots,z_{S-1}\)</span>, with <span class="math inline">\(z_0:=x_0\)</span> fixed, and the segments are tied together by <strong>continuity constraints</strong>: the simulated end of segment <span class="math inline">\(i\)</span> must equal <span class="math inline">\(z_{i+1}\)</span>. These are the “defects”, and they are the same object that collocation is built from.</p>
+<p>Why this is better conditioned is immediate once stated. Sensitivities now only ever propagate <strong>within</strong> a segment. A control in segment three has no direct effect on segment six’s defect; it acts only indirectly, through states that are decision variables rather than simulated quantities. Each segment is short, so its own Jacobian stays well conditioned however long the overall horizon is – the flat lower curve in <a href="#fig-cond" class="quarto-xref">Fig.&nbsp;2</a>.</p>
+<p>The price is a larger problem: more decision variables and more constraints. But the resulting nonlinear program is <strong>sparse</strong>, since each defect touches only two segments’ worth of variables, and much better behaved numerically. On the swing-up with <span class="math inline">\(S=6\)</span>, multiple shooting reaches <span class="math inline">\(\theta_h=3.140\)</span> at an effort of <span class="math inline">\(2.22\)</span>.</p>
+<p>The rule of thumb: single shooting is fine for short horizons and dynamics that are mildly nonlinear or stable. Multiple shooting, or collocation, is the default otherwise.</p>
+</section>
+<section id="what-shooting-is-good-for" class="level3" data-number="2.7">
+<h3 data-number="2.7" class="anchored" data-anchor-id="what-shooting-is-good-for"><span class="header-section-number">2.7</span> What shooting is good for</h3>
+<p>Shooting keeps the nonlinear program small – only the controls, or the controls plus a handful of segment states – which is attractive when simulations are cheap and the variable count matters. Both variants still require <em>simulating</em> the dynamics, which can be expensive or numerically delicate for stiff systems. Collocation, next, avoids simulation altogether.</p>
+</section>
+</section>
+<section id="direct-collocation" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="direct-collocation"><span class="header-section-number">3</span> Direct collocation</h2>
+<section id="direct-transcription" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="direct-transcription"><span class="header-section-number">3.1</span> Direct transcription</h3>
+<p>Parametrize <strong>both</strong> states and controls at every node of a time grid <span class="math inline">\(t_0,\dots,t_N\)</span> with <span class="math inline">\(N\)</span> intervals of length <span class="math inline">\(\tau\)</span>. The dynamics no longer determine the states; instead they appear as equality constraints tying consecutive nodes together, obtained by applying a numerical quadrature rule to</p>
+<p><span class="math display">\[x(t+\tau)-x(t)=\int_t^{t+\tau}f(x,u)\,dt.\]</span></p>
+<p>Everything is optimized <em>simultaneously</em>. This is why collocation programs are much larger than shooting programs – and also why they tend to be much better conditioned, since there are no long simulation chains, and why state and path constraints are trivial to impose: the states are variables, so a bound on them is a bound on a variable.</p>
+</section>
+<section id="trapezoidal-collocation" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="trapezoidal-collocation"><span class="header-section-number">3.2</span> Trapezoidal collocation</h3>
+<p>Approximate the integral by the trapezoidal rule. The defect constraint, for each <span class="math inline">\(k\in\{0,\dots,N-1\}\)</span>, is</p>
+<p><span class="math display">\[x_{k+1}-x_k-\frac{\tau}{2}\big(f(x_k,u_k)+f(x_{k+1},u_{k+1})\big)=0,\]</span></p>
+<p>and the cost is discretized by the same rule,</p>
+<p><span class="math display">\[J\approx\sum_{k=0}^{N-1}\frac{\tau}{2}\big(g(x_k,u_k)+g(x_{k+1},u_{k+1})\big)+g_h(x_N).\]</span></p>
+<p>It is second-order accurate and simple enough to write by hand: the decision vector, the defects and the cost all follow from those two formulas.</p>
+</section>
+<section id="hermite-simpson-collocation" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="hermite-simpson-collocation"><span class="header-section-number">3.3</span> Hermite-Simpson collocation</h3>
+<p>Interpolate the state within each interval by the cubic Hermite polynomial matching <span class="math inline">\(x_k,f_k\)</span> at <span class="math inline">\(t_k\)</span> and <span class="math inline">\(x_{k+1},f_{k+1}\)</span> at <span class="math inline">\(t_{k+1}\)</span>. Its value at the midpoint is</p>
+<p><span class="math display">\[x_{\text{mid}}=\frac{x_k+x_{k+1}}{2}+\frac{\tau}{8}\big(f(x_k,u_k)-f(x_{k+1},u_{k+1})\big), \qquad u_{\text{mid}}=\frac{u_k+u_{k+1}}{2}.\]</span></p>
+<p>Collocate the dynamics at that midpoint and apply Simpson’s rule:</p>
+<p><span class="math display">\[x_{k+1}-x_k-\frac{\tau}{6}\big(f(x_k,u_k)+4f(x_{\text{mid}},u_{\text{mid}})+f(x_{k+1},u_{k+1})\big)=0.\]</span></p>
+<p>Two extra function evaluations per interval buy two extra orders of accuracy. One warning that the case studies make concrete: the cost must be integrated with the <em>matching</em> quadrature – Simpson’s rule, on the same midpoint – or the objective is only second-order accurate and the scheme’s advantage is thrown away.</p>
+</section>
+<section id="what-the-penalty-weight-actually-controls" class="level3" data-number="3.4">
+<h3 data-number="3.4" class="anchored" data-anchor-id="what-the-penalty-weight-actually-controls"><span class="header-section-number">3.4</span> What the penalty weight actually controls</h3>
+<p>Here the companion code has something to teach that the slides do not say, and it is worth more than the accuracy comparison it displaces.</p>
+<p>Run both schemes on the swing-up at <span class="math inline">\(N=60\)</span> and they report an effort of about <span class="math inline">\(2.03\)</span>, below multiple shooting’s <span class="math inline">\(2.22\)</span>. Refine the grid and the reported cost keeps falling:</p>
+<div style="text-align: center;">
+<div id="fig-colloc" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-colloc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture9/collocation_accuracy.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:72.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-colloc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;3: The reported optimal effort against the number of intervals, for both schemes, at the companion code’s default penalty weight. Read as a convergence study this looks like agreement between two methods of different order. It is neither convergence nor agreement – see the text.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Two things in <a href="#fig-colloc" class="quarto-xref">Fig.&nbsp;3</a> should bother a careful reader. The curve <strong>never flattens</strong>: a converging quantity levels off, and this one is still falling at the right-hand edge. And the two schemes are <strong>indistinguishable</strong>, when one is supposed to be two orders more accurate than the other.</p>
+<p>The honest test is to throw away the node values, keep only the control, and simulate it through the true dynamics. Doing that to the trapezoidal solution at the default weight <span class="math inline">\(\rho=300\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">reported</th>
+<th style="text-align: right;">simulated</th>
+<th style="text-align: right;"><span class="math inline">\(\theta(T)\)</span> simulated</th>
+<th style="text-align: right;">max defect</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(\rho=300\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.0300\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.0284\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1.3841\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(3.5\times10^{-3}\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(\rho=3000\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.2177\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.2161\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.9294\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(3.6\times10^{-4}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The control that was supposed to bring the pendulum to <span class="math inline">\(\theta=\pi\)</span> leaves it less than halfway there. The attractive cost of <span class="math inline">\(2.03\)</span> is not the cost of a swing-up at all; it is the cost of a trajectory that does not swing up, bought by letting the defects drift. At the tighter weight the reported effort rises to <span class="math inline">\(2.2177\)</span> – which is where multiple shooting independently landed, <span class="math inline">\(2.2194\)</span>. That agreement is the sign that the tighter weight is the right one.</p>
+<p>Redone at <span class="math inline">\(\rho=3000\)</span> the refinement sweep behaves as a convergence study should, settling towards about <span class="math inline">\(2.22\)</span>:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><span class="math inline">\(N\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(10\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(20\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(30\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(40\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">trapezoidal, <span class="math inline">\(\rho=300\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.2493\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.1811\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.1373\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.0995\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">trapezoidal, <span class="math inline">\(\rho=3000\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.2836\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.2473\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.2348\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.2277\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hermite-Simpson, <span class="math inline">\(\rho=3000\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.2831\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.2444\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.2330\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.2266\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The two schemes are <em>still</em> almost on top of each other, and that is the real lesson. <strong>In a penalty formulation it is the penalty weight, not the order of the quadrature, that sets the accuracy.</strong> Hermite-Simpson’s fourth order cannot show through an error floor imposed by <span class="math inline">\(\rho\)</span>. The case studies in Section 5 impose the defects as genuine equality constraints inside an SQP solver, and there the fourth order appears exactly as promised – Hermite-Simpson at <span class="math inline">\(N=20\)</span> matching trapezoidal at <span class="math inline">\(N=80\)</span>.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: why does the reported cost fall forever?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: why does the reported cost fall forever?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>At fixed <span class="math inline">\(\rho\)</span>, the reported optimal effort <em>decreases</em> monotonically as <span class="math inline">\(N\)</span> grows, and never settles. Explain why, and say whether the true optimal cost of the continuous problem is above or below the numbers in the first row of the table.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Because with penalized defects the discrete problem is a <strong>relaxation</strong> of the continuous one, not an approximation of it in the usual sense. The optimizer is not required to satisfy the dynamics; it is only charged <span class="math inline">\(\rho\|\text{defect}\|^2\)</span> for violating them, and it will violate them whenever the effort saved exceeds the charge.</p>
+<p>The size of that violation per interval is set by <span class="math inline">\(\rho\)</span> and is roughly constant – about <span class="math inline">\(3.5\times10^{-3}\)</span> at every <span class="math inline">\(N\)</span> in the table. So the <em>number</em> of intervals over which the trajectory is allowed to drift grows with <span class="math inline">\(N\)</span>, the total drift grows with it, and the achievable “cost” falls. Refining the grid does not improve the answer; it buys the optimizer more places to cheat.</p>
+<p>The true optimal cost is therefore <strong>above</strong> those numbers: the relaxation can only report a value at or below the true optimum. This is worth contrasting with the second case study in Section 5, where the errors all point the other way – and the last quick exercise of these notes asks why.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="shooting-against-collocation" class="level3" data-number="3.5">
+<h3 data-number="3.5" class="anchored" data-anchor-id="shooting-against-collocation"><span class="header-section-number">3.5</span> Shooting against collocation</h3>
+<p>The trade is clean. <strong>Shooting</strong> has few decision variables and a dense Jacobian, but its conditioning degrades with horizon length and simulation errors compound. <strong>Collocation</strong> has many decision variables, but its Jacobian is sparse and banded – each defect touches only its own two nodes – stays well conditioned however long the horizon, and admits state and path constraints at any node for free.</p>
+<p>In practice, general-purpose collocation solvers exploit that sparsity directly, with interior-point or SQP methods built on sparse linear algebra, which makes collocation the default choice in most modern trajectory-optimization software even though the raw problem is far larger.</p>
+</section>
+<section id="pseudospectral-collocation" class="level3" data-number="3.6">
+<h3 data-number="3.6" class="anchored" data-anchor-id="pseudospectral-collocation"><span class="header-section-number">3.6</span> Pseudospectral collocation</h3>
+<p>One variant deserves naming. Instead of a <em>local</em>, piecewise low-order polynomial on each interval, use a single <strong>global</strong> polynomial – a Legendre or Chebyshev basis – over the whole horizon, collocated at a special set of nodes (Gauss, Radau or Lobatto points, clustered near the endpoints).</p>
+<p>For smooth problems this gives <strong>spectral convergence</strong>: error falling faster than any polynomial rate in the number of nodes, often reaching high accuracy with a handful of nodes where a local scheme would need hundreds. It is the basis of production aerospace tools such as GPOPS-II.</p>
+<p>The caveat is the same one the second case study will make vividly: a global polynomial is a poor fit when the optimal trajectory itself has kinks, which is exactly what active inequality constraints produce.</p>
+</section>
+</section>
+<section id="differential-dynamic-programming-and-ilqr" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="differential-dynamic-programming-and-ilqr"><span class="header-section-number">4</span> Differential dynamic programming and iLQR</h2>
+<section id="the-idea" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="the-idea"><span class="header-section-number">4.1</span> The idea</h3>
+<p>Shooting and collocation both treat the problem as a generic nonlinear program and hand it to a solver that knows nothing about its structure. But the structure is known, and the course has already exploited it: Unit 5’s Riccati recursion solves the linear-quadratic problem <em>exactly</em> by a single backward dynamic-programming pass, with no iterative solve at all.</p>
+<p>Can something like that be had for a nonlinear problem? Not exactly – there is no closed form. But it can be <em>iterated</em>: linearize and quadratize around a nominal trajectory, solve the resulting linear-quadratic problem exactly by Riccati, use the answer to improve the nominal trajectory, and repeat.</p>
+<p>Concretely, starting from a nominal <span class="math inline">\((\bar x_k,\bar u_k)\)</span>, for instance all-zero controls simulated forward, each iteration does four things. <strong>Linearize</strong> the dynamics, <span class="math inline">\(A_k=\partial f/\partial x\)</span> and <span class="math inline">\(B_k=\partial f/\partial u\)</span> at <span class="math inline">\((\bar x_k,\bar u_k)\)</span>. <strong>Quadratize</strong> the cost about the same point. <strong>Solve</strong> the resulting time-varying linear-quadratic problem exactly by a backward Riccati-like pass, which yields a local feedback policy <span class="math inline">\(\delta u_k=k_k+K_k(x_k-\bar x_k)\)</span>. <strong>Forward-simulate</strong> under that policy, with a line search, to obtain an improved nominal trajectory.</p>
+<p>This is DDP with the second-order dynamics terms dropped. Full DDP keeps <span class="math inline">\(\partial^2f/\partial x^2\)</span> and its relatives, converging faster locally at the price of more derivatives.</p>
+</section>
+<section id="the-backward-pass" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="the-backward-pass"><span class="header-section-number">4.2</span> The backward pass</h3>
+<p>Take the value function to be locally quadratic about <span class="math inline">\(\bar x_k\)</span>, <span class="math inline">\(V_k(\delta x)\approx V_k+V_{x,k}^\intercal\delta x+\tfrac12\delta x^\intercal V_{xx,k}\delta x\)</span>. At each stage define</p>
+<p><span class="math display">\[Q_x=g_x+A_k^\intercal V_{x,k+1}, \qquad Q_u=g_u+B_k^\intercal V_{x,k+1},\]</span></p>
+<p><span class="math display">\[Q_{xx}=g_{xx}+A_k^\intercal V_{xx,k+1}A_k, \qquad Q_{uu}=g_{uu}+B_k^\intercal V_{xx,k+1}B_k, \qquad Q_{ux}=g_{ux}+B_k^\intercal V_{xx,k+1}A_k.\]</span></p>
+<p>Minimizing the local model over <span class="math inline">\(\delta u\)</span> gives the feedforward and feedback gains</p>
+<p><span class="math display">\[k_k=-Q_{uu}^{-1}Q_u, \qquad K_k=-Q_{uu}^{-1}Q_{ux},\]</span></p>
+<p>and the value function updates as</p>
+<p><span class="math display">\[V_{x,k}=Q_x-K_k^\intercal Q_{uu}k_k, \qquad V_{xx,k}=Q_{xx}-K_k^\intercal Q_{uu}K_k.\]</span></p>
+<p>Compare this with Unit 5. The structure is identical, with <span class="math inline">\(Q_{xx},Q_{uu},Q_{ux}\)</span> in the role of <span class="math inline">\(Q\)</span> and <span class="math inline">\(R\)</span> – except that they are built from <em>local</em> linearizations and rebuilt from scratch at every iteration, rather than solved once for a globally linear system.</p>
+</section>
+<section id="the-forward-pass" class="level3" data-number="4.3">
+<h3 data-number="4.3" class="anchored" data-anchor-id="the-forward-pass"><span class="header-section-number">4.3</span> The forward pass</h3>
+<p>Simulate <span class="math inline">\(x_{k+1}=f(x_k,u_k)\)</span> from <span class="math inline">\(x_0\)</span> with</p>
+<p><span class="math display">\[u_k=\bar u_k+\alpha k_k+K_k(x_k-\bar x_k).\]</span></p>
+<p>The feedback term keeps the new trajectory near the region where the linearization is valid; the feedforward term is the actual update, scaled by a step size <span class="math inline">\(\alpha\in(0,1]\)</span>. Backtrack on <span class="math inline">\(\alpha\)</span> – try <span class="math inline">\(1,\tfrac12,\tfrac14,\dots\)</span> – until the new trajectory’s cost is genuinely lower. It is the line search inside Levenberg-Marquardt, applied to a whole feedback policy instead of a single step.</p>
+</section>
+<section id="how-fast-it-converges" class="level3" data-number="4.4">
+<h3 data-number="4.4" class="anchored" data-anchor-id="how-fast-it-converges"><span class="header-section-number">4.4</span> How fast it converges</h3>
+<p>On the swing-up, iLQR converges from an all-zero initial guess in about four or five full iterations:</p>
+<div style="text-align: center;">
+<div id="fig-ilqr" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ilqr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture9/ilqr_convergence.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:66.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ilqr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;4: iLQR’s cost at each iteration, on a logarithmic scale. The cost falls by three orders of magnitude in the first four iterations and is essentially converged by the fifth – the near-quadratic convergence typical of Newton-type methods.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The scale on <a href="#fig-ilqr" class="quarto-xref">Fig.&nbsp;4</a> is logarithmic, and the drop is far steeper than the Levenberg-Marquardt solves that shooting and collocation need, and it is a direct benefit of exploiting the dynamic-programming structure instead of handing a dense nonlinear program to a general-purpose solver.</p>
+</section>
+<section id="which-optimum-and-why" class="level3" data-number="4.5">
+<h3 data-number="4.5" class="anchored" data-anchor-id="which-optimum-and-why"><span class="header-section-number">4.5</span> Which optimum, and why</h3>
+<p>Now back to <a href="#fig-traj" class="quarto-xref">Fig.&nbsp;1</a>, and the fact postponed from Section 2. iLQR’s <span class="math inline">\(\theta(t)\)</span> dips <strong>backward</strong> before swinging up, while multiple shooting and both collocation schemes go straight up.</p>
+<p>It is tempting to read this as a weakness of iLQR. It is not. <strong>Single shooting does exactly the same thing</strong>, landing on a cost of <span class="math inline">\(2.3117\)</span> indistinguishable from iLQR’s – the two curves in <a href="#fig-traj" class="quarto-xref">Fig.&nbsp;1</a> lie on top of one another, which is why only one dipping trajectory is visible.</p>
+<p>What separates the two groups is not the method but the <strong>initial guess</strong>. Single shooting and iLQR both start from <span class="math inline">\(u\equiv0\)</span> and nothing else. Multiple shooting and collocation additionally seed a state trajectory running from <span class="math inline">\(x(0)\)</span> to <span class="math inline">\(x(T)\)</span> – a guess that already “knows” the pendulum is supposed to end up at the top. Warm-start either of the first two from the second group’s answer and they find the other optimum as well:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">from <span class="math inline">\(u\equiv0\)</span></th>
+<th style="text-align: right;">warm started</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">single shooting</td>
+<td style="text-align: right;"><span class="math inline">\(2.3117\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.2371\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">iLQR</td>
+<td style="text-align: right;"><span class="math inline">\(2.3117\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(2.2371\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Both land on the same two numbers, which is the clearest possible evidence that there are two local optima here and that the starting point alone decides which one is found.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: is the dipping solution wrong?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: is the dipping solution wrong?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>The backward swing costs <span class="math inline">\(2.3117\)</span> and the direct one <span class="math inline">\(2.2371\)</span> – about <span class="math inline">\(3\%\)</span> more. Is the dipping trajectory a failure of the solver? And given that all five methods are local, how would you organize a solve in practice so as not to depend on luck?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>It is not a failure. The dipping trajectory is a genuine local optimum of a genuinely nonconvex problem: every method that finds it reports the same cost to four decimal places, and no small perturbation improves it. Swinging backwards first to build momentum is a real strategy, and on a pendulum with a tighter torque limit it would be the <em>only</em> one. Here it simply happens to cost a little more.</p>
+<p>Nor is it obvious from the outside which basin a solver will land in. Both guesses – “no control at all” and “a straight line from start to target” – are perfectly natural, and they give different answers.</p>
+<p>The practical recipe follows from that. Do not rely on one solve from one guess. Solve a <strong>coarse</strong> problem first, where the grid is small, the solve is cheap and several initial guesses can be tried, then warm-start the fine solve from the best coarse answer. This is also why collocation is often the first thing run even when the final answer is wanted from iLQR: collocation’s initial guess is a state trajectory, which is a much easier thing to guess well than a control sequence. And when there is physical insight about what the answer should look like, it belongs in the initial guess, not in a comment.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="where-this-leads" class="level3" data-number="4.6">
+<h3 data-number="4.6" class="anchored" data-anchor-id="where-this-leads"><span class="header-section-number">4.6</span> Where this leads</h3>
+<p>Three connections are worth making explicit.</p>
+<p><strong>Back to Unit 5.</strong> The backward pass <em>is</em> the Riccati recursion, applied to a linearization around a nominal trajectory rather than to a globally linear model.</p>
+<p><strong>Back to Unit 8.</strong> Run the forward pass for a single step, then re-linearize at the freshly measured state and repeat. That is receding-horizon iLQR, which is essentially nonlinear MPC. Unit 8 solved one quadratic program per step because its dynamics were linear; here the “quadratic program” is the by-product of one backward pass. The backward pass is a local, model-based approximation of one step of the Bellman recursion – the same computation, in spirit, as Unit 8’s rollout and approximate dynamic programming, carried out analytically rather than by enumeration.</p>
+<p><strong>Forward to Unit 10.</strong> iLQR still needs to <em>know</em> <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span> and <span class="math inline">\(g_h\)</span> exactly, and to differentiate them. What if the dynamics or the cost are unknown, and all that is possible is to interact with the system and observe what happens? That is precisely where the course goes next. Keep the backward-pass parallel in mind: much of reinforcement learning reads as the same dynamic-programming idea, learned from data instead of computed from a known model.</p>
+</section>
+<section id="what-ilqr-is-good-for" class="level3" data-number="4.7">
+<h3 data-number="4.7" class="anchored" data-anchor-id="what-ilqr-is-good-for"><span class="header-section-number">4.7</span> What iLQR is good for</h3>
+<p>Very fast local convergence, because it exploits the structure; a natural bridge to both MPC and reinforcement learning; and a <strong>feedback policy</strong> rather than merely an open-loop trajectory, which the direct methods do not provide. Against that: it is only locally convergent, and in the simplified form shown here it does not handle hard inequality constraints the way collocation does natively.</p>
+</section>
+</section>
+<section id="two-case-studies" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="two-case-studies"><span class="header-section-number">5</span> Two case studies</h2>
+<p>The pendulum is small and friendly. The two problems that close this unit are not, and they break in <em>opposite</em> ways, which is the point of having both.</p>
+<p>Both use the same system: an electric vehicle, modelled longitudinally as a point mass with aerodynamic drag, rolling resistance and road grade,</p>
+<p><span class="math display">\[\dot s=v, \qquad m\dot v=F-\tfrac12\rho C_dA\,v|v|-mgC_r-mg\,\gamma(s),\]</span></p>
+<p>with <span class="math inline">\(m=1600\)</span> kg, <span class="math inline">\(C_dA=0.60\)</span> m<span class="math inline">\(^2\)</span>, <span class="math inline">\(C_r=0.010\)</span>, <span class="math inline">\(|F|\le3\)</span> kN, <span class="math inline">\(v\le30\)</span> m/s, and <span class="math inline">\(\gamma(s)\)</span> the road gradient. The battery is <strong>asymmetric</strong>: delivering mechanical power <span class="math inline">\(P=Fv\)</span> costs <span class="math inline">\(P/\eta_d\)</span> with <span class="math inline">\(\eta_d=0.90\)</span>, while recovering it returns only <span class="math inline">\(\eta_r|P|\)</span> with <span class="math inline">\(\eta_r=0.65\)</span>. The round trip is <span class="math inline">\(\eta_d\eta_r=0.585\)</span>, and that single number is what makes the first problem interesting at all.</p>
+<p>A word on the solver, which is itself a lesson. The three pendulum modules are deliberately <code>numpy</code>-only, rolling their own Levenberg-Marquardt on a penalized least-squares residual. That works because the pendulum’s cost is a sum of squares and its only constraints are equalities. Neither is true here: battery energy is not a sum of squares and can be negative, the trip time is a decision variable, and both problems carry genuine inequality constraints on speed and force. So the case studies use a real SQP solver. When a problem outgrows the hand-rolled machinery, that is information about the problem, not a defect of the exposition.</p>
+<p>A second lesson arrives before any answer does. Written in SI units these problems have decision variables spanning four orders of magnitude – position <span class="math inline">\(\sim2000\)</span>, speed <span class="math inline">\(\sim17\)</span>, force <span class="math inline">\(\sim1500\)</span> – and SQP simply <strong>fails</strong>, exiting on its iteration limit with the dynamics still violated. Every transcription here therefore works in non-dimensional variables <span class="math inline">\(s/L\)</span>, <span class="math inline">\(v/v_{\max}\)</span>, <span class="math inline">\(F/F_{\max}\)</span>, with the defects scaled to match. Badly scaled transcriptions are among the commonest reasons a trajectory optimization “does not work”.</p>
+<section id="energy-optimal-driving" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="energy-optimal-driving"><span class="header-section-number">5.1</span> Energy-optimal driving</h3>
+<p>Cover a <span class="math inline">\(2000\)</span> m route in a fixed <span class="math inline">\(120\)</span> s – so <span class="math inline">\(60\)</span> km/h on average – entering and leaving at that average speed, over a hill <span class="math inline">\(12\)</span> m high spread across <span class="math inline">\(800\)</span> m, using as little battery energy as possible:</p>
+<p><span class="math display">\[\min_{F(\cdot)}\int_0^{120}P_{\text{batt}}\big(F(t),v(t)\big)\,dt \quad\text{subject to the dynamics},\ s(0)=0,\ s(T)=2000,\ v(0)=v(T)=\tfrac{2000}{120}.\]</span></p>
+<p>Before solving anything, it is worth seeing why there is a problem at all. Suppose regeneration were perfect, <span class="math inline">\(\eta_d=\eta_r=1\)</span>. The energy spent is then the change in kinetic energy, plus the change in potential energy, plus the dissipation <span class="math inline">\(\int(F_{\text{drag}}+F_{\text{roll}})v\,dt\)</span>. The route’s net elevation change is zero and the end speeds are fixed, so the first two vanish – the hill is <strong>free</strong> – and minimizing <span class="math inline">\(\int(\tfrac12\rho C_dAv^3+mgC_rv)\,dt\)</span> at fixed <span class="math inline">\(\int v\,dt\)</span> and fixed <span class="math inline">\(T\)</span> gives constant speed, by convexity.</p>
+<p>So with a perfect battery, cruise control is already optimal and there is nothing to compute. <strong>Everything interesting in this problem comes from <span class="math inline">\(\eta_d\eta_r&lt;1\)</span>.</strong></p>
+<div style="text-align: center;">
+<div id="fig-eco" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eco-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture9/ev_eco_profile.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:68.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eco-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;5: The energy-optimal speed profile over the route, against the constant-speed baseline. Top: the elevation. Middle: speed. Bottom: tractive force, where the essential difference lies – the baseline must brake on the descent, at about <span class="math inline">\(-0.5\)</span> kN, while the optimal trajectory never does.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The baseline, holding the average speed throughout, uses <span class="math inline">\(0.6158\)</span> MJ. The optimum uses <span class="math inline">\(0.5724\)</span> MJ – about <strong><span class="math inline">\(7\%\)</span> less</strong>, for the same route in the same time. The speed eases from <span class="math inline">\(60\)</span> km/h to <span class="math inline">\(58.7\)</span> on the flat approach, falls to <span class="math inline">\(54.3\)</span> at the crest, rises to <span class="math inline">\(66.3\)</span> at the foot of the descent, and returns to <span class="math inline">\(60\)</span> at the end.</p>
+<p>The single most informative feature is in the bottom panel of <a href="#fig-eco" class="quarto-xref">Fig.&nbsp;5</a>: <strong>the optimal trajectory never brakes.</strong> Its force stays at or above <span class="math inline">\(+10\)</span> N throughout, while the baseline brakes at <span class="math inline">\(-483\)</span> N on the descent, pushing energy through a round trip that returns <span class="math inline">\(58.5\%\)</span> of it. The optimizer’s answer is to arrive at the crest <em>slower</em> and let gravity do the accelerating, converting potential energy straight into kinetic energy – the one conversion in this vehicle that is lossless. It all but shuts the motor off from about <span class="math inline">\(950\)</span> m, holding <span class="math inline">\(25\)</span> N at the crest against the baseline’s <span class="math inline">\(1.0\)</span> kN, and coasts over the top.</p>
+<p>Nothing told it to do that. There is no coasting rule in the formulation and no “lift off before the crest” heuristic. There is a model, a set of constraints, and a cost.</p>
+</section>
+<section id="trusting-the-answer" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="trusting-the-answer"><span class="header-section-number">5.2</span> Trusting the answer</h3>
+<p>The lesson of Section 3 returns, in a setting where it is easy to be fooled. The number an NLP reports is its own discretization’s estimate of the cost, computed on its own grid by its own rule. It is not the cost of the trajectory the vehicle would follow. Simulating each solution’s force schedule through the true dynamics gives an honest score – and asks whether the route was finished at all:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Scheme</th>
+<th style="text-align: right;"><span class="math inline">\(N\)</span></th>
+<th style="text-align: right;">Solver’s value [MJ]</th>
+<th style="text-align: right;">Simulated [MJ]</th>
+<th style="text-align: right;">Misses the finish by</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Trapezoidal</td>
+<td style="text-align: right;"><span class="math inline">\(20\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.5647\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.5604\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-21.4\)</span> m</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Trapezoidal</td>
+<td style="text-align: right;"><span class="math inline">\(40\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.5706\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.5696\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-4.7\)</span> m</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Trapezoidal</td>
+<td style="text-align: right;"><span class="math inline">\(80\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.5717\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.5729\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-0.6\)</span> m</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hermite-Simpson</td>
+<td style="text-align: right;"><span class="math inline">\(20\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.5716\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.5714\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-1.0\)</span> m</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hermite-Simpson</td>
+<td style="text-align: right;"><span class="math inline">\(40\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.5736\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.5736\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(+0.1\)</span> m</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hermite-Simpson</td>
+<td style="text-align: right;"><span class="math inline">\(80\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.5725\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.5724\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-0.5\)</span> m</td>
+</tr>
+</tbody>
+</table>
+<p>Trapezoidal at <span class="math inline">\(N=20\)</span> reports the best energy of all – by quietly stopping twenty-one metres short. A cost that beats the others because the trajectory is infeasible is the classic way to be fooled by a coarse grid.</p>
+<p>And here, where the defects reach the solver as <strong>hard equality constraints</strong> rather than as penalties, the order of the scheme finally shows: <strong>Hermite-Simpson at <span class="math inline">\(N=20\)</span> is about as good as trapezoidal at <span class="math inline">\(N=80\)</span></strong>, for a quarter of the variables. That is what Section 3’s comparison was unable to see.</p>
+</section>
+<section id="time-optimal-driving" class="level3" data-number="5.3">
+<h3 data-number="5.3" class="anchored" data-anchor-id="time-optimal-driving"><span class="header-section-number">5.3</span> Time-optimal driving</h3>
+<p>Same vehicle, now on the flat opening <span class="math inline">\(400\)</span> m of the route, from rest to rest, as fast as possible:</p>
+<p><span class="math display">\[\min_{F(\cdot),\,T}\ T \quad\text{subject to the dynamics},\ s(0)=0,\ v(0)=0,\ s(T)=400,\ v(T)=0,\ |F|\le F_{\max}.\]</span></p>
+<p>Two things change. First, the horizon is now a <strong>decision variable</strong>, which none of the methods so far was set up for. The standard fix is to normalize time: let <span class="math inline">\(\sigma=t/T\in[0,1]\)</span> be the independent variable, so that</p>
+<p><span class="math display">\[\frac{dx}{d\sigma}=T\,f(x,F),\]</span></p>
+<p>and <span class="math inline">\(T\)</span> joins the vector of unknowns. Every defect is then multiplied by <span class="math inline">\(T\)</span>, and a fixed grid in <span class="math inline">\(\sigma\)</span> stretches or shrinks with the solution. Everything else is unchanged.</p>
+<p>Second, and more consequentially, the solution is <strong>not smooth</strong>. The cost <span class="math inline">\(T=\int_0^T1\,dt\)</span> does not depend on <span class="math inline">\(F\)</span> at all, so the Hamiltonian is linear in the input, and Pontryagin’s minimum principle – the indirect family, finally earning its keep – puts the optimal force on a bound wherever the switching function is nonzero:</p>
+<p><span class="math display">\[F^\star(t)=-F_{\max}\operatorname{sign}\big(\lambda_v(t)\big).\]</span></p>
+<p>Here the switching function crosses zero exactly once, so there is no singular arc and the answer is <strong>bang-bang with a single switch</strong>: accelerate flat out, then brake flat out. The peak speed reached, <span class="math inline">\(98.1\)</span> km/h, stays under the <span class="math inline">\(108\)</span> km/h limit, so that constraint never binds and no cruise phase appears.</p>
+<p>That collapses an infinite-dimensional problem to <strong>one unknown</strong>, the switching time. A bracketed root find on the distance covered gives</p>
+<p><span class="math display">\[T^\star=29.2828\ \text{s}, \qquad t_{\text{switch}}=15.8441\ \text{s}\ (54.1\%),\]</span></p>
+<p>unchanged to nine digits as the integration step goes from <span class="math inline">\(10^{-2}\)</span> to <span class="math inline">\(10^{-3}\)</span> s. When the structure of the answer is known, almost nothing needs discretizing – and this is the yardstick against which the direct methods can be scored.</p>
+<div style="text-align: center;">
+<div id="fig-timeopt" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-timeopt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture9/ev_time_optimal.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:97.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-timeopt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;6: Left: the bang-bang speed profile and two collocation approximations of it. Middle: the optimal force, discontinuous at the switch, which the grid can only smear across one interval. Right: the error in the computed minimum time against the number of intervals, for both schemes, with first- and second-order reference slopes.
+</figcaption>
+</figure>
+</div>
+</div>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Scheme</th>
+<th style="text-align: right;"><span class="math inline">\(N=10\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(N=20\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(N=40\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(N=80\)</span></th>
+<th style="text-align: right;">Fitted order</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Trapezoidal</td>
+<td style="text-align: right;"><span class="math inline">\(+0.1972\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(+0.0692\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(+0.0137\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(+0.0039\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1.94\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hermite-Simpson</td>
+<td style="text-align: right;"><span class="math inline">\(+0.0981\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(+0.0445\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(+0.0076\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(+0.0023\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1.88\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Errors <span class="math inline">\(T_N-T^\star\)</span> in seconds; multiple shooting with eight segments and <span class="math inline">\(N=40\)</span> gives <span class="math inline">\(+0.0085\)</span>.</p>
+<p>The right-hand panel of <a href="#fig-timeopt" class="quarto-xref">Fig.&nbsp;6</a> makes the comparison with the energy-optimal problem plain. There, Hermite-Simpson was worth a factor of four in grid size. Here it is worth a factor of about <strong>two in the constant and nothing in the rate</strong> – <span class="math inline">\(1.88\)</span> against <span class="math inline">\(1.94\)</span>. Fourth-order accuracy is a statement about smooth solutions, and this solution is not one. The remedy is not a finer grid but a better <em>parameterization</em>: make the switching time itself a variable and put a grid point on it, which is precisely what the one-unknown reference above does.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: why do the errors point the other way?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: why do the errors point the other way?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Every entry in the table above is <strong>positive</strong> – the computed minimum time always exceeds the true one. In Section 3 every entry pointed the other way: the reported effort was always <em>below</em> the true optimum, and fell further as the grid was refined. Both are discretizations of continuous problems, solved by the same kinds of method. Why do their errors have opposite signs?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-8" class="callout-8-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Because one discretization is a <strong>restriction</strong> of the continuous problem and the other is a <strong>relaxation</strong> of it.</p>
+<p>In the time-optimal problem the defects are imposed on the SQP solver as hard equality constraints, and the control is confined to whatever the grid can represent – here, piecewise linear between nodes. Every discrete solution is therefore a genuine (or very nearly genuine) trajectory of the system, but not every trajectory of the system is available to the discrete problem. The feasible set has shrunk, so the optimum can only get <em>worse</em>: <span class="math inline">\(T_N\ge T^\star\)</span>, with equality only in the limit. The optimal force is discontinuous, no piecewise-linear function on a finite grid can reproduce it, and the smeared version is slower.</p>
+<p>In the penalized collocation of Section 3 the defects are not imposed at all – they are merely charged for. Trajectories that the system cannot actually follow are admitted to the feasible set, which has therefore <em>grown</em>, and an optimum over a larger set can only be <em>better</em>. Hence a reported cost below the truth, falling further as more intervals offer more places to drift.</p>
+<p>Two practical consequences. A restriction gives a one-sided bound you can trust: the time it reports is achievable, give or take the constraint tolerance. A relaxation gives a bound in the direction that flatters it, and a number from a relaxation is never evidence that anything works – which is why the only real test, in both halves of this unit, was to simulate the answer.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="summary" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="summary"><span class="header-section-number">6</span> Summary</h2>
+<p>Every method in this unit turns an infinite-dimensional problem into a finite one, and the choices differ in <em>what</em> is discretized.</p>
+<p><strong>Direct methods</strong> discretize first and optimize second. <strong>Shooting</strong> eliminates the states by simulation and optimizes over the controls alone – exactly what Unit 7 was already doing, generalized to nonlinear dynamics. It keeps the problem small, but propagating sensitivities along the whole horizon makes the Jacobian ill-conditioned when the dynamics have a growing mode. <strong>Multiple shooting</strong> cuts the horizon into segments with free initial states and continuity constraints, so sensitivities propagate only within a segment; the problem is larger but sparse and far better behaved.</p>
+<p><strong>Collocation</strong> does not simulate at all. States and controls at every node are decision variables, and the dynamics appear only as defect constraints obtained from a quadrature rule. Trapezoidal is second-order and simple; <strong>Hermite-Simpson</strong> is fourth-order for two extra function evaluations per interval; <strong>pseudospectral</strong> schemes replace the local polynomial by a global one and converge spectacularly on smooth problems and poorly on kinked ones. Collocation’s Jacobian is sparse and well conditioned however long the horizon, and path constraints are free, which is why it is the default in most modern software.</p>
+<p><strong>DDP and iLQR</strong> exploit the sequential structure instead of hiding it, iterating Unit 5’s Riccati recursion on local linearizations. They converge in a handful of iterations and return a feedback policy, not just a trajectory – and they bridge directly to Unit 8’s MPC and to the reinforcement learning of Unit 10, where the same Bellman recursion is learned from data rather than computed from a known model.</p>
+<p><strong>Indirect methods</strong> optimize first. They are harder to set up and rarely used, until a problem’s structure is known well enough to collapse it – as in the time-optimal case study, where Pontryagin’s minimum principle reduced the whole problem to a single unknown and beat every discretization by orders of magnitude.</p>
+<p>Four things are worth carrying out of this unit, and none of them is a method.</p>
+<p><strong>All of these find only local optima.</strong> Which one you get is decided by the initial guess, not by the method: single shooting and iLQR, started from zero controls, find a different – and <span class="math inline">\(3\%\)</span> worse – swing-up than multiple shooting and collocation, which are seeded with a state trajectory. A good initial guess is part of the problem specification.</p>
+<p><strong>Scaling decides whether the solve works at all.</strong> In SI units the case studies’ variables span four orders of magnitude and SQP fails outright on them.</p>
+<p><strong>The quadrature must match the scheme.</strong> A fourth-order defect with a second-order cost integral is a second-order method that converges quickly to the wrong number.</p>
+<p><strong>And the value an optimizer reports is not the cost of the trajectory it returns.</strong> It is computed on the optimizer’s own grid, by its own rule, subject to its own tolerances – and whether it lands above or below the truth depends on whether the discretization restricted the problem or relaxed it. The only way to find out is to simulate the answer.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

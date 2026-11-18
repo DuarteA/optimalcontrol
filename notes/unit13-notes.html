@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>Unit 13 – Policy Gradient and Actor-Critic Methods</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="unit13-notes_files/libs/clipboard/clipboard.min.js"></script>
+<script src="unit13-notes_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="unit13-notes_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="unit13-notes_files/libs/quarto-html/popper.min.js"></script>
+<script src="unit13-notes_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="unit13-notes_files/libs/quarto-html/anchor.min.js"></script>
+<link href="unit13-notes_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="unit13-notes_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="unit13-notes_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="unit13-notes_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="unit13-notes_files/libs/bootstrap/bootstrap-5f5514ab72c605193d28bd5ace4a0252.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      // NOTE: these must stay 0-argument, matching \newcommand{\argmin}
+      // in macros.tex. They used to be declared here as taking one
+      // argument ("\\operatorname*{argmin}_{#1}", 1), so \argmin{...}
+      // rendered in html but produced garbage in pdf, and \argmin_{...}
+      // rendered in pdf but produced garbage in html. Use \argmin_{x}.
+      argmin: "\\operatorname*{argmin}",
+      argmax: "\\operatorname*{argmax}",
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#where-this-unit-sits-in-the-course" id="toc-where-this-unit-sits-in-the-course" class="nav-link active" data-scroll-target="#where-this-unit-sits-in-the-course"><span class="header-section-number">1</span> Where this unit sits in the course</a></li>
+  <li><a href="#parameterising-a-policy" id="toc-parameterising-a-policy" class="nav-link" data-scroll-target="#parameterising-a-policy"><span class="header-section-number">2</span> Parameterising a policy</a>
+  <ul class="collapse">
+  <li><a href="#why-the-policy-has-to-be-stochastic" id="toc-why-the-policy-has-to-be-stochastic" class="nav-link" data-scroll-target="#why-the-policy-has-to-be-stochastic"><span class="header-section-number">2.1</span> Why the policy has to be stochastic</a></li>
+  <li><a href="#preferences-and-the-soft-max" id="toc-preferences-and-the-soft-max" class="nav-link" data-scroll-target="#preferences-and-the-soft-max"><span class="header-section-number">2.2</span> Preferences and the soft-max</a></li>
+  </ul></li>
+  <li><a href="#the-policy-gradient-theorem" id="toc-the-policy-gradient-theorem" class="nav-link" data-scroll-target="#the-policy-gradient-theorem"><span class="header-section-number">3</span> The policy gradient theorem</a>
+  <ul class="collapse">
+  <li><a href="#what-the-theorem-says" id="toc-what-the-theorem-says" class="nav-link" data-scroll-target="#what-the-theorem-says"><span class="header-section-number">3.1</span> What the theorem says</a></li>
+  <li><a href="#a-worked-example" id="toc-a-worked-example" class="nav-link" data-scroll-target="#a-worked-example"><span class="header-section-number">3.2</span> A worked example</a></li>
+  </ul></li>
+  <li><a href="#from-the-theorem-to-an-algorithm" id="toc-from-the-theorem-to-an-algorithm" class="nav-link" data-scroll-target="#from-the-theorem-to-an-algorithm"><span class="header-section-number">4</span> From the theorem to an algorithm</a>
+  <ul class="collapse">
+  <li><a href="#intermezzo-stochastic-gradient-descent" id="toc-intermezzo-stochastic-gradient-descent" class="nav-link" data-scroll-target="#intermezzo-stochastic-gradient-descent"><span class="header-section-number">4.1</span> Intermezzo: stochastic gradient descent</a></li>
+  <li><a href="#all-actions" id="toc-all-actions" class="nav-link" data-scroll-target="#all-actions"><span class="header-section-number">4.2</span> All actions</a></li>
+  <li><a href="#reinforce" id="toc-reinforce" class="nav-link" data-scroll-target="#reinforce"><span class="header-section-number">4.3</span> REINFORCE</a></li>
+  <li><a href="#what-reinforce-costs" id="toc-what-reinforce-costs" class="nav-link" data-scroll-target="#what-reinforce-costs"><span class="header-section-number">4.4</span> What REINFORCE costs</a></li>
+  </ul></li>
+  <li><a href="#baseline-subtraction" id="toc-baseline-subtraction" class="nav-link" data-scroll-target="#baseline-subtraction"><span class="header-section-number">5</span> Baseline subtraction</a></li>
+  <li><a href="#actor-critic-methods" id="toc-actor-critic-methods" class="nav-link" data-scroll-target="#actor-critic-methods"><span class="header-section-number">6</span> Actor-critic methods</a>
+  <ul class="collapse">
+  <li><a href="#motivation-and-the-division-of-labour" id="toc-motivation-and-the-division-of-labour" class="nav-link" data-scroll-target="#motivation-and-the-division-of-labour"><span class="header-section-number">6.1</span> Motivation and the division of labour</a></li>
+  <li><a href="#learning-the-critic" id="toc-learning-the-critic" class="nav-link" data-scroll-target="#learning-the-critic"><span class="header-section-number">6.2</span> Learning the critic</a></li>
+  <li><a href="#the-algorithm" id="toc-the-algorithm" class="nav-link" data-scroll-target="#the-algorithm"><span class="header-section-number">6.3</span> The algorithm</a></li>
+  <li><a href="#variants" id="toc-variants" class="nav-link" data-scroll-target="#variants"><span class="header-section-number">6.4</span> Variants</a></li>
+  </ul></li>
+  <li><a href="#the-mountain-car" id="toc-the-mountain-car" class="nav-link" data-scroll-target="#the-mountain-car"><span class="header-section-number">7</span> The mountain car</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">8</span> Summary</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="unit13-notes.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Unit 13 – Policy Gradient and Actor-Critic Methods</h1>
+<p class="subtitle lead">4SC000 Optimal Control and Reinforcement Learning</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Textbook-prose companion to
+lectures/lecture13-policy-gradient-actor-critic.qmd, intended as a
+booklet chapter for readers who did not attend the lecture. Same content
+and figures as the slides, but written as connected prose rather than
+bullet points, so it can stand on its own. Figures are the same crops
+already verified for the slide deck, referenced from
+../lectures/figures/lecture13/ rather than duplicated.
+
+FIRST PASS (2026-10-26). Conventions carried over from units 1-12:
+- Prose, not bullets; every equation from the deck is kept.
+- Figure captions are written here (the slides deliberately carry none).
+- Quick-check callouts follow the unit 1-12 pattern: an OPEN
+  {.callout-tip collapse="false"} with the question, immediately followed
+  by a COLLAPSED {.callout-note collapse="true"} with the solution.
+- Per [[feedback-concluding-remarks-no-learning-outcomes]], no "After this
+  lecture you should be able to" block; the deck's Concluding remarks are
+  absorbed into the closing Summary section.
+- Costs are MINIMISED throughout, as in Units 1-12. The source deck is
+  consistent about this: every parameter update is a DESCENT. The RL
+  literature writes these as ascent on a reward; the sign is the only
+  difference, and it is noted once in the text.
+
+HEADER LINK ROW: Slides, Exercises and Jupyter notebooks. Unit 13 now has
+all three (the exercises were added 2026-10-26 from PS3 section 6).
+
+NOTATION, and one collision inherited from the deck. As in Units 10-12,
+alpha = DISCOUNT factor and gamma = STEP SIZE for the policy; the deck
+adds beta for the critic's step size, which is kept. The deck also
+writes the CRITIC'S WEIGHT VECTOR as alpha_k, which collides with the
+discount factor alpha used on its own page 6. That is the deck's choice
+and it is followed here so that slides and notes agree, with a warning
+callout at first use. If Duarte renames the critic weights in the
+Keynote -- w or r would both be better, and r is what Unit 12 uses for
+the parameters of Jtilde(x,r) -- this file must be changed with it.
+
+ERRORS IN THE SOURCE SLIDES, corrected here. The deck's own header
+comment lists the ones found during its conversion (page 15's "has not
+effect" and its leading-minus cancellation line; page 15's mixed t/k
+subscripts; page 13's G_k summand written with k instead of t; a dozen
+typos). All of those are carried here. THREE MORE were found while
+writing these notes, all on the worked example:
+
+  1. SOURCE PAGE 9, the "=" line of the example. It reads
+         J_0(1) = 25/4 + 1/2(3 + 9/2 theta) + 1/2(1-theta)(...)
+     but the first line of the same slide gives the constant as
+     1/2(1+6+1+2/2+1/2) = 19/4. Written as printed, the "=" line
+     exceeds the line above it by exactly 3/2 -- the 3 is counted
+     twice, once folded into 25/4 and once explicitly. Either
+         19/4 + 1/2(3 + 9/2 theta) + ...     (keep the 3)
+     or  25/4 + 9/4 theta + ...              (fold it)
+     is correct; this file uses the first, which matches the line above.
+     Confirmed by enumerating the lattice symbolically: the true value
+     is J_0(1) = 11 - (5/2)theta - (5/2)theta^2 + (5/2)theta^3, which
+     the first line reproduces exactly and the "=" line misses by 3/2.
+     THE DECK STILL CARRIES THE TYPO -- fix lecture13 page "Example"
+     (second one) when convenient. It does not affect the gradient,
+     which is why page 9's lower half is right.
+
+  2. SOURCE PAGE 9, the annotated gradient figure
+     (figures/lecture13/pg09-gradient-annotated.png). The two labels on
+     the TOP row are swapped: the factor "1" multiplying Q((1,2),1) is
+     labelled grad pi(2|(1,2),theta) and the factor "(-1)" multiplying
+     Q((1,2),2) is labelled grad pi(1|(1,2),theta). Since
+     pi(1|(1,2),theta) = theta, its gradient is +1, so the labels belong
+     the other way round. The two labels on the bottom row are correct.
+     The figure is reproduced as printed -- repainting a label inside a
+     Keynote screenshot is not worth the risk -- and the correct pairing
+     is written out in the text immediately below it.
+
+  3. SOURCE PAGE 12, the REINFORCE derivation. The summand of the middle
+     expression is written with the SAMPLED action u_k where it needs the
+     BOUND summation variable u (and Q is left at u while pi is at u_k).
+     The sum is over all actions; u_k only appears after the expectation
+     over the policy is taken. Written correctly here.
+
+VERIFICATION. The worked example of pages 8-9 was rebuilt from the
+lattice figure by symbolic enumeration over all trajectories (sympy, no
+sampling). Confirmed: the four Q-factors 9/2, 19/2 - 5 theta^2, 7/2 and
+17/2; the two state probabilities 1/2 and (1-theta)/2; the first line of
+page 8; and -- the point of the example -- that the policy gradient
+theorem's sum equals dJ_0(1)/dtheta EXACTLY, with proportionality
+constant 1, for this finite-horizon problem with mu the probability of
+being in a (stage, state) pair. The slide-4 example was checked the same
+way: J_0(1) = 8 p_0 + (1-p_0)(3 + 3 p_1 + 6(1-p_1)), with deterministic
+values 8, 8, 6, 9. The mountain-car numbers are the measured output of
+the two notebooks in code/unit13/, not estimates.
+
+ONE THIRD-PARTY IMAGE is absent from the deck and therefore from these
+notes: the OpenAI Gymnasium mountain-car screenshot (source page 22),
+because the site is published publicly. All of its text is kept.
+
+FIRST-PASS CAVEAT: expect a section-by-section refinement round, same as
+every other unit. No interactive demonstrations yet.
+-->
+<p><a href="../lectures/lecture13-policy-gradient-actor-critic.html">Slides</a> · <a href="../exercises/unit13-exercises.html">Exercises</a> · <a href="../code/unit13/notebooks.html">Jupyter notebooks</a></p>
+<section id="where-this-unit-sits-in-the-course" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="where-this-unit-sits-in-the-course"><span class="header-section-number">1</span> Where this unit sits in the course</h2>
+<p>Every method in Units 10 to 12 works the same way at the moment of acting. Something – a table, a network, a set of linear features – holds an estimate of the cost-to-go, and the control is whatever minimises that estimate:</p>
+<p><span class="math display">\[u_k=\arg\min_{u_k\in U_k(x_k)}\mathbb{E}\big[g_k(x_k,u_k,w_k)+\tilde J_{k+1}(f_k(x_k,u_k,w_k))\big].\]</span></p>
+<p>This is <strong>approximation in value space</strong>, and deep Q-learning, simulation-based policy iteration, SARSA, semi-gradient TD and LSTD are all instances of it. The policy is never represented; it is recomputed from the value estimate every time a decision is needed.</p>
+<p>This unit takes the other road. <strong>Approximation in policy space</strong> picks the policy directly out of a parameterised family,</p>
+<p><span class="math display">\[u_k=\mu_k(x_k,r_k), \qquad r_k \ \text{the parameters},\]</span></p>
+<p>and searches the parameter space, judging each parameter by what it costs in simulation. A state feedback gain is such a family; so is a neural network mapping states to actions. No cost-to-go is estimated at all. <strong>Policy gradient</strong> methods are the subject of the first half of this unit.</p>
+<p>The two ideas are not rivals, and the second half of the unit combines them: <strong>actor-critic</strong> methods carry a parameterised policy <em>and</em> a parameterised cost approximation, each improving the other. That is the combination promised at the start of the course – approximation in value space and in policy space at the same time – and it is where modern reinforcement learning has largely settled.</p>
+<p>One remark on signs before anything else. This course minimises a cost, so every parameter update in this unit is a gradient <strong>descent</strong>, <span class="math inline">\(\theta_{k+1}=\theta_k-\gamma(\cdots)\)</span>. The reinforcement learning literature maximises a reward and writes the same algorithms as ascent. Nothing else differs; if you read REINFORCE elsewhere and find a plus sign, that is why.</p>
+</section>
+<section id="parameterising-a-policy" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="parameterising-a-policy"><span class="header-section-number">2</span> Parameterising a policy</h2>
+<section id="why-the-policy-has-to-be-stochastic" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="why-the-policy-has-to-be-stochastic"><span class="header-section-number">2.1</span> Why the policy has to be stochastic</h3>
+<p>Start with finite state and input spaces, where a deterministic policy is just a table: one action per state. There are finitely many such tables, and the cost is a number attached to each. There is nothing to differentiate – the cost, viewed as a function of “the policy”, is defined only at isolated points. Searching such a family means trying the points one by one, and exhaustive search over policies is hopeless for any problem worth solving.</p>
+<p>Allowing the policy to <strong>randomise</strong> changes this completely. Let the policy be described not by which action it takes but by the <em>probability</em> with which it takes each one. Those probabilities are continuous quantities, the cost is an expectation over them, and an expectation over a finite set is a polynomial in the probabilities – as smooth as anything could be.</p>
+<div style="text-align: center;">
+<div id="fig-pg-graph" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pg-graph-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture13/pg04-example-graph.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pg-graph-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;1: A two-stage example. From the initial state <span class="math inline">\(1\)</span> the action <span class="math inline">\(u_0=2\)</span> costs <span class="math inline">\(3\)</span> and moves to the top row, <span class="math inline">\(u_0=1\)</span> costs <span class="math inline">\(1\)</span> and stays in the bottom row; from the top state at stage <span class="math inline">\(1\)</span>, <span class="math inline">\(u_1=2\)</span> costs <span class="math inline">\(1\)</span> and ends in a terminal state of cost <span class="math inline">\(5\)</span>, while <span class="math inline">\(u_1=1\)</span> costs <span class="math inline">\(2\)</span> and ends in a terminal state of cost <span class="math inline">\(1\)</span>. The bottom row has a single edge, of cost <span class="math inline">\(6\)</span>. The policy is described by <span class="math inline">\(p_0=\text{Prob}[u_0=1]\)</span> and <span class="math inline">\(p_1=\text{Prob}[u_1=1]\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>For the graph of <a href="#fig-pg-graph" class="quarto-xref">Fig.&nbsp;1</a> the cost of the initial state can be written out in one line. Taking <span class="math inline">\(u_0=1\)</span> costs <span class="math inline">\(1\)</span>, then <span class="math inline">\(6\)</span>, then the terminal <span class="math inline">\(1\)</span>, for a total of <span class="math inline">\(8\)</span>; taking <span class="math inline">\(u_0=2\)</span> costs <span class="math inline">\(3\)</span> and then leaves the stage-<span class="math inline">\(1\)</span> decision, worth <span class="math inline">\(2+1=3\)</span> if <span class="math inline">\(u_1=1\)</span> and <span class="math inline">\(1+5=6\)</span> if <span class="math inline">\(u_1=2\)</span>. Hence</p>
+<p><span class="math display">\[J_0(1)=8p_0+(1-p_0)\big(3+3p_1+6(1-p_1)\big).\]</span></p>
+<div style="text-align: center;">
+<div id="fig-det-vs-stoch" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-det-vs-stoch-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture13/pg04-cost-deterministic-stochastic.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:92.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-det-vs-stoch-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;2: Left: the cost of the four deterministic policies of the graph above, four isolated numbers with nothing in between. Right: the cost of the randomised policy as a function of <span class="math inline">\((p_0,p_1)\)</span> – a smooth surface whose corners are those same four numbers.
+</figcaption>
+</figure>
+</div>
+</div>
+<p><a href="#fig-det-vs-stoch" class="quarto-xref">Fig.&nbsp;2</a> is the whole argument in one picture. On the left, four stems: the four deterministic policies and nothing between them. On the right, the same four numbers reappear at the corners of the unit square, now joined by a surface that can be walked downhill. Randomising the policy has not added any policy that was not available before – the cost is linear in each <span class="math inline">\(p_k\)</span> separately, so its minimum over the square is always attained at a corner – but it has made the search <em>differentiable</em>. That is the only reason the randomisation is there.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: read the four corners off the formula">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: read the four corners off the formula
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Using <span class="math inline">\(J_0(1)=8p_0+(1-p_0)\big(3+3p_1+6(1-p_1)\big)\)</span>, write down the cost of each of the four deterministic policies, and say which one is optimal. Then check your answer against the stems in <a href="#fig-det-vs-stoch" class="quarto-xref">Fig.&nbsp;2</a>. Finally: is the cost monotone in <span class="math inline">\(p_0\)</span>?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>A deterministic policy is a corner of the square. Setting <span class="math inline">\(p_0=1\)</span> gives <span class="math inline">\(J_0(1)=8\)</span> whatever <span class="math inline">\(p_1\)</span> is, because the trajectory never reaches the stage-<span class="math inline">\(1\)</span> decision – that accounts for two of the four. Setting <span class="math inline">\(p_0=0\)</span> leaves <span class="math inline">\(3+3p_1+6(1-p_1)\)</span>, which is <span class="math inline">\(6\)</span> at <span class="math inline">\(p_1=1\)</span> and <span class="math inline">\(9\)</span> at <span class="math inline">\(p_1=0\)</span>. So the four values are</p>
+<p><span class="math display">\[(u_0,u_1)=(1,1):8, \qquad (1,2):8, \qquad (2,1):6, \qquad (2,2):9,\]</span></p>
+<p>matching the four stems <span class="math inline">\(6,8,9,8\)</span> in the figure. The optimum is <span class="math inline">\(u_0=2\)</span>, <span class="math inline">\(u_1=1\)</span>, with cost <span class="math inline">\(6\)</span>: take the expensive first edge in order to reach the cheap terminal state.</p>
+<p>For the last part, simplify to <span class="math inline">\(J_0(1)=8p_0+(1-p_0)(9-3p_1)\)</span>, so</p>
+<p><span class="math display">\[\frac{\partial J_0(1)}{\partial p_0}=8-(9-3p_1)=3p_1-1,\]</span></p>
+<p>which is negative for <span class="math inline">\(p_1&lt;1/3\)</span> and positive for <span class="math inline">\(p_1&gt;1/3\)</span>. The cost is <em>not</em> monotone in <span class="math inline">\(p_0\)</span>: whether raising the probability of <span class="math inline">\(u_0=1\)</span> helps depends on what the policy intends to do afterwards. This is the first appearance of something that runs through the whole unit – the value of a decision is only defined relative to the policy that follows it.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="preferences-and-the-soft-max" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="preferences-and-the-soft-max"><span class="header-section-number">2.2</span> Preferences and the soft-max</h3>
+<p>The policy may be parameterised in any way at all, subject to one requirement: it must be differentiable in its parameters. Write</p>
+<p><span class="math display">\[\pi(\underline u\mid\underline x,\theta)=\text{Prob}[u_k=\underline u\mid x_k=\underline x]\]</span></p>
+<p>for discrete control and state spaces, and</p>
+<p><span class="math display">\[\text{Prob}[u_k\in A\mid x_k=\underline x]=\int_A\pi(\underline u\mid\underline x,\theta)\,d\underline u\]</span></p>
+<p>for continuous ones, where <span class="math inline">\(\pi(\cdot\mid\underline x,\theta)\)</span> is then a probability density. The underlining distinguishes a particular value of the state or input from the random variable <span class="math inline">\(x_k\)</span> or <span class="math inline">\(u_k\)</span>.</p>
+<p>For discrete spaces the standard construction assigns a real <strong>preference</strong> <span class="math inline">\(h(\underline x,\underline u,\theta)\)</span> to each state-action pair and turns the preferences into probabilities by exponentiating and normalising – the <strong>soft-max</strong> policy,</p>
+<p><span class="math display">\[\pi(\underline u\mid\underline x,\theta)=\frac{e^{h(\underline x,\underline u,\theta)}}{\sum_be^{h(\underline x,b,\theta)}}.\]</span></p>
+<p>Three properties make this the default choice. The probabilities are automatically positive and sum to one, so the parameters are unconstrained and no projection is ever needed. The map is smooth, so the differentiability requirement holds by construction. And the preferences themselves can be anything differentiable – a linear function <span class="math inline">\(h=\theta^\intercal\phi(\underline x,\underline u)\)</span> of features, or the output of a neural network, exactly as in Unit 12 but now producing a policy instead of a cost-to-go.</p>
+<p>A consequence worth noticing early: a soft-max policy can never be exactly deterministic. It can approach a deterministic policy, by driving the preference of one action far above the others, but it reaches it only in the limit. Since the optimum usually <em>is</em> deterministic, policy gradient methods typically converge by having their parameters run off to infinity. The same phenomenon appears for continuous action spaces as a policy whose standard deviation shrinks toward zero – which is precisely what happens in this unit’s notebooks.</p>
+</section>
+</section>
+<section id="the-policy-gradient-theorem" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="the-policy-gradient-theorem"><span class="header-section-number">3</span> The policy gradient theorem</h2>
+<section id="what-the-theorem-says" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="what-the-theorem-says"><span class="header-section-number">3.1</span> What the theorem says</h3>
+<p>With the policy parameterised, the cost is a function of <span class="math inline">\(\theta\)</span>:</p>
+<p><span class="math display">\[J(\theta)=\mathbb{E}_{\pi_\theta}[C],\]</span></p>
+<p>where <span class="math inline">\(C\)</span> is the problem’s own cost, either</p>
+<p><span class="math display">\[\textbf{finite horizon}\qquad C=\mathbb{E}_{w_k}\Big[\sum_{k=0}^{h-1}g(x_k,u_k)+g_h(x_h)\Big]\]</span></p>
+<p>or</p>
+<p><span class="math display">\[\textbf{infinite horizon, discounted}\qquad C=\mathbb{E}_{w_k}\Big[\sum_{k=0}^{\infty}\alpha^kg(x_k,u_k)\Big].\]</span></p>
+<p>The expectation <span class="math inline">\(\mathbb{E}_{\pi_\theta}\)</span> is over the actions drawn from the policy; the inner <span class="math inline">\(\mathbb{E}_{w_k}\)</span> is over the disturbances. With that in hand the method writes itself,</p>
+<p><span class="math display">\[\theta_{k+1}=\theta_k-\gamma\nabla_\theta J(\theta_k),\]</span></p>
+<p>and the only question left is how to get <span class="math inline">\(\nabla_\theta J(\theta)\)</span> without a model.</p>
+<p>That is what the <strong>policy gradient theorem</strong> provides. It states that the gradient is proportional to</p>
+<p><span class="math display">\[\nabla_\theta J(\theta)\propto\sum_{\underline x}\mu(\underline x)\sum_{\underline u}Q_\pi(\underline x,\underline u)\,\nabla_\theta\pi(\underline u\mid\underline x,\theta),\]</span></p>
+<p>where</p>
+<p><span class="math display">\[\mu(\underline x)=\text{Prob}[x_k=\underline x]\]</span></p>
+<p>is the probability of visiting state <span class="math inline">\(\underline x\)</span> under the current policy – in a finite-horizon problem the state is understood to include the stage, so <span class="math inline">\(\underline x\)</span> is a pair (stage, state) – and <span class="math inline">\(Q_\pi(\underline x,\underline u)\)</span> is the Q-factor of the policy <span class="math inline">\(\pi(\cdot\mid\cdot,\theta)\)</span>, that is, the cost of taking <span class="math inline">\(\underline u\)</span> now and following <span class="math inline">\(\pi\)</span> thereafter.</p>
+<p>Look at the shape of the expression before anything else. On the left is the gradient of the <strong>cost</strong>. On the right is the gradient of the <strong>policy</strong> – a function the designer chose and can differentiate in closed form – multiplied by two quantities, <span class="math inline">\(\mu\)</span> and <span class="math inline">\(Q_\pi\)</span>, that describe the system’s behaviour but are never differentiated. The dynamics <span class="math inline">\(f_k\)</span> and the cost <span class="math inline">\(g_k\)</span> do not appear anywhere. That is the content of the theorem: it converts a derivative that would need the model into one that needs only quantities that can be <em>sampled</em>.</p>
+<p>Two caveats. First, the proportionality: with <span class="math inline">\(\mu\)</span> as defined above, for a finite-horizon problem, the constant is <span class="math inline">\(1\)</span> and the relation is an equality – this is checked explicitly in the example below. In the discounted infinite-horizon case <span class="math inline">\(\mu\)</span> is a discounted occupancy measure and the constant depends on how it is normalised, which is why the theorem is usually stated with <span class="math inline">\(\propto\)</span>. It does not matter in practice, because a constant factor is absorbed into the step size <span class="math inline">\(\gamma\)</span>. Second, the theorem is a statement about the <em>exact</em> gradient; turning it into an algorithm means replacing <span class="math inline">\(\mu\)</span> and <span class="math inline">\(Q_\pi\)</span> by samples, and the rest of this unit is about how.</p>
+</section>
+<section id="a-worked-example" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="a-worked-example"><span class="header-section-number">3.2</span> A worked example</h3>
+<p>The example on the slides is worth following line by line, because it is the one place in the unit where the theorem can be checked against a derivative computed the ordinary way.</p>
+<div style="text-align: center;">
+<div id="fig-lattice" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lattice-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture13/pg08-example-lattice.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:78.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lattice-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;3: A four-stage lattice with two states per stage. Solid arrows are decisions, dotted arrows are disturbances. The policy is tied to one parameter: <span class="math inline">\(\text{Prob}[u_1=1]=\theta\)</span> and <span class="math inline">\(\text{Prob}[u_2=1]=\theta^2\)</span>. The disturbances at stages <span class="math inline">\(0\)</span> and <span class="math inline">\(3\)</span> are fair coin flips, <span class="math inline">\(\text{Prob}[w_0=1]=\text{Prob}[w_3=1]=1/2\)</span>. Edge labels are costs; the numbers above the stage-<span class="math inline">\(4\)</span> nodes are terminal costs.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The lattice of <a href="#fig-lattice" class="quarto-xref">Fig.&nbsp;3</a> is small enough that the cost can be written down in closed form. Starting from state <span class="math inline">\(1\)</span> at stage <span class="math inline">\(0\)</span>, the disturbance <span class="math inline">\(w_0\)</span> decides the row: with probability <span class="math inline">\(1/2\)</span> the trajectory goes to the bottom row, where there are no decisions left at all, and with probability <span class="math inline">\(1/2\)</span> it goes to the top row, where both decisions are live. Writing both branches out,</p>
+<p><span class="math display">\[J_0(1)=\tfrac12\big(1+6+1+\tfrac22+\tfrac12\big)+\tfrac12\Big(3+\theta\big(2+1+\tfrac22+\tfrac12\big)+(1-\theta)\big(1+\theta^2(2+\tfrac22+\tfrac12)+(1-\theta^2)(5+\tfrac42+\tfrac32)\big)\Big).\]</span></p>
+<p>Each half-fraction is a terminal expectation: <span class="math inline">\(\tfrac22+\tfrac12\)</span> is <span class="math inline">\(\tfrac12(0+2)+\tfrac12(0+1)\)</span>, the average of the two terminal costs reached from the bottom state at stage <span class="math inline">\(3\)</span> at no edge cost, and <span class="math inline">\(\tfrac42+\tfrac32\)</span> is <span class="math inline">\(\tfrac12(2+2)+\tfrac12(2+1)\)</span>, the same average from the top state, where both edges cost <span class="math inline">\(2\)</span>.</p>
+<p>Collecting terms, and recognising the Q-factors inside,</p>
+<p><span class="math display">\[J_0(1)=\tfrac{19}{4}+\tfrac12\big(3+\tfrac92\theta\big)+\tfrac12(1-\theta)\Big(1+\tfrac72\theta^2+\tfrac{17}{2}\big(1-\theta^2\big)\Big),\]</span></p>
+<p>which expands to the cubic</p>
+<p><span class="math display">\[J_0(1)=11-\tfrac52\theta-\tfrac52\theta^2+\tfrac52\theta^3.\]</span></p>
+<div class="callout callout-style-default callout-warning callout-titled" title="A misprint on the slide">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>A misprint on the slide
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The slide gives the constant in the second display as <span class="math inline">\(25/4\)</span> rather than <span class="math inline">\(19/4\)</span>, while keeping the <span class="math inline">\(3\)</span> inside the following bracket. That counts the <span class="math inline">\(3\)</span> twice and overstates the cost by <span class="math inline">\(3/2\)</span>. Either constant is defensible on its own – <span class="math inline">\(25/4\)</span> is correct if the <span class="math inline">\(3\)</span> is dropped from the bracket, <span class="math inline">\(19/4\)</span> if it is kept – but not both at once. The gradient on the slide is unaffected, since a constant differentiates away.</p>
+</div>
+</div>
+<p>Now the ingredients of the theorem. There are exactly two states at which a decision is taken, written as (stage, state) pairs: <span class="math inline">\((1,2)\)</span> and <span class="math inline">\((2,2)\)</span>. Their visitation probabilities are</p>
+<p><span class="math display">\[\mu((1,2))=\tfrac12, \qquad \mu((2,2))=\tfrac12(1-\theta),\]</span></p>
+<p>since reaching the top row at stage <span class="math inline">\(1\)</span> requires <span class="math inline">\(w_0=1\)</span>, and remaining there at stage <span class="math inline">\(2\)</span> requires in addition that <span class="math inline">\(u_1=2\)</span>, which has probability <span class="math inline">\(1-\theta\)</span>. The four Q-factors are</p>
+<p><span class="math display">\[Q((1,2),1)=\tfrac92, \qquad Q((1,2),2)=1+\theta^2\tfrac72+(1-\theta^2)\tfrac{17}{2},\]</span></p>
+<p><span class="math display">\[Q((2,2),1)=\tfrac72, \qquad Q((2,2),2)=\tfrac{17}{2}.\]</span></p>
+<p>Each is read off the lattice directly: <span class="math inline">\(Q((2,2),2)\)</span>, for instance, is the cost <span class="math inline">\(5\)</span> of the top edge plus the terminal average <span class="math inline">\(\tfrac42+\tfrac32\)</span> from the top state at stage <span class="math inline">\(3\)</span>, which is <span class="math inline">\(5+\tfrac72=\tfrac{17}{2}\)</span>. Note that <span class="math inline">\(Q((1,2),2)\)</span> depends on <span class="math inline">\(\theta\)</span> while the other three do not: taking <span class="math inline">\(u_1=2\)</span> leaves a further decision to be made, and the value of that branch depends on how the policy will make it.</p>
+<p>Finally the policy gradients. The parameterisation is <span class="math inline">\(\pi(1\mid(1,2),\theta)=\theta\)</span> and <span class="math inline">\(\pi(1\mid(2,2),\theta)=\theta^2\)</span>, so</p>
+<p><span class="math display">\[\nabla_\theta\pi(1\mid(1,2),\theta)=1, \quad \nabla_\theta\pi(2\mid(1,2),\theta)=-1, \quad \nabla_\theta\pi(1\mid(2,2),\theta)=2\theta, \quad \nabla_\theta\pi(2\mid(2,2),\theta)=-2\theta.\]</span></p>
+<div style="text-align: center;">
+<div id="fig-gradient-annotated" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-gradient-annotated-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture13/pg09-gradient-annotated.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:88.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-gradient-annotated-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;4: The derivative of the closed-form cost, with each factor of the policy gradient theorem braced: a state probability <span class="math inline">\(\mu\)</span>, a Q-factor, and a gradient of the policy. Reproduced from the slide; note the swapped labels discussed below.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Putting the pieces together, the theorem’s sum has four terms, one per (decision state, action) pair:</p>
+<p><span class="math display">\[\nabla_\theta J_0(1)=\underbrace{\tfrac12}_{\mu((1,2))}\times\underbrace{\tfrac92}_{Q((1,2),1)}\times\underbrace{1}_{\nabla_\theta\pi(1\mid(1,2),\theta)}+\tfrac12\times\Big(1+\tfrac72\theta^2+\tfrac{17}{2}(1-\theta^2)\Big)\times(-1)\]</span></p>
+<p><span class="math display">\[+\underbrace{\tfrac12(1-\theta)}_{\mu((2,2))}\times\underbrace{\tfrac72}_{Q((2,2),1)}\times\underbrace{2\theta}_{\nabla_\theta\pi(1\mid(2,2),\theta)}+\tfrac12(1-\theta)\times\tfrac{17}{2}\times(-2\theta),\]</span></p>
+<p>which collects to</p>
+<p><span class="math display">\[\nabla_\theta J_0(1)=\tfrac{15}{2}\theta^2-5\theta-\tfrac52,\]</span></p>
+<p>and that is exactly the derivative of the cubic above. Not proportional to it – equal to it. For a finite-horizon problem with <span class="math inline">\(\mu\)</span> the probability of occupying a (stage, state) pair, the constant in the theorem is one.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="Two swapped labels in the figure above">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Two swapped labels in the figure above
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>On the top row of the figure, the factor <span class="math inline">\(1\)</span> that multiplies <span class="math inline">\(Q((1,2),1)\)</span> is labelled <span class="math inline">\(\nabla_\theta\pi(2\mid(1,2),\theta)\)</span> and the factor <span class="math inline">\((-1)\)</span> that multiplies <span class="math inline">\(Q((1,2),2)\)</span> is labelled <span class="math inline">\(\nabla_\theta\pi(1\mid(1,2),\theta)\)</span>. The two belong the other way round: <span class="math inline">\(\pi(1\mid(1,2),\theta)=\theta\)</span> has gradient <span class="math inline">\(+1\)</span>, and it is action <span class="math inline">\(1\)</span> whose Q-factor is <span class="math inline">\(9/2\)</span>. The labels on the bottom row are correct. The pairing written out above is the right one.</p>
+</div>
+</div>
+<p>What should be taken from this example is not the arithmetic but the correspondence. Every term of the derivative, computed by ordinary calculus on a closed-form expression, turns out to factor into a visitation probability, a Q-factor and a policy gradient. Nothing else appears, and in particular no derivative of a transition probability or of a cost. The theorem says this always happens.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: where does gradient descent end up here?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: where does gradient descent end up here?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>The cost of <a href="#fig-lattice" class="quarto-xref">Fig.&nbsp;3</a> is <span class="math inline">\(J_0(1)=11-\tfrac52\theta-\tfrac52\theta^2+\tfrac52\theta^3\)</span>, and <span class="math inline">\(\theta\)</span> is a probability, so it is confined to <span class="math inline">\([0,1]\)</span>. Find the minimiser, and say what deterministic policy it corresponds to. What is unusual about where gradient descent stops, compared with the policies in <a href="#fig-pg-graph" class="quarto-xref">Fig.&nbsp;1</a>?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The derivative <span class="math inline">\(\tfrac{15}{2}\theta^2-5\theta-\tfrac52\)</span> factors as <span class="math inline">\(\tfrac52(3\theta+1)(\theta-1)\)</span>, with roots <span class="math inline">\(\theta=-1/3\)</span> and <span class="math inline">\(\theta=1\)</span>. On <span class="math inline">\([0,1]\)</span> only the second is relevant, and the derivative is negative throughout the interior – it is <span class="math inline">\(-5/2\)</span> at <span class="math inline">\(\theta=0\)</span> and rises to <span class="math inline">\(0\)</span> at <span class="math inline">\(\theta=1\)</span>. So the cost falls monotonically from <span class="math inline">\(J_0(1)=11\)</span> at <span class="math inline">\(\theta=0\)</span> to</p>
+<p><span class="math display">\[J_0(1)=\tfrac{17}{2} \quad\text{at}\quad \theta=1.\]</span></p>
+<p>At <span class="math inline">\(\theta=1\)</span> both <span class="math inline">\(\text{Prob}[u_1=1]=\theta\)</span> and <span class="math inline">\(\text{Prob}[u_2=1]=\theta^2\)</span> equal one, so the optimum is the deterministic policy that takes <span class="math inline">\(u=1\)</span> – the diagonal, downward edge – at both decisions.</p>
+<p>What is unusual is that <span class="math inline">\(\theta=1\)</span> is a genuine <strong>stationary point</strong>: the derivative vanishes there. In <a href="#fig-pg-graph" class="quarto-xref">Fig.&nbsp;1</a> the optimum also sat at a corner, but the gradient did not vanish at it, so plain gradient descent would have marched into the constraint and needed to be projected back. Here it does not: the steps shrink to nothing as <span class="math inline">\(\theta\)</span> approaches <span class="math inline">\(1\)</span>, and the iteration converges to the boundary from the inside. The difference comes from the parameterisation, not from the problem – tying <span class="math inline">\(\text{Prob}[u_2=1]\)</span> to <span class="math inline">\(\theta^2\)</span> makes the cost cubic rather than multilinear. This is worth remembering when reading the Unit 13 exercises, where the untied version of the same situation behaves like <a href="#fig-pg-graph" class="quarto-xref">Fig.&nbsp;1</a> and the tied version does not.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="from-the-theorem-to-an-algorithm" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="from-the-theorem-to-an-algorithm"><span class="header-section-number">4</span> From the theorem to an algorithm</h2>
+<section id="intermezzo-stochastic-gradient-descent" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="intermezzo-stochastic-gradient-descent"><span class="header-section-number">4.1</span> Intermezzo: stochastic gradient descent</h3>
+<p>The same intermezzo appeared in Unit 12, and it is repeated here because both of this unit’s algorithms are instances of it. Whenever the update involves the gradient of an expected value, or the expected value of a gradient,</p>
+<p><span class="math display">\[\theta_{k+1}=\theta_k-\gamma\nabla_\theta\mathbb{E}_w\big[V(\theta,w)\big],\]</span></p>
+<p>a <strong>stochastic gradient</strong> method simply replaces the expectation by a single realisation of <span class="math inline">\(w\)</span>,</p>
+<p><span class="math display">\[\theta_{k+1}=\theta_k-\gamma\nabla_\theta V(\theta,w).\]</span></p>
+<p>The individual steps are wrong; their average is right, and that is enough. When <span class="math inline">\(V\)</span> is convex in <span class="math inline">\(\theta\)</span> the method converges to the optimal parameter under the usual conditions on the step sizes. The price is variance, and in this unit the price is unusually high.</p>
+</section>
+<section id="all-actions" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="all-actions"><span class="header-section-number">4.2</span> All actions</h3>
+<p>Return to the theorem and read the outer sum as what it is – an expectation over the states the policy visits:</p>
+<p><span class="math display">\[\nabla_\theta J(\theta_k)\propto\mathbb{E}_\mu\Big[\sum_{\underline u}Q_\pi(x_k,\underline u)\,\nabla_\theta\pi(\underline u\mid x_k,\theta_k)\Big].\]</span></p>
+<p>Now apply the intermezzo. Replace the expectation over states by the state actually visited at step <span class="math inline">\(k\)</span> of a simulation, and the resulting update is</p>
+<p><span class="math display">\[\theta_{k+1}=\theta_k-\gamma\sum_{\underline u}Q_\pi(x_k,\underline u)\,\nabla_\theta\pi(\underline u\mid x_k,\theta_k).\]</span></p>
+<p>This is the <strong>all actions</strong> method. It is a perfectly sound algorithm, and for a small discrete action set there is little reason not to use it. Its weakness is the sum: it needs <span class="math inline">\(Q_\pi(x_k,\underline u)\)</span> for <em>every</em> action, including the ones the policy did not take, and a continuous action space has infinitely many of them.</p>
+</section>
+<section id="reinforce" class="level3" data-number="4.3">
+<h3 data-number="4.3" class="anchored" data-anchor-id="reinforce"><span class="header-section-number">4.3</span> REINFORCE</h3>
+<p>REINFORCE removes the sum, replacing it by the single action actually taken. The step is the importance-sampling trick of Unit 11 in another costume: multiply and divide by the probability of the action.</p>
+<p><span class="math display">\[\sum_{\underline u}Q_\pi(x_k,\underline u)\,\nabla_\theta\pi(\underline u\mid x_k,\theta_k)=\sum_{\underline u}\pi(\underline u\mid x_k,\theta_k)\,Q_\pi(x_k,\underline u)\,\frac{\nabla_\theta\pi(\underline u\mid x_k,\theta_k)}{\pi(\underline u\mid x_k,\theta_k)}\]</span></p>
+<p>The right-hand side is now a weighted average over actions with the policy’s own weights – that is, an expectation over <span class="math inline">\(u_k\sim\pi\)</span>. So</p>
+<p><span class="math display">\[\nabla_\theta J(\theta_k)\propto\mathbb{E}_\mu\mathbb{E}_\pi\Big[Q_\pi(x_k,u_k)\,\frac{\nabla_\theta\pi(u_k\mid x_k,\theta_k)}{\pi(u_k\mid x_k,\theta_k)}\Big],\]</span></p>
+<p>and the sum over actions has become a sample of one. One quantity is still missing: <span class="math inline">\(Q_\pi(x_k,u_k)\)</span>, the cost of taking <span class="math inline">\(u_k\)</span> and following the policy afterwards. REINFORCE estimates it the way Unit 11’s Monte-Carlo method did – by simply running the trajectory to the end and adding up what it cost. Call that realised cost <span class="math inline">\(G_k\)</span>. Applying the intermezzo a second time, to both expectations at once,</p>
+<p><span class="math display">\[\theta_{k+1}=\theta_k-\gamma\,G_k\,\frac{\nabla_\theta\pi(u_k\mid x_k,\theta_k)}{\pi(u_k\mid x_k,\theta_k)}.\]</span></p>
+<div class="callout callout-style-default callout-note callout-titled" title="Algorithm: REINFORCE">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Algorithm: REINFORCE
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>For each Monte-Carlo run:</p>
+<ul>
+<li>Initialise <span class="math inline">\(x_0\)</span> randomly, apply <span class="math inline">\(\pi(\underline u\mid\underline x,\theta)\)</span>, and obtain the trajectory <span class="math inline">\(\big((x_0,u_0),(x_1,u_1),\dots,(x_{h-1},u_{h-1}),x_h\big)\)</span>.</li>
+<li>For each <span class="math inline">\(k\in\{0,1,\dots,h-1\}\)</span> compute</li>
+</ul>
+<p><span class="math display">\[\theta_{k+1}=\theta_k-\gamma\,G_k\,\frac{\nabla_\theta\pi(u_k\mid x_k,\theta_k)}{\pi(u_k\mid x_k,\theta_k)}, \qquad G_k=\sum_{t=k}^{h-1}g(x_t,u_t)+g_h(x_h).\]</span></p>
+</div>
+</div>
+</div>
+<p>The update is almost always written in the equivalent <strong>log</strong> form,</p>
+<p><span class="math display">\[\theta_{k+1}=\theta_k-\gamma\,G_k\,\nabla_\theta\log\big(\pi(u_k\mid x_k,\theta_k)\big),\]</span></p>
+<p>since <span class="math inline">\(\nabla_\theta\log\pi=\nabla_\theta\pi/\pi\)</span>. The log form is not merely tidier. For a soft-max policy the logarithm turns the quotient into a difference,</p>
+<p><span class="math display">\[\nabla_\theta\log\pi(\underline u\mid\underline x,\theta)=\nabla_\theta h(\underline x,\underline u,\theta)-\sum_b\pi(b\mid\underline x,\theta)\,\nabla_\theta h(\underline x,b,\theta),\]</span></p>
+<p>the gradient of the chosen action’s preference minus the policy’s average of all of them. No exponentials survive, and nothing is divided by a probability that may be tiny – which is both cheaper and far more numerically stable than evaluating <span class="math inline">\(\nabla_\theta\pi/\pi\)</span> literally. Every implementation uses this form, including the ones in this unit’s notebooks.</p>
+<p>Read the update in words. The trajectory is run; each action is scored by what the rest of the run cost; and each action’s probability is then pushed down in proportion to that cost. Expensive actions become less likely, cheap ones more likely – though notice that the comparison is with zero and not with what the policy usually achieves, which is the defect the next section repairs. Nothing else is needed – no model, no value function, no maximisation over actions. The absence of that last one is what makes the method work for continuous action spaces, where the <span class="math inline">\(\arg\min\)</span> of value-space methods would itself be an optimisation problem at every time step.</p>
+</section>
+<section id="what-reinforce-costs" class="level3" data-number="4.4">
+<h3 data-number="4.4" class="anchored" data-anchor-id="what-reinforce-costs"><span class="header-section-number">4.4</span> What REINFORCE costs</h3>
+<p>The method’s strengths are the two just named: it handles continuous action spaces naturally, and it can represent genuinely stochastic policies, which matters whenever the optimal behaviour is to randomise.</p>
+<p>Its weaknesses are both aspects of one thing. The gradient estimate has <strong>high variance</strong>, and the method needs <strong>careful tuning of the learning rate</strong> largely because of it. The variance has two sources that multiply each other. First, <span class="math inline">\(G_k\)</span> is the sum of all the costs from step <span class="math inline">\(k\)</span> to the end of the run – an unbiased estimate of <span class="math inline">\(Q_\pi(x_k,u_k)\)</span>, but one that absorbs every disturbance and every randomised action along the way, and whose spread therefore grows with the horizon. Second, the ratio <span class="math inline">\(\nabla_\theta\pi/\pi\)</span> has the policy’s probability in the denominator, so a rarely-taken action produces a correspondingly large update – the same mechanism that made ordinary importance sampling noisy in Unit 11.</p>
+<p>The rest of the unit is, essentially, the response to this.</p>
+</section>
+</section>
+<section id="baseline-subtraction" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="baseline-subtraction"><span class="header-section-number">5</span> Baseline subtraction</h2>
+<p>Here is the central trick. Suppose a function <span class="math inline">\(b(\underline x)\)</span> of the state alone – it may not depend on the action – is subtracted from the Q-factor inside the theorem:</p>
+<p><span class="math display">\[\nabla_\theta J(\theta_k)\propto\sum_{\underline x}\mu(\underline x)\sum_{\underline u}\big(Q_\pi(\underline x,\underline u)-b(\underline x)\big)\nabla_\theta\pi(\underline u\mid\underline x,\theta_k).\]</span></p>
+<p>This changes nothing, because the term that was added vanishes identically:</p>
+<p><span class="math display">\[-b(\underline x)\sum_{\underline u}\nabla_\theta\pi(\underline u\mid\underline x,\theta_k)=-b(\underline x)\nabla_\theta\Big(\sum_{\underline u}\pi(\underline u\mid\underline x,\theta_k)\Big)=-b(\underline x)\nabla_\theta(1)=0.\]</span></p>
+<p>The sum of the policy’s probabilities over actions is one, whatever the parameters are, so its gradient is zero. Following the same steps as before through to the sampled update gives the REINFORCE algorithm with a baseline,</p>
+<p><span class="math display">\[\theta_{k+1}=\theta_k-\gamma\big(G_k-b(x_k)\big)\frac{\nabla_\theta\pi(u_k\mid x_k,\theta_k)}{\pi(u_k\mid x_k,\theta_k)}.\]</span></p>
+<p>The point is that while <span class="math inline">\(b\)</span> is irrelevant to the <em>exact</em> gradient, it is very far from irrelevant to the <em>sampled</em> one. The quantity whose variance matters is <span class="math inline">\(G_k-b(x_k)\)</span>, and choosing <span class="math inline">\(b\)</span> well can shrink it dramatically. This is <strong>variance reduction</strong>, and it is the single most effective modification of the basic method.</p>
+<p>The natural choice of <span class="math inline">\(b\)</span> is an estimate of the cost-to-go <span class="math inline">\(J_\pi(x_k)\)</span> itself, since then <span class="math inline">\(G_k-b(x_k)\)</span> measures how much better or worse this particular run turned out than the policy’s own expectation – a quantity that is centred near zero and does not grow with the horizon. Taking that choice seriously, and learning the estimate as the algorithm runs, is exactly what an actor-critic method is.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: if it cancels, how can it help?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: if it cancels, how can it help?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-8" class="callout-8-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>The calculation above shows that subtracting <span class="math inline">\(b(\underline x)\)</span> leaves the gradient unchanged. Yet the whole point of doing it is that the algorithm behaves differently. Reconcile these two statements. And why must <span class="math inline">\(b\)</span> be allowed to depend on the state but not on the action?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-9-contents" aria-controls="callout-9" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-9" class="callout-9-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The cancellation is a statement about the <strong>expected value</strong> of the update, and two random variables with the same mean can have wildly different spreads. Writing <span class="math inline">\(w_k=\nabla_\theta\pi(u_k\mid x_k,\theta_k)/\pi(u_k\mid x_k,\theta_k)\)</span> for the weight, REINFORCE’s step is <span class="math inline">\(G_kw_k\)</span> and the baselined step is <span class="math inline">\((G_k-b(x_k))w_k\)</span>; both have the same mean, but</p>
+<p><span class="math display">\[\text{Var}\big[(G_k-b)w_k\big]=\mathbb{E}\big[(G_k-b)^2w_k^2\big]-\big(\mathbb{E}[(G_k-b)w_k]\big)^2,\]</span></p>
+<p>and only the first term depends on <span class="math inline">\(b\)</span>. Choosing <span class="math inline">\(b\)</span> close to <span class="math inline">\(\mathbb{E}[G_k\mid x_k]=J_\pi(x_k)\)</span> makes <span class="math inline">\((G_k-b)^2\)</span> small while leaving the mean alone. Since stochastic gradient descent converges at a rate governed by the variance of its steps, that is a real improvement in a quantity the exact gradient simply does not see.</p>
+<p>As for the restriction: the cancellation used <span class="math inline">\(\sum_{\underline u}\nabla_\theta\pi(\underline u\mid\underline x,\theta)=\nabla_\theta 1=0\)</span>, which requires <span class="math inline">\(b\)</span> to come <em>outside</em> the sum over actions. If <span class="math inline">\(b\)</span> depended on <span class="math inline">\(\underline u\)</span> it could not be factored out, the sum <span class="math inline">\(\sum_{\underline u}b(\underline x,\underline u)\nabla_\theta\pi(\underline u\mid\underline x,\theta)\)</span> would generally be non-zero, and the estimator would be biased – it would be descending a different function. The permitted freedom is exactly “anything the action does not influence”.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="actor-critic-methods" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="actor-critic-methods"><span class="header-section-number">6</span> Actor-critic methods</h2>
+<section id="motivation-and-the-division-of-labour" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="motivation-and-the-division-of-labour"><span class="header-section-number">6.1</span> Motivation and the division of labour</h3>
+<p>The two families met so far have complementary failings. <strong>Value-based</strong> methods – Q-learning and its descendants – are efficient and well-understood, but every decision requires minimising over the action set, which makes continuous action spaces awkward. <strong>Policy-based</strong> methods handle continuous actions effortlessly but suffer from the variance just described. <strong>Actor-critic</strong> methods keep both representations and let each cover the other’s weakness.</p>
+<p>The division of labour is in the names. The <strong>actor</strong> is the parameterised policy <span class="math inline">\(\pi(\underline u\mid\underline x,\theta)\)</span>; it is what selects actions, and it is updated by the policy gradient. The <strong>critic</strong> is a parameterised approximation of the cost-to-go; it does not select anything, it only evaluates – it criticises the actor’s decisions. And the channel between them is the baseline: the critic’s estimate is what gets subtracted from the return in the actor’s update. There is no new theory here. An actor-critic method is REINFORCE with baseline subtraction, in which the baseline is learned rather than guessed.</p>
+</section>
+<section id="learning-the-critic" class="level3" data-number="6.2">
+<h3 data-number="6.2" class="anchored" data-anchor-id="learning-the-critic"><span class="header-section-number">6.2</span> Learning the critic</h3>
+<p>Concretely, replace the baseline by a parameterised cost approximation,</p>
+<p><span class="math display">\[b(x_k)\ \longrightarrow\ \hat J(x_k,\alpha_k),\]</span></p>
+<p>for weights <span class="math inline">\(\alpha_k\)</span> learned online – by a neural network, or by any of Unit 12’s architectures.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="A collision of symbols">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>A collision of symbols
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Following the slides, <span class="math inline">\(\alpha_k\)</span> here denotes the <strong>critic’s weight vector</strong>, not the discount factor. The discount is also written <span class="math inline">\(\alpha\)</span> in this course, including on the slide that defines the discounted cost earlier in this unit. The two have nothing to do with each other. Unit 12 wrote the parameters of an approximation as <span class="math inline">\(r\)</span>, which would have avoided the clash; the deck’s choice is kept here so that the slides and these notes agree.</p>
+</div>
+</div>
+<p>The critic’s weights are learned by the methods of Units 11 and 12, applied to the problem of evaluating the current policy. There are two candidates, and they are the two candidates of Unit 11. The <strong>Monte-Carlo</strong> version regresses the approximation onto the realised return,</p>
+<p><span class="math display">\[\alpha_{k+1}=\alpha_k-\beta\big(G_k-\hat J(x_k,\alpha_k)\big)\nabla_{\alpha_k}\hat J(x_k,\alpha_k),\]</span></p>
+<p>while the <strong>temporal-difference</strong> version replaces <span class="math inline">\(G_k\)</span> by the one-step estimate <span class="math inline">\(g(x_k,u_k)+\hat J(x_{k+1},\alpha_{k+1})\)</span>:</p>
+<p><span class="math display">\[\alpha_{k+1}=\alpha_k-\beta\big(g(x_k,u_k)+\hat J(x_{k+1},\alpha_{k+1})-\hat J(x_k,\alpha_k)\big)\nabla_{\alpha_k}\hat J(x_k,\alpha_k).\]</span></p>
+<p>Here <span class="math inline">\(\beta\)</span> is the critic’s step size, generally different from the actor’s <span class="math inline">\(\gamma\)</span>. The second update is the semi-gradient of Unit 12: the parameters appear in the target and are deliberately not differentiated. The trade is the familiar one – Monte-Carlo is unbiased but must wait for the end of the run and carries the full variance of the return, while TD is biased by its own current estimate but updates immediately and is far quieter.</p>
+<p>The most common form of the method takes the TD route one step further and uses the same one-step estimate in the <em>actor’s</em> update as well, replacing <span class="math inline">\(G_k\)</span> by <span class="math inline">\(g(x_k,u_k)+\hat J(x_{k+1},\alpha_{k+1})\)</span> there too. The two updates then share a single quantity.</p>
+</section>
+<section id="the-algorithm" class="level3" data-number="6.3">
+<h3 data-number="6.3" class="anchored" data-anchor-id="the-algorithm"><span class="header-section-number">6.3</span> The algorithm</h3>
+<div class="callout callout-style-default callout-note callout-titled" title="Algorithm: actor-critic">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-11-contents" aria-controls="callout-11" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Algorithm: actor-critic
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-11" class="callout-11-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>For each Monte-Carlo run:</p>
+<ul>
+<li>Initialise <span class="math inline">\(x_0\)</span> randomly, apply <span class="math inline">\(\pi(\underline u\mid\underline x,\theta)\)</span>, and obtain <span class="math inline">\(\big((x_0,u_0),(x_1,u_1),\dots,(x_{h-1},u_{h-1}),x_h\big)\)</span>.</li>
+<li>For each <span class="math inline">\(k\in\{0,1,\dots,h-1\}\)</span> compute</li>
+</ul>
+<p><span class="math display">\[\textbf{critic}\qquad \alpha_{k+1}=\alpha_k-\beta\big(g(x_k,u_k)+\hat J(x_{k+1},\alpha_{k+1})-\hat J(x_k,\alpha_k)\big)\nabla_{\alpha_k}\hat J(x_k,\alpha_k)\]</span></p>
+<p><span class="math display">\[\textbf{actor}\qquad \theta_{k+1}=\theta_k-\gamma\Big(g(x_k,u_k)+\hat J(x_{k+1},\alpha_{k+1})-\hat J(x_k,\alpha_k)\Big)\frac{\nabla_\theta\pi(u_k\mid x_k,\theta_k)}{\pi(u_k\mid x_k,\theta_k)}\]</span></p>
+</div>
+</div>
+</div>
+<p>The bracket is the same in both lines, and it is the <strong>temporal difference</strong> of Unit 11:</p>
+<p><span class="math display">\[\delta_k=g(x_k,u_k)+\hat J(x_{k+1},\alpha_{k+1})-\hat J(x_k,\alpha_k).\]</span></p>
+<p>One number, computed once per time step, used twice. The critic treats it as its own prediction error and corrects its weights by it. The actor treats it as the signed weight on the policy gradient: if <span class="math inline">\(\delta_k\)</span> is negative the action turned out better than the critic expected, and its probability is increased; if positive, decreased. The critic’s job is to set the bar; the actor’s job is to chase actions that clear it.</p>
+<p>That substitution – <span class="math inline">\(G_k-b(x_k)\)</span> replaced by <span class="math inline">\(\delta_k\)</span> – is the whole of the variance reduction, and it is worth seeing how large it is. <span class="math inline">\(G_k\)</span> is a sum over the remainder of the run; <span class="math inline">\(\delta_k\)</span> involves one cost and two evaluations of the critic. The spread of the first grows with the horizon, the spread of the second does not. The measurement in this unit’s notebooks puts the ratio of standard deviations at roughly <span class="math inline">\(100\)</span> on a problem with a thousand steps per run.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: what is the actor's weight, in expectation?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-12-contents" aria-controls="callout-12" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: what is the actor’s weight, in expectation?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-12" class="callout-12-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Suppose the critic has converged, so that <span class="math inline">\(\hat J(x,\alpha)=J_\pi(x)\)</span> exactly. What is the expected value of the temporal difference <span class="math inline">\(\delta_k\)</span>, conditioned on the state <span class="math inline">\(x_k\)</span> and the action <span class="math inline">\(u_k\)</span>? What is it conditioned on <span class="math inline">\(x_k\)</span> alone? Use the answer to explain the name of the A2C variant below.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-13-contents" aria-controls="callout-13" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-13" class="callout-13-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>With the critic exact, and conditioning on both the state and the action, the expectation of the one-step estimate is by definition the Q-factor:</p>
+<p><span class="math display">\[\mathbb{E}\big[g(x_k,u_k)+J_\pi(x_{k+1})\;\big|\;x_k,u_k\big]=Q_\pi(x_k,u_k),\]</span></p>
+<p>so</p>
+<p><span class="math display">\[\mathbb{E}[\delta_k\mid x_k,u_k]=Q_\pi(x_k,u_k)-J_\pi(x_k).\]</span></p>
+<p>This difference is called the <strong>advantage</strong> of the action <span class="math inline">\(u_k\)</span> at the state <span class="math inline">\(x_k\)</span>: how much better or worse taking <span class="math inline">\(u_k\)</span> is than acting as the policy usually does. It is positive for actions that cost more than average and negative for ones that cost less – a cost-minimising convention, the reverse of the reward-maximising literature.</p>
+<p>Conditioning on the state alone and averaging over the policy’s own actions gives zero, since <span class="math inline">\(\mathbb{E}_\pi[Q_\pi(x_k,u_k)\mid x_k]=J_\pi(x_k)\)</span> by the definition of <span class="math inline">\(J_\pi\)</span>. So the actor’s weight is centred: on average over the actions it takes, the policy is neither rewarded nor penalised, and only the <em>differences between actions at the same state</em> drive the update. That is precisely what a good baseline should achieve, and it explains the name of <strong>A2C</strong>, advantage actor-critic – the algorithm is estimating, and descending, the advantage function.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="variants" class="level3" data-number="6.4">
+<h3 data-number="6.4" class="anchored" data-anchor-id="variants"><span class="header-section-number">6.4</span> Variants</h3>
+<p>The algorithm above is the basic form; the versions in use are refinements of it, and all five on the slide are worth being able to recognise.</p>
+<p><strong>A2C</strong>, advantage actor-critic, uses the advantage function explicitly as the actor’s weight – the quantity identified in the exercise above. <strong>A3C</strong>, asynchronous advantage actor-critic, runs several agents in parallel on separate copies of the environment and combines their updates, which decorrelates the data much as experience replay did in Unit 12. <strong>DDPG</strong>, deep deterministic policy gradient, allows the actor to be deterministic in a continuous action space, where differentiating through the action is possible even though the finite-action argument at the start of this unit does not apply. <strong>PPO</strong>, proximal policy optimisation, constrains how far the policy may move in a single update, which is the main practical fix for the step-size sensitivity named earlier. <strong>SAC</strong>, soft actor-critic, adds an entropy term that rewards the policy for staying random, so that exploration does not die out early – a failure mode the next section demonstrates.</p>
+</section>
+</section>
+<section id="the-mountain-car" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="the-mountain-car"><span class="header-section-number">7</span> The mountain car</h2>
+<p>The unit’s worked implementation is the classic mountain car. A car sits in a sinusoidal valley; the only available action is an acceleration, applied in either direction; the goal is to reach the flag on top of the right hill. The observations are the car’s position and velocity, both continuous, and the action is the acceleration, also continuous – which is the point of using it here, since the value-space methods of Units 10 to 12 would need a minimisation over that continuous set at every step.</p>
+<p>The cost structure is the interesting part. Every time step incurs a cost of <span class="math inline">\(0.1\times(\text{action})^2\)</span>, penalising large accelerations, and reaching the flag earns <span class="math inline">\(100\)</span>. The car is underpowered: full throttle from rest will not climb the hill, and the only solution is to rock back and forth, building amplitude, until there is enough energy to get over. So the task is genuinely hard in a way the toy lattices of this unit are not – and it exposes something about policy gradient methods that is easy to miss.</p>
+<p>Both algorithms were run on this problem; the notebooks <a href="../code/unit13/notebooks.html"><code>A_13_MountainCarREINFORCE.ipynb</code> and <code>A_13_MountainCarActorCritic.ipynb</code></a> contain the code and the measurements. Over 200 episodes from a fixed seed:</p>
+<table class="caption-top table">
+<caption>Measured behaviour on <code>MountainCarContinuous-v0</code>, seed <span class="math inline">\(0\)</span>. Scores are the environment’s own rewards, so larger is better.</caption>
+<colgroup>
+<col style="width: 22%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 15%">
+<col style="width: 16%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">first 20 episodes</th>
+<th style="text-align: right;">last 50 episodes</th>
+<th style="text-align: right;">best episode</th>
+<th style="text-align: right;">episodes reaching the flag</th>
+<th style="text-align: right;">final policy std</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">REINFORCE</td>
+<td style="text-align: right;"><span class="math inline">\(-23.08\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-6.03\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-0.01\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.0057\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">actor-critic</td>
+<td style="text-align: right;"><span class="math inline">\(-1.45\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-0.89\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-0.00\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0.0011\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Neither agent ever reaches the flag. Both converge, quickly and confidently, to a policy that does nothing at all – and both are <em>right</em> to, in the narrow sense that matters to a gradient method. A policy that never accelerates pays no action cost and scores about zero; any policy that explores pays the action cost and, until it happens to reach the flag, collects nothing in return. The <span class="math inline">\(+100\)</span> is unreachable by small perturbations of the do-nothing policy, so the gradient points steadily towards doing less. The final policy standard deviations in the table are the collapse described earlier in this unit, measured: the policy has become deterministic, and exploration has stopped.</p>
+<p>The comparison between the two rows is the instructive part. REINFORCE takes about <span class="math inline">\(29\)</span> episodes to effectively stop acting; the actor-critic takes <strong>one</strong>. Measured along trajectories of one fixed policy, the spread of the quantity multiplying <span class="math inline">\(\nabla_\theta\log\pi\)</span> is about <span class="math inline">\(0.28\)</span> for REINFORCE’s return <span class="math inline">\(G_k\)</span>, and smaller for the actor-critic’s temporal difference <span class="math inline">\(\delta_k\)</span> by a factor of roughly</p>
+<p><span class="math display">\[\frac{\text{std}[G_k]}{\text{std}[\delta_k]}\approx 109.\]</span></p>
+<p>So the critic does exactly what the theory promises: it reduces the variance of the gradient estimate by two orders of magnitude. And the consequence, on this problem, is that the agent commits to the wrong behaviour a great deal faster.</p>
+<p>That is not an argument against actor-critic methods. It is a reminder that variance reduction and correctness are different things. A noisy gradient estimate is, incidentally and unreliably, a form of exploration; removing the noise removes that too. The remedies are the ones named in the variants section – an entropy bonus as in SAC, or an explicit floor on the policy’s standard deviation, which the REINFORCE notebook includes as an option – and they are separate machinery, deliberately added, not something the policy gradient theorem provides. The theorem computes a gradient. Whether the landscape that gradient descends leads anywhere good is a different question, and on this problem it does not.</p>
+</section>
+<section id="summary" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="summary"><span class="header-section-number">8</span> Summary</h2>
+<p>Units 10 to 12 all represented the policy implicitly, through an estimate of the cost-to-go and a minimisation at decision time. This unit represents the policy <strong>directly</strong>, as a parameterised family, and searches the parameters.</p>
+<p>The family must be <strong>stochastic</strong>. For a deterministic policy over a finite action set the cost is a handful of isolated numbers and there is nothing to differentiate; randomising joins those numbers by a smooth surface without adding any policy that was not already available. The <strong>soft-max</strong> construction, built on differentiable preferences, is the standard way to do it.</p>
+<p>The <strong>policy gradient theorem</strong> expresses <span class="math inline">\(\nabla_\theta J(\theta)\)</span> as a sum over states and actions of a visitation probability, a Q-factor and the gradient of the policy. Its significance is what is missing: the model appears nowhere, so the gradient can be estimated from simulation alone. The worked example confirms it term by term against an ordinary derivative.</p>
+<p><strong>REINFORCE</strong> is the stochastic-gradient realisation of the theorem – the expectation over states replaced by the state visited, the sum over actions replaced by the action taken, and the Q-factor replaced by the Monte-Carlo return <span class="math inline">\(G_k\)</span>. It needs no model, no value function and no minimisation over actions, which is what makes continuous action spaces easy. Its price is <strong>variance</strong>, inflated both by the long sum <span class="math inline">\(G_k\)</span> and by the ratio <span class="math inline">\(\nabla_\theta\pi/\pi\)</span>.</p>
+<p><strong>Baseline subtraction</strong> is the response. Any function of the state alone may be subtracted from the Q-factor without changing the exact gradient, because the policy’s probabilities sum to one; but it changes the variance of the sampled gradient a great deal. The best baseline is an estimate of the cost-to-go.</p>
+<p><strong>Actor-critic</strong> methods learn that estimate online. The actor is the policy, the critic is the cost approximation, and the quantity passed between them is the <strong>temporal difference</strong> of Unit 11 – the critic’s prediction error, and the actor’s signed weight. Its conditional expectation is the <strong>advantage</strong>, which is where A2C gets its name. This is approximation in value space and in policy space working together, the combination promised at the start of the course.</p>
+<p>What the mountain car adds is a warning. The critic reduces the variance of the gradient by roughly two orders of magnitude, exactly as advertised, and on that problem the result is that the agent settles into a bad local optimum faster. Policy gradient methods compute a gradient correctly; they do not, by themselves, explore. Keeping a policy exploring long enough to find a distant reward is a separate problem, and every serious variant of these algorithms carries separate machinery for it.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

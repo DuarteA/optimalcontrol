@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>Unit 11 – Policy Iteration, Simulation-Based Policy Evaluation and SARSA</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="unit11-notes_files/libs/clipboard/clipboard.min.js"></script>
+<script src="unit11-notes_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="unit11-notes_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="unit11-notes_files/libs/quarto-html/popper.min.js"></script>
+<script src="unit11-notes_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="unit11-notes_files/libs/quarto-html/anchor.min.js"></script>
+<link href="unit11-notes_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="unit11-notes_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="unit11-notes_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="unit11-notes_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="unit11-notes_files/libs/bootstrap/bootstrap-5f5514ab72c605193d28bd5ace4a0252.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      // NOTE: these must stay 0-argument, matching \newcommand{\argmin}
+      // in macros.tex. They used to be declared here as taking one
+      // argument ("\\operatorname*{argmin}_{#1}", 1), so \argmin{...}
+      // rendered in html but produced garbage in pdf, and \argmin_{...}
+      // rendered in pdf but produced garbage in html. Use \argmin_{x}.
+      argmin: "\\operatorname*{argmin}",
+      argmax: "\\operatorname*{argmax}",
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#where-this-unit-sits-in-the-course" id="toc-where-this-unit-sits-in-the-course" class="nav-link active" data-scroll-target="#where-this-unit-sits-in-the-course"><span class="header-section-number">1</span> Where this unit sits in the course</a></li>
+  <li><a href="#policy-iteration" id="toc-policy-iteration" class="nav-link" data-scroll-target="#policy-iteration"><span class="header-section-number">2</span> Policy iteration</a>
+  <ul class="collapse">
+  <li><a href="#policy-evaluation" id="toc-policy-evaluation" class="nav-link" data-scroll-target="#policy-evaluation"><span class="header-section-number">2.1</span> Policy evaluation</a></li>
+  <li><a href="#policy-improvement" id="toc-policy-improvement" class="nav-link" data-scroll-target="#policy-improvement"><span class="header-section-number">2.2</span> Policy improvement</a></li>
+  <li><a href="#the-loop-and-why-it-terminates" id="toc-the-loop-and-why-it-terminates" class="nav-link" data-scroll-target="#the-loop-and-why-it-terminates"><span class="header-section-number">2.3</span> The loop, and why it terminates</a></li>
+  <li><a href="#an-example-inventory-control-a-third-time" id="toc-an-example-inventory-control-a-third-time" class="nav-link" data-scroll-target="#an-example-inventory-control-a-third-time"><span class="header-section-number">2.4</span> An example: inventory control, a third time</a></li>
+  <li><a href="#policy-iteration-with-q-factors" id="toc-policy-iteration-with-q-factors" class="nav-link" data-scroll-target="#policy-iteration-with-q-factors"><span class="header-section-number">2.5</span> Policy iteration with Q-factors</a></li>
+  </ul></li>
+  <li><a href="#simulation-based-policy-iteration" id="toc-simulation-based-policy-iteration" class="nav-link" data-scroll-target="#simulation-based-policy-iteration"><span class="header-section-number">3</span> Simulation-based policy iteration</a>
+  <ul class="collapse">
+  <li><a href="#monte-carlo-policy-evaluation" id="toc-monte-carlo-policy-evaluation" class="nav-link" data-scroll-target="#monte-carlo-policy-evaluation"><span class="header-section-number">3.1</span> Monte-Carlo policy evaluation</a></li>
+  <li><a href="#temporal-difference-evaluation" id="toc-temporal-difference-evaluation" class="nav-link" data-scroll-target="#temporal-difference-evaluation"><span class="header-section-number">3.2</span> Temporal difference evaluation</a></li>
+  <li><a href="#monte-carlo-or-td" id="toc-monte-carlo-or-td" class="nav-link" data-scroll-target="#monte-carlo-or-td"><span class="header-section-number">3.3</span> Monte-Carlo or TD?</a></li>
+  </ul></li>
+  <li><a href="#exploration" id="toc-exploration" class="nav-link" data-scroll-target="#exploration"><span class="header-section-number">4</span> Exploration</a>
+  <ul class="collapse">
+  <li><a href="#exploring-starts-and-epsilon-soft-policies" id="toc-exploring-starts-and-epsilon-soft-policies" class="nav-link" data-scroll-target="#exploring-starts-and-epsilon-soft-policies"><span class="header-section-number">4.1</span> Exploring starts and <span class="math inline">\(\epsilon\)</span>-soft policies</a></li>
+  <li><a href="#why-q-factors-make-exploration-harder" id="toc-why-q-factors-make-exploration-harder" class="nav-link" data-scroll-target="#why-q-factors-make-exploration-harder"><span class="header-section-number">4.2</span> Why Q-factors make exploration harder</a></li>
+  </ul></li>
+  <li><a href="#generalized-policy-iteration" id="toc-generalized-policy-iteration" class="nav-link" data-scroll-target="#generalized-policy-iteration"><span class="header-section-number">5</span> Generalized policy iteration</a></li>
+  <li><a href="#sarsa" id="toc-sarsa" class="nav-link" data-scroll-target="#sarsa"><span class="header-section-number">6</span> SARSA</a>
+  <ul class="collapse">
+  <li><a href="#example-frozen-lake" id="toc-example-frozen-lake" class="nav-link" data-scroll-target="#example-frozen-lake"><span class="header-section-number">6.1</span> Example: frozen lake</a></li>
+  </ul></li>
+  <li><a href="#off-policy-learning" id="toc-off-policy-learning" class="nav-link" data-scroll-target="#off-policy-learning"><span class="header-section-number">7</span> Off-policy learning</a>
+  <ul class="collapse">
+  <li><a href="#importance-sampling" id="toc-importance-sampling" class="nav-link" data-scroll-target="#importance-sampling"><span class="header-section-number">7.1</span> Importance sampling</a></li>
+  <li><a href="#importance-sampling-for-returns" id="toc-importance-sampling-for-returns" class="nav-link" data-scroll-target="#importance-sampling-for-returns"><span class="header-section-number">7.2</span> Importance sampling for returns</a></li>
+  <li><a href="#ordinary-and-weighted-importance-sampling" id="toc-ordinary-and-weighted-importance-sampling" class="nav-link" data-scroll-target="#ordinary-and-weighted-importance-sampling"><span class="header-section-number">7.3</span> Ordinary and weighted importance sampling</a></li>
+  <li><a href="#example-blackjack" id="toc-example-blackjack" class="nav-link" data-scroll-target="#example-blackjack"><span class="header-section-number">7.4</span> Example: blackjack</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">8</span> Summary</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="unit11-notes.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Unit 11 – Policy Iteration, Simulation-Based Policy Evaluation and SARSA</h1>
+<p class="subtitle lead">4SC000 Optimal Control and Reinforcement Learning</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Textbook-prose companion to
+lectures/lecture11-policy-iteration-sarsa.qmd, intended as a booklet
+chapter for readers who did not attend the lecture. Same content and
+figures as the slides, but written as connected prose rather than bullet
+points, so it can stand on its own. Figures are the same crops already
+verified for the slide deck, referenced from
+../lectures/figures/lecture11/ rather than duplicated.
+
+FIRST PASS (2026-10-25). Conventions carried over from units 1-10:
+- Prose, not bullets; every equation from the deck is kept.
+- Figure captions are written here (the slides deliberately carry none).
+- Quick-check callouts follow the unit 1-10 pattern: an OPEN
+  {.callout-tip collapse="false"} with the question, immediately followed
+  by a COLLAPSED {.callout-note collapse="true"} with the solution.
+- The deck's appendix (trajectory reuse and the bias-variance trade-off)
+  is folded into a collapsible callout at the end rather than kept as a
+  trailing section -- same treatment as units 5, 6, 7 and 10.
+- Per [[feedback-concluding-remarks-no-learning-outcomes]], no "After this
+  lecture you should be able to" block; the deck's Concluding remarks are
+  absorbed into the closing Summary section.
+- Costs are MINIMISED throughout, as in Units 1-10.
+
+HEADER LINK ROW: complete as of 2026-10-25 -- Slides, Exercises (PS3
+sections 2, 3.4, 4 and 5) and Jupyter notebooks (code/unit11/, seven of
+them). All three resolve only once those files have been rendered:
+`quarto render` the whole project, or at least
+exercises/unit11-exercises.qmd and code/unit11/notebooks.qmd, or the
+links 404 even though they are correct.
+
+ERRORS IN THE SOURCE SLIDES. The deck's own header comment lists seven
+corrections made against Slides/Lecture11.pdf; all are carried here. The
+three that change content rather than notation are:
+  - source page 31 writes the epsilon-greedy policy with "arg max
+    Q-hat"; everywhere else in the course the quantity is a COST, so it
+    must be arg min;
+  - source page 24 states batch TD as converging to "the values obtained
+    by first estimating a model and then applying TD"; the standard
+    result is convergence to the certainty-equivalence estimate, i.e.
+    the values of the fitted model solved EXACTLY;
+  - source page 40 swaps the Behavioural/Target labels relative to the
+    vector definitions beside them. Behaviour policy mu, target policy
+    pi throughout here.
+
+TWO TYPOS SURVIVE INSIDE FIGURES and cannot be fixed from this file,
+since they are baked into the cropped images pg17 and pg18: the heading
+"Try to improve evaluate policy" (should be "Try to improve policy") and
+"compute just for a subject of actions" (should be "subset"). Worth
+fixing in the Keynote; the captions here do not repeat them.
+
+ONE DECK FIGURE WAS RE-CROPPED while writing these notes.
+figures/lecture11/pg45-trajectory-reuse-ex.png carried a duplicate of
+the line "visited at early stages" at the top -- the tail of the
+sentence that introduces it, which the deck prints as text immediately
+above the image. Cut at the ink-band boundary at row 134 of 384. The
+deck picks up the fix automatically, since both files reference the same
+image.
+
+THREE THIRD-PARTY IMAGES are absent from the deck and therefore from
+these notes (the generalized-policy-iteration diagrams from Sutton and
+Barto, and the two OpenAI Gymnasium screenshots), because the site is
+published publicly. The surrounding arguments are written out in full,
+so nothing is lost; see the deck's header comment for the options.
+
+VERIFICATION. The inventory lattice of the worked example (source pages
+9-14) was recomputed from the model rather than transcribed from the
+slide images: see code/unit11/A_11_StochInventoryControlPI.ipynb, which
+reproduces every cell of every lattice, including the per-iteration
+sequence of J(0, stage 0). The tables printed in this unit come from
+that computation and agree with the slides to the last digit. Problem
+numbers referenced in the text are those of exercises/unit11-exercises.qmd.
+
+FIRST-PASS CAVEAT: expect a section-by-section refinement round, same as
+every other unit. No interactive demonstrations have been added yet --
+units 6, 7 and 8 have them, units 10 and 11 do not.
+-->
+<p><a href="../lectures/lecture11-policy-iteration-sarsa.html">Slides</a> · <a href="../exercises/unit11-exercises.html">Exercises</a> · <a href="../code/unit11/notebooks.html">Jupyter notebooks</a></p>
+<section id="where-this-unit-sits-in-the-course" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="where-this-unit-sits-in-the-course"><span class="header-section-number">1</span> Where this unit sits in the course</h2>
+<p>Unit 10 set up the infinite-horizon problems in which reinforcement learning is easiest to state, and then gave one algorithm for them: value iteration, and its model-free shadow, Q-learning. Value iteration sweeps the Bellman equation until the values stop moving, and Q-learning is the same sweep with the expectation over successor states replaced by the one successor that happened to occur.</p>
+<p>This unit gives the <strong>other</strong> classical algorithm for the same problems, and then follows it down the same road into the model-free world. The algorithm is <strong>policy iteration</strong>, and the idea behind it is quite unlike dynamic programming. Instead of improving a <em>value</em> until it is optimal and reading off a policy at the end, policy iteration improves a <em>policy</em> directly, by alternating two steps: work out what the current policy is worth, then replace it by the policy that is greedy with respect to that worth. Both steps are exact and neither involves a limit; the loop stops because there are only finitely many policies to run through.</p>
+<p>What makes this worth a unit of its own is what happens when the model is removed. The evaluation step is the only one that needs the transition probabilities, and it is the only one that is an <em>expectation</em> – so it is exactly the step that simulation can replace. Doing so gives simulation-based policy iteration, and the two standard ways of estimating a policy’s cost from simulated trajectories, <strong>Monte-Carlo</strong> and <strong>temporal difference (TD)</strong>, are the two basic tools of the whole field. Relaxing both steps – evaluating only approximately, improving only partially – gives <strong>generalized policy iteration</strong>, the pattern behind most algorithms used in practice, of which <strong>SARSA</strong> is the simplest instance worth naming. Finally, estimating the value of one policy from data generated by another – <strong>off-policy learning</strong> – is handled by importance sampling, which closes the unit.</p>
+<p>Three threads from earlier units run through all of this. Policy improvement <em>is</em> the rollout step of Unit 8, with the current policy as the base policy. The move from cost functions to Q-factors <em>is</em> the move that made Q-learning possible in Unit 10, and it does the same work here. And the inventory control problem of Units 1 and 2, solved by stochastic dynamic programming there and by Q-learning in Unit 10, is solved a third and a fourth way below – exactly, and then from simulation – which is what makes it possible to check the learned answers against the truth.</p>
+</section>
+<section id="policy-iteration" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="policy-iteration"><span class="header-section-number">2</span> Policy iteration</h2>
+<p>Policy iteration is an alternative procedure to dynamic programming for computing an optimal policy. It is used mostly when the state and input spaces are discrete, and it works for problems with disturbances, so it is an alternative to stochastic dynamic programming as well. Its two steps are <strong>policy evaluation</strong> and <strong>policy improvement</strong>, and almost everything in the rest of this unit – and much of reinforcement learning, including the actor-critic methods of Units 13 and 14 – is a variation on that pair.</p>
+<section id="policy-evaluation" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="policy-evaluation"><span class="header-section-number">2.1</span> Policy evaluation</h3>
+<p>Consider a shortest path problem with a terminal state,</p>
+<p><span class="math display">\[x_{k+1}=w_k, \qquad \text{Prob}[w_k=j\mid x_k=i,\ u_k=\ell]=p_{ij}(\ell), \qquad k\in\{0,1,2,\dots\},\]</span></p>
+<p>and let <span class="math inline">\(J_\mu(i)\)</span> be the cost incurred by a fixed policy <span class="math inline">\(\mu\)</span> started at <span class="math inline">\(x_0=i\)</span>. Then the <span class="math inline">\(n\)</span> numbers <span class="math inline">\(J_\mu(1),\dots,J_\mu(n)\)</span> can be computed by solving the system of <span class="math inline">\(n\)</span> <strong>linear</strong> equations</p>
+<p><span class="math display">\[\begin{aligned} J_\mu(1)&amp;=g(1,\mu(1))+\sum_{j=1}^{n}p_{1j}(\mu(1))J_\mu(j)\\ J_\mu(2)&amp;=g(2,\mu(2))+\sum_{j=1}^{n}p_{2j}(\mu(2))J_\mu(j)\\ &amp;\ \ \vdots\\ J_\mu(n)&amp;=g(n,\mu(n))+\sum_{j=1}^{n}p_{nj}(\mu(n))J_\mu(j).\end{aligned}\]</span></p>
+<p>The word to dwell on is <em>linear</em>. These equations look exactly like the Bellman equation of Unit 10 with one thing deleted: the minimisation. Because the policy is fixed, there is no choice to make at any state – the action at state <span class="math inline">\(i\)</span> is <span class="math inline">\(\mu(i)\)</span>, full stop – and what remains is a square linear system in the unknowns <span class="math inline">\(J_\mu(1),\dots,J_\mu(n)\)</span>. In matrix form, with <span class="math inline">\(P_\mu\)</span> the matrix whose <span class="math inline">\((i,j)\)</span> entry is <span class="math inline">\(p_{ij}(\mu(i))\)</span> and <span class="math inline">\(g_\mu\)</span> the vector of stage costs,</p>
+<p><span class="math display">\[J_\mu=g_\mu+P_\mu J_\mu \qquad \Longleftrightarrow \qquad (I-P_\mu)J_\mu=g_\mu,\]</span></p>
+<p>a single solve rather than an iteration. That is the whole reason policy iteration exists: the <em>minimisation</em> is what makes the Bellman equation nonlinear and forces value iteration to iterate, and evaluating a fixed policy removes it.</p>
+<p>The discounted case is identical with a discount factor inserted. For</p>
+<p><span class="math display">\[x_{k+1}=w_k, \qquad \text{Prob}[w_k=j\mid x_k=i,\ u_k=\ell]=p_{ij}(\ell),\]</span></p>
+<p>and the cost <span class="math inline">\(\sum_{k=0}^{\infty}\mathbb{E}[\alpha^kg(x_k,u_k)]\)</span>, the values <span class="math inline">\(J_\mu(1),\dots,J_\mu(n)\)</span> solve</p>
+<p><span class="math display">\[\begin{aligned} J_\mu(1)&amp;=g(1,\mu(1))+\alpha\sum_{j=1}^{n}p_{1j}(\mu(1))J_\mu(j)\\ &amp;\ \ \vdots\\ J_\mu(n)&amp;=g(n,\mu(n))+\alpha\sum_{j=1}^{n}p_{nj}(\mu(n))J_\mu(j),\end{aligned}\]</span></p>
+<p>that is <span class="math inline">\((I-\alpha P_\mu)J_\mu=g_\mu\)</span>. Here the solve is even better behaved: <span class="math inline">\(\alpha P_\mu\)</span> has spectral radius at most <span class="math inline">\(\alpha&lt;1\)</span>, so <span class="math inline">\(I-\alpha P_\mu\)</span> is invertible for <em>every</em> policy, with no reachability assumption needed.</p>
+</section>
+<section id="policy-improvement" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="policy-improvement"><span class="header-section-number">2.2</span> Policy improvement</h3>
+<p>Given a policy <span class="math inline">\(\mu\)</span> and its costs <span class="math inline">\(J_\mu(1),\dots,J_\mu(n)\)</span>, define a new policy by acting greedily with respect to them:</p>
+<p><span class="math display">\[\bar\mu(i)=\underset{u\in U(i)}{\arg\min}\Big[g(i,u)+\sum_{j=1}^{n}p_{ij}(u)J_\mu(j)\Big].\]</span></p>
+<p>Then <span class="math inline">\(J_{\bar\mu}(i)\leq J_\mu(i)\)</span> for every <span class="math inline">\(i\)</span>. This step is called <strong>policy improvement</strong>, and the inequality is the reason the whole scheme works.</p>
+<p>It should look familiar. Taking one action by minimising the immediate cost plus the cost-to-go of a <em>base policy</em> thereafter is precisely the <strong>rollout policy</strong> of Unit 8, with <span class="math inline">\(\mu\)</span> as the base policy. The guarantee quoted there – a rollout policy is never worse than its base policy – is the same guarantee quoted here, and it is what makes the iteration monotone.</p>
+</section>
+<section id="the-loop-and-why-it-terminates" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="the-loop-and-why-it-terminates"><span class="header-section-number">2.3</span> The loop, and why it terminates</h3>
+<p>Alternating the two steps gives policy iteration, shown in <a href="#fig-pi-loop" class="quarto-xref">Fig.&nbsp;1</a>. One evaluates the current policy, improves it, evaluates the improved policy, and so on, stopping when the improvement step returns the policy it was given – at which point there is no point continuing.</p>
+<div style="text-align: center;">
+<div id="fig-pi-loop" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pi-loop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg06-pi-loop-sp.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:56.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pi-loop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;1: The policy iteration loop. Starting from any policy <span class="math inline">\(\mu^0\)</span>, the two steps alternate: evaluation turns a policy into its cost-to-go, improvement turns a cost-to-go into a new policy. The same diagram serves the shortest path and the discounted problem; only the formulas below it differ, by a factor <span class="math inline">\(\alpha\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>In full, for the shortest path problem,</p>
+<p><span class="math display">\[\textbf{Evaluate}\quad J_{\mu^k}(i)=g\big(i,\mu^k(i)\big)+\sum_{j=1}^{n}p_{ij}\big(\mu^k(i)\big)J_{\mu^k}(j),\]</span></p>
+<p><span class="math display">\[\textbf{Improve}\quad \mu^{k+1}(i)=\underset{u\in U(i)}{\arg\min}\ g(i,u)+\sum_{j=1}^{n}p_{ij}(u)J_{\mu^k}(j),\]</span></p>
+<p>and for the discounted problem,</p>
+<p><span class="math display">\[\textbf{Evaluate}\quad J_{\mu^k}(i)=g\big(i,\mu^k(i)\big)+\alpha\sum_{j=1}^{n}p_{ij}\big(\mu^k(i)\big)J_{\mu^k}(j),\]</span></p>
+<p><span class="math display">\[\textbf{Improve}\quad \mu^{k+1}(i)=\underset{u\in U(i)}{\arg\min}\ g(i,u)+\alpha\sum_{j=1}^{n}p_{ij}(u)J_{\mu^k}(j).\]</span></p>
+<p>The procedure <strong>must stop</strong>, and the argument is a counting argument rather than an analytic one. There are only finitely many policies: if there are <span class="math inline">\(m\)</span> possible decisions at each of <span class="math inline">\(n\)</span> states, there are <span class="math inline">\(m^n\)</span> of them. Each improvement step produces a policy that is no worse than the previous one, and a policy that is strictly better has never been visited before, so no policy can appear twice unless the iteration has stopped. Hence after at most <span class="math inline">\(m^n\)</span> rounds the improvement step must return its own input.</p>
+<p>This is a genuinely different kind of guarantee from the one in Unit 10. Value iteration converges <em>asymptotically</em> to the solution of the Bellman equation, so one needs a tolerance <span class="math inline">\(\epsilon\)</span> and a stopping test. Policy iteration terminates <em>exactly</em>, in finitely many steps, and when it stops it has a certificate: the policy it holds is its own greedy improvement, which is the Bellman optimality condition written out. The price is that each step is a linear solve rather than a sweep, which costs <span class="math inline">\(O(n^3)\)</span> against value iteration’s <span class="math inline">\(O(n^2m)\)</span> per sweep.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: is the bound $m^n$ any use?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: is the bound <span class="math inline">\(m^n\)</span> any use?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>The termination argument gives a bound of <span class="math inline">\(m^n\)</span> iterations. For the Pac-man maze of Unit 10, with <span class="math inline">\(n=77\times77=5929\)</span> states and <span class="math inline">\(m=5\)</span> actions, that is <span class="math inline">\(5^{5929}\)</span> – a number with more than four thousand digits. Is the argument therefore worthless in practice?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The argument is worth a great deal, and the bound is worth nothing. They are different things.</p>
+<p>What the argument establishes is that policy iteration <strong>terminates at all</strong>, in finitely many steps, with an exactly optimal policy and a certificate that it is optimal. No limit, no tolerance, no stopping heuristic. That is a structural fact about the algorithm, and nothing about the size of <span class="math inline">\(m^n\)</span> weakens it.</p>
+<p>The bound itself is almost never attained. In practice policy iteration converges in a handful of iterations – typically a number that grows very slowly with <span class="math inline">\(n\)</span>, and often fewer than ten. The worked example below takes five; Problem 11.1 takes two. The reason is that each improvement step changes the action at <em>every</em> state where a better one exists, not at one state at a time, so a single round can leap a long way across the space of policies.</p>
+<p>The honest statement is therefore: the <span class="math inline">\(m^n\)</span> bound proves termination and predicts nothing. For <em>predicting</em> the iteration count one relies on the empirical observation that it is small, and on the fact – provable for the discounted case – that policy iteration converges at least as fast as value iteration, since each of its value estimates dominates the corresponding value iterate.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="an-example-inventory-control-a-third-time" class="level3" data-number="2.4">
+<h3 data-number="2.4" class="anchored" data-anchor-id="an-example-inventory-control-a-third-time"><span class="header-section-number">2.4</span> An example: inventory control, a third time</h3>
+<p>The inventory control problem of Units 1 and 2 is the right place to watch policy iteration run, because the answer is already known from two other routes. A shop holds at most <span class="math inline">\(N=4\)</span> items over <span class="math inline">\(h=4\)</span> stages. At each stage it may order <span class="math inline">\(u_k\)</span> items, paying <span class="math inline">\(5\)</span> per item plus a fixed transaction cost of <span class="math inline">\(0.5\)</span> for any non-zero order; it pays <span class="math inline">\(0.2\)</span> per item held; it sells at <span class="math inline">\(10\)</span> per item, up to the demand. The demand is <span class="math inline">\(d=(2,2,1,1)\)</span>, except that at stage <span class="math inline">\(2\)</span> it is uncertain, <span class="math inline">\(\text{Prob}[d_2=0]=\text{Prob}[d_2=1]=0.5\)</span>. Unsold stock at the end is salvaged at <span class="math inline">\(5-0.2\)</span> per item, giving the terminal cost <span class="math inline">\(g_4=(0,-4.8,-9.6,-14.4,-19.2)\)</span>. Costs are negative because the shop makes money.</p>
+<p>Stochastic dynamic programming – value iteration – gives the optimal policy and the optimal costs-to-go of <a href="#fig-ex-optimal" class="quarto-xref">Fig.&nbsp;2</a>.</p>
+<div style="text-align: center;">
+<div id="fig-ex-optimal" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ex-optimal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg09-example-optimal.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:86.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ex-optimal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;2: The optimal policy and optimal costs-to-go for the inventory problem, from stochastic dynamic programming. Each circle is a stock level (0 at the bottom, 4 at the top) at a stage; the number above a circle is its optimal cost-to-go, the grey number beside it the optimal order quantity, and the arrows the resulting transitions. Stage <span class="math inline">\(2\)</span> has two outgoing arrows per state because the demand there is random.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Policy iteration reaches the same lattice by a completely different route. Start from the policy “buy nothing”, <span class="math inline">\(\mu^0(x_k,k)=0\)</span> for every stock level and stage. Evaluating it is a backward sweep with no minimisation – the shop simply sells what it has and runs down – and gives <a href="#fig-ex-mu0" class="quarto-xref">Fig.&nbsp;3</a>.</p>
+<div style="text-align: center;">
+<div id="fig-ex-mu0" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ex-mu0-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg10-example-mu0.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:86.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ex-mu0-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;3: Policy evaluation of the initial policy <span class="math inline">\(\mu^0\)</span>, “buy nothing”. Every grey action is <span class="math inline">\(0\)</span>; the numbers above the circles are the costs <span class="math inline">\(J_{\mu^0}\)</span> of following that policy from there. An empty shop that never orders is worth exactly <span class="math inline">\(0\)</span> at every stage, which is the bottom row.
+</figcaption>
+</figure>
+</div>
+</div>
+<table class="caption-top table">
+<caption><span class="math inline">\(J_{\mu^0}\)</span> – the cost of never ordering. The last column is the terminal cost <span class="math inline">\(g_4\)</span>.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">stock</th>
+<th style="text-align: right;">stage 0</th>
+<th style="text-align: right;">stage 1</th>
+<th style="text-align: right;">stage 2</th>
+<th style="text-align: right;">stage 3</th>
+<th style="text-align: right;">stage 4</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;"><span class="math inline">\(-38.80\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-35.90\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-25.50\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-23.60\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-19.20\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;"><span class="math inline">\(-29.20\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-29.10\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-21.10\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-19.00\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-14.40\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><span class="math inline">\(-19.60\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-19.60\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-16.70\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-14.40\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-9.60\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><span class="math inline">\(-9.80\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-9.80\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-9.70\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-9.80\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-4.80\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Four more rounds finish the job. <a href="#fig-ex-mu1" class="quarto-xref">Fig.&nbsp;4</a>, <a href="#fig-ex-mu2" class="quarto-xref">Fig.&nbsp;5</a>, <a href="#fig-ex-mu3" class="quarto-xref">Fig.&nbsp;6</a> and <a href="#fig-ex-mu4" class="quarto-xref">Fig.&nbsp;7</a> show the improved policies <span class="math inline">\(\mu^1,\dots,\mu^4\)</span> with their evaluations, and the fifth improvement step returns <span class="math inline">\(\mu^5=\mu^4\)</span>, at which point the algorithm stops, holding the optimal policy of <a href="#fig-ex-optimal" class="quarto-xref">Fig.&nbsp;2</a>.</p>
+<div style="text-align: center;">
+<div id="fig-ex-mu1" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ex-mu1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg11-example-mu1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:86.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ex-mu1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;4: Policy improvement applied to <span class="math inline">\(J_{\mu^0}\)</span> gives <span class="math inline">\(\mu^1\)</span>, and policy evaluation gives <span class="math inline">\(J_{\mu^1}\)</span>. The first improvement is dramatic: an empty shop at stage <span class="math inline">\(0\)</span> goes from ordering nothing to ordering the full four items.
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-ex-mu2" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ex-mu2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg12-example-mu2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:86.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ex-mu2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;5: <span class="math inline">\(\mu^2\)</span> and <span class="math inline">\(J_{\mu^2}\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-ex-mu3" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ex-mu3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg13-example-mu3.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:86.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ex-mu3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;6: <span class="math inline">\(\mu^3\)</span> and <span class="math inline">\(J_{\mu^3}\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-ex-mu4" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ex-mu4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg14-example-mu4.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:86.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ex-mu4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;7: <span class="math inline">\(\mu^4\)</span> and <span class="math inline">\(J_{\mu^4}\)</span>. The next improvement step returns <span class="math inline">\(\mu^5=\mu^4\)</span>, so the algorithm stops and <span class="math inline">\(\mu^4\)</span> is optimal.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The single number that summarises the run is the cost of starting with an empty shop at stage <span class="math inline">\(0\)</span>:</p>
+<table class="caption-top table">
+<caption>One number per lattice: the cost of an empty shop at stage <span class="math inline">\(0\)</span> under each successive policy.</caption>
+<colgroup>
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">iteration <span class="math inline">\(\ell\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(0\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(1\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(2\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(3\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(4\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(5\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(J_{\mu^\ell}(\text{stock }0,\text{ stage }0)\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(0\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-25.30\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-25.70\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-25.75\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(-25.95\)</span></td>
+<td style="text-align: right;">stop</td>
+</tr>
+</tbody>
+</table>
+<p>Three things are worth reading off this sequence.</p>
+<p><strong>Almost all of the gain comes in the first step.</strong> The jump from <span class="math inline">\(0\)</span> to <span class="math inline">\(-25.30\)</span> is the difference between a policy that never orders and one that orders; the remaining four rounds are worth <span class="math inline">\(0.65\)</span> between them. This is typical, and it is the reason approximate versions of the algorithm are useful at all: a crude evaluation of a bad policy is enough to produce a much better one.</p>
+<p><strong>The values improve monotonically, but the policies do not march steadily towards the optimum.</strong> The order quantity at stock <span class="math inline">\(0\)</span>, stage <span class="math inline">\(0\)</span> goes <span class="math inline">\(0,4,2,4,2\)</span> across the five policies, overshooting and returning, while the corresponding values fall monotonically. There is no contradiction: the guarantee is on <span class="math inline">\(J_{\mu^{k+1}}\leq J_{\mu^k}\)</span>, not on the policies converging in any geometric sense. The gaps here are genuinely small – under <span class="math inline">\(J_{\mu^2}\)</span> the order quantities <span class="math inline">\(2\)</span> and <span class="math inline">\(4\)</span> score <span class="math inline">\(-25.70\)</span> and <span class="math inline">\(-25.75\)</span> – so a small change in the evaluated values flips the minimiser. An approximate evaluation would flip it too, which is exactly the fragility that makes the simulation-based version of the algorithm harder to reason about than the exact one.</p>
+<p><strong>The answer agrees to the last digit with two other computations.</strong> The optimal stage-<span class="math inline">\(0\)</span> column, <span class="math inline">\(-25.95\)</span>, <span class="math inline">\(-30.75\)</span>, <span class="math inline">\(-36.05\)</span>, <span class="math inline">\(-40.65\)</span>, <span class="math inline">\(-45.45\)</span> for stock levels <span class="math inline">\(0\)</span> to <span class="math inline">\(4\)</span>, is the same column produced by the stochastic dynamic programming of Unit 2 and by the exact reference inside Unit 10’s Q-learning notebook. Three independent routes to five numbers is a stronger check than any one of them alone, and it is the reason this example is carried through the course. <code>A_11_StochInventoryControlPI.ipynb</code> runs the policy iteration shown here and prints every lattice.</p>
+<p>Problems 11.3 and 11.9 in the exercise sheet run one round of this loop by hand, on an infinite-horizon and a finite-horizon version of the same shop.</p>
+</section>
+<section id="policy-iteration-with-q-factors" class="level3" data-number="2.5">
+<h3 data-number="2.5" class="anchored" data-anchor-id="policy-iteration-with-q-factors"><span class="header-section-number">2.5</span> Policy iteration with Q-factors</h3>
+<p>Everything above can be rewritten in terms of Q-factors, and for model-based policy iteration the rewriting changes nothing. For reinforcement learning the difference is subtle and crucial, and leads to very different implementations.</p>
+<p>The Q-factor of a policy <span class="math inline">\(\mu\)</span> is the cost of taking action <span class="math inline">\(u\)</span> once at state <span class="math inline">\(i\)</span> and following <span class="math inline">\(\mu\)</span> thereafter. Evaluation and improvement become</p>
+<p><span class="math display">\[\textbf{DC:}\quad Q_{\mu^k}(i,u)=g(i,u)+\alpha\sum_{j=1}^{n}p_{ij}(u)\,Q_{\mu^k}\big(j,\mu^k(j)\big),\]</span></p>
+<p><span class="math display">\[\textbf{SP:}\quad Q_{\mu^k}(i,u)=g(i,u)+\sum_{j=1}^{n}p_{ij}(u)\,Q_{\mu^k}\big(j,\mu^k(j)\big),\]</span></p>
+<p><span class="math display">\[\textbf{Improve:}\quad \mu^{k+1}(i)=\underset{u\in U(i)}{\arg\min}\ Q_{\mu^k}(i,u).\]</span></p>
+<p>Note the bootstrap in the evaluation equation: the successor state <span class="math inline">\(j\)</span> is evaluated at the action <span class="math inline">\(\mu^k(j)\)</span> that the <em>current policy</em> would take there. That is what makes it policy evaluation rather than a Bellman sweep, and it is the equation SARSA will later approximate from data.</p>
+<p>The point of the rewriting is the improvement step. It is now a minimisation over a stored table, and <strong>the model has disappeared from it entirely</strong>. Compare the two versions side by side. With Q-factors,</p>
+<p><span class="math display">\[\mu^{k+1}(i)=\underset{u\in U(i)}{\arg\min}\ Q_{\mu^k}(i,u),\]</span></p>
+<p>and with cost functions,</p>
+<p><span class="math display">\[\tilde\mu^{k+1}(i)=\underset{u\in U(i)}{\arg\min}\ g(i,u)+\alpha\underbrace{\sum_{j=1}^{n}p_{ij}(u)\tilde J_{\tilde\mu^k}(j)}_{\text{needs } p_{ij}, \text{ or many more simulations}}.\]</span></p>
+<p>In the second form, extracting a policy requires either knowledge of <span class="math inline">\(p_{ij}\)</span> or enough extra simulations to approximate the expectation – and those simulations must be run <em>from state <span class="math inline">\(i\)</span> under each candidate action <span class="math inline">\(u\)</span></em>, which is a much more demanding requirement than passively watching trajectories. In the first form, nothing is needed but the table.</p>
+<p>This is exactly the observation that made Q-learning possible in Unit 10, doing the same work in a different algorithm. The price is also the same, and it is paid in <strong>exploration</strong>: a table indexed by <span class="math inline">\((i,u)\)</span> has <span class="math inline">\(m\)</span> times as many entries to fill, and a deterministic policy visits only one action per state. That is the subject of a section below.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: where did the model go?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: where did the model go?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>The Q-factor improvement step uses no model, while the cost-function one needs <span class="math inline">\(p_{ij}\)</span>. But the Q-factors themselves were <em>defined</em> by an equation full of <span class="math inline">\(p_{ij}\)</span>. Has the model dependence really been removed, or just moved somewhere less visible?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Moved – but moved somewhere that simulation can reach, which is the whole point.</p>
+<p>The model dependence sits in the <em>evaluation</em> step, and the evaluation step is an <strong>expectation of something that can be observed</strong>: the cost of following <span class="math inline">\(\mu\)</span> from a given state-action pair. Run the policy from that pair and add up what happens, and you have an unbiased sample of exactly the quantity <span class="math inline">\(Q_\mu(i,u)\)</span> is defined to be. Averaging many such samples estimates it without ever writing down <span class="math inline">\(p_{ij}\)</span>. That is Monte-Carlo evaluation, and it is the subject of the next section.</p>
+<p>The cost-function improvement step is not of that kind. It needs <span class="math inline">\(\sum_jp_{ij}(u)J_\mu(j)\)</span> for <em>every candidate <span class="math inline">\(u\)</span></em>, including the ones the current policy never takes, so the data to estimate it does not exist in a trajectory generated by <span class="math inline">\(\mu\)</span>: it would have to be gathered by deliberately taking each <span class="math inline">\(u\)</span> at each <span class="math inline">\(i\)</span> and watching where it leads. Formally one could do that, and for a simulator one can – but it is a different and much stronger kind of access to the system than observing a stream of experience.</p>
+<p>So the right statement is: Q-factors do not remove the model, they relocate the dependence from a step that cannot be sampled to a step that can. The same sentence describes the move from value iteration to Q-learning in Unit 10.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="simulation-based-policy-iteration" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="simulation-based-policy-iteration"><span class="header-section-number">3</span> Simulation-based policy iteration</h2>
+<p>Replace the exact evaluation step by an estimate built from simulated trajectories and policy iteration becomes usable without a model. <a href="#fig-sbpi-j" class="quarto-xref">Fig.&nbsp;8</a> puts the model-based and simulation-based versions side by side in the cost-function form, and <a href="#fig-sbpi-q" class="quarto-xref">Fig.&nbsp;9</a> does the same in the Q-factor form.</p>
+<div style="text-align: center;">
+<div id="fig-sbpi-j" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-sbpi-j-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg17-simulation-based-pi.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:92.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-sbpi-j-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;8: Model-based policy iteration (left) against simulation-based policy iteration (right), in the cost-function form. The loop is unchanged; both boxes are weakened. Evaluation becomes approximate and is built from simulations, possibly only a few, possibly only for a subset of states and with an approximation architecture such as a neural network. Improvement becomes an <em>attempt</em> at improvement, which may fail precisely because the values it is greedy with respect to are approximate.
+</figcaption>
+</figure>
+</div>
+</div>
+<div style="text-align: center;">
+<div id="fig-sbpi-q" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-sbpi-q-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg18-simulation-based-pi-q.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:92.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-sbpi-q-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;9: The same comparison in the Q-factor form. The evaluation equation now bootstraps on <span class="math inline">\(Q_{\mu^k}(j,\mu^k(j))\)</span>, the successor state evaluated at the action the current policy takes; the improvement step is a minimisation over the stored table and involves no model at all.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Two words on those diagrams deserve emphasis, because they are what separates this section from the exact algorithm above. “<strong>Approximately</strong> evaluate” means the values are estimates with sampling error in them, not solutions of a linear system. And “<strong>try to</strong> improve” means the improvement step may now <em>fail</em> to improve: the monotonicity guarantee <span class="math inline">\(J_{\mu^{k+1}}\leq J_{\mu^k}\)</span> was proved for the exact values, and greedy action selection against noisy values carries no such guarantee. The worked example above already showed how little margin there can be – two order quantities separated by <span class="math inline">\(0.05\)</span> – so this is not a theoretical worry.</p>
+<p>Everything now turns on the evaluation step. There are two basic ways to estimate the cost of a policy from simulations: <strong>Monte-Carlo</strong> and <strong>temporal difference</strong>.</p>
+<section id="monte-carlo-policy-evaluation" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="monte-carlo-policy-evaluation"><span class="header-section-number">3.1</span> Monte-Carlo policy evaluation</h3>
+<p>Monte-Carlo evaluation is the direct approach: run the policy, see what it costs, average. Suppose we run <span class="math inline">\(M\)</span> simulations of the system under a fixed policy <span class="math inline">\(\mu\)</span>,</p>
+<p><span class="math display">\[x_0^\ell,x_1^\ell,\dots,x_N^\ell \qquad \ell\in\{1,\dots,M\},\]</span></p>
+<p>where for shortest path problems <span class="math inline">\(x_N^\ell\)</span> is a terminal state, and otherwise the simulation is run for a long time <span class="math inline">\(N\)</span> (the appendix discusses how to choose it).</p>
+<p><strong>Step 1.</strong> Every time <span class="math inline">\(r\in\{1,2,\dots\}\)</span> that a simulation visits a state <span class="math inline">\(x_k=i\)</span>, compute the <strong>return</strong> from that visit onwards,</p>
+<p><span class="math display">\[R_r(i)=\sum_{\ell=k}^{N}g(x_\ell,u_\ell), \quad u_\ell=\mu(x_\ell) \qquad \Big(\text{for DC: } R_r(i)=\sum_{\ell=k}^{N}\alpha^{\ell-k}g(x_\ell,u_\ell)\Big).\]</span></p>
+<p><strong>Step 2.</strong> Estimate the cost-to-go of <span class="math inline">\(\mu\)</span> at state <span class="math inline">\(i\)</span> by the average of those returns,</p>
+<p><span class="math display">\[\hat J(i)=\frac{1}{\bar n(i)}\sum_{r=1}^{\bar n(i)}R_r(i), \qquad \bar n(i)=\#\text{ visits to state } i \text{ across all simulations}.\]</span></p>
+<p>The Q-factors come from the same recipe with one change of bookkeeping: treat a state-action pair as the thing being visited.</p>
+<p><strong>Step 1.</strong> Every time <span class="math inline">\(r\)</span> that a simulation is at <span class="math inline">\(x_k=i\)</span> and action <span class="math inline">\(u_k=j\)</span> is taken, compute</p>
+<p><span class="math display">\[R_r(i,j)=\sum_{\ell=k}^{N}g(x_\ell,u_\ell), \qquad u_\ell=\begin{cases}j &amp; \text{if } \ell=k\\ \mu(x_\ell) &amp; \text{if } \ell&gt;k\end{cases}\]</span></p>
+<p><span class="math display">\[\Big(\text{for DC: } R_r(i,j)=\sum_{\ell=k}^{N}\alpha^{\ell-k}g(x_\ell,u_\ell)\Big).\]</span></p>
+<p><strong>Step 2.</strong> Average them,</p>
+<p><span class="math display">\[\hat Q(i,j)=\frac{1}{\bar n(i,j)}\sum_{r=1}^{\bar n(i,j)}R_r(i,j), \qquad \bar n(i,j)=\#\text{ visits to the pair } (i,j).\]</span></p>
+<p>Note what the definition of <span class="math inline">\(R_r(i,j)\)</span> says: the first action is <span class="math inline">\(j\)</span>, whatever the policy would have done, and every action after it is the policy’s. That is the definition of a Q-factor, read as an instruction for a simulator.</p>
+</section>
+<section id="temporal-difference-evaluation" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="temporal-difference-evaluation"><span class="header-section-number">3.2</span> Temporal difference evaluation</h3>
+<p>To motivate the temporal difference method, first rewrite Monte-Carlo so that it computes its average <strong>incrementally</strong>, as Q-learning did in Unit 10:</p>
+<p><span class="math display">\[\hat J_{t+1}(i)=\hat J_t(i)+\gamma\big(R_r(i)-\hat J_t(i)\big) \qquad \text{when } x_t=i \text{ is visited},\]</span></p>
+<p>with a step size <span class="math inline">\(\gamma\)</span> that may vary with <span class="math inline">\(t\)</span> but is taken constant here. (With <span class="math inline">\(\gamma=1/r\)</span> at the <span class="math inline">\(r\)</span>-th visit this is exactly the running mean; with <span class="math inline">\(\gamma\)</span> constant it is an exponentially weighted one.)</p>
+<p>Now decompose the return into its first term and the rest:</p>
+<p><span class="math display">\[R_r(i)=\sum_{\ell=k}^{N}g(x_\ell,u_\ell)=g(x_k,\mu(x_k))+\underbrace{\sum_{\ell=k+1}^{N}g(x_\ell,u_\ell)}_{\approx\ \hat J_t(x_{k+1})}.\]</span></p>
+<p>The underbraced sum is the return from the <em>next</em> state onwards – and we already hold an estimate of it, namely <span class="math inline">\(\hat J_t(x_{k+1})\)</span>. The TD method uses that estimate instead of waiting for the trajectory to finish:</p>
+<p><span class="math display">\[\hat J_{t+1}(x_k)=\hat J_t(x_k)+\gamma\Big(\overbrace{g(x_k,\mu(x_k))+\hat J_t(x_{k+1})-\hat J_t(x_k)}^{\text{temporal difference}}\Big).\]</span></p>
+<p>Dropping the time index and writing the update with an arrow, as is customary:</p>
+<p><span class="math display">\[\hat J(x_k)\leftarrow \hat J(x_k)+\gamma\Big(g(x_k,\mu(x_k))+\hat J(x_{k+1})-\hat J(x_k)\Big),\]</span></p>
+<p>and with a discount, <span class="math inline">\(g(x_k,\mu(x_k))+\alpha\hat J(x_{k+1})-\hat J(x_k)\)</span> inside the bracket. The quantity in the bracket is the <strong>temporal difference</strong>, usually written <span class="math inline">\(\delta\)</span>: the discrepancy between what the stored estimate said this state was worth and what one step of actual experience plus the stored estimate of the next state say it is worth.</p>
+<p><a href="#fig-mc-vs-td" class="quarto-xref">Fig.&nbsp;10</a> shows the difference in one picture.</p>
+<div style="text-align: center;">
+<div id="fig-mc-vs-td" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-mc-vs-td-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg23-mc-vs-td.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:76.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mc-vs-td-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;10: Monte-Carlo and TD returns for the same visit to <span class="math inline">\(x_k\)</span>. The red bracket is the Monte-Carlo return: the whole remaining trajectory, from <span class="math inline">\(x_k\)</span> to <span class="math inline">\(x_N\)</span>. The blue bracket is the TD return: the single transition <span class="math inline">\(x_k\to x_{k+1}\)</span>, plus the stored estimate at <span class="math inline">\(x_{k+1}\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The <strong>Monte-Carlo return</strong> depends on the full trajectory after <span class="math inline">\(x_k\)</span>, so one must wait until the trajectory is over before it can be computed at all. The <strong>TD return</strong> is local: it depends only on <span class="math inline">\(x_{k+1}\)</span>, can be computed immediately, and reuses the cost-to-go estimates already built up.</p>
+</section>
+<section id="monte-carlo-or-td" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="monte-carlo-or-td"><span class="header-section-number">3.3</span> Monte-Carlo or TD?</h3>
+<p>Three points settle the comparison for the purposes of this course.</p>
+<p><strong>TD is the more useful of the two.</strong> It is simpler, more practical and more widely used, and it is at the heart of most of the more advanced methods – including SARSA below, and Q-learning in Unit 10, which is the same idea applied to the Bellman equation rather than to a fixed policy’s evaluation equation.</p>
+<p><strong>Monte-Carlo is unbiased; TD is not.</strong> For discounted problems, the Monte-Carlo return is an unbiased sample of the quantity being estimated – it <em>is</em> the cost of the policy along one realisation. The TD target <span class="math inline">\(g+\alpha\hat J(x_{k+1})\)</span> is not, because <span class="math inline">\(\hat J(x_{k+1})\)</span> is a current estimate rather than the true value, and an error there propagates straight into the update. For methods that need an unbiased estimate – for a convergence proof, or for well-definedness – Monte-Carlo is the one to use. Importance sampling, later in this unit, is such a case.</p>
+<p><strong>TD on a fixed batch converges to the certainty-equivalence solution.</strong> If TD is applied repeatedly to a fixed batch of data, it converges to the costs-to-go one would obtain by first estimating a model from that data – transition frequencies – and then solving that model <em>exactly</em>. That is a precise statement of what TD is doing with its bootstrapping: it is implicitly fitting a model and solving it, without ever forming the model. Batch Monte-Carlo, by contrast, converges to the estimate that minimises squared error on the observed returns, which is a different answer. Neither is uniformly better; TD’s answer is usually the more useful one when the data really do come from a Markov chain, because it exploits that structure and Monte-Carlo does not.</p>
+<p>The two are not in fact opposites but the two ends of one family. The Monte-Carlo error at a state is exactly the discounted sum of all the TD errors along the remaining trajectory,</p>
+<p><span class="math display">\[R_k-\hat J(x_k)=\sum_{\ell=k}^{\infty}\alpha^{\ell-k}\delta(x_\ell), \qquad \delta(x_\ell)=g(x_\ell)+\alpha\hat J(x_{\ell+1})-\hat J(x_\ell),\]</span></p>
+<p>provided <span class="math inline">\(\hat J\)</span> is held fixed along the trajectory. Truncating that sum after <span class="math inline">\(n\)</span> terms gives <span class="math inline">\(n\)</span>-step TD; weighting the truncations geometrically gives TD(<span class="math inline">\(\lambda\)</span>), with <span class="math inline">\(\lambda=0\)</span> recovering TD and <span class="math inline">\(\lambda=1\)</span> recovering Monte-Carlo. Problem 11.6 proves the identity; it is three lines of telescoping, and it is the cleanest way to see that the bias-variance trade-off between the two methods is a continuum rather than a choice.</p>
+<p>Problem 11.5 runs both methods by hand on the same eleven-step trajectory, which is worth doing once: the two end up at visibly different numbers, and seeing why is more instructive than the general statements above.</p>
+</section>
+</section>
+<section id="exploration" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="exploration"><span class="header-section-number">4</span> Exploration</h2>
+<p>Dynamic programming obtains a policy for every state, because it sweeps through all of them. Simulation-based policy iteration does not: the states it learns about are the states its own iterates <span class="math inline">\(\mu^k\)</span> happen to visit. That is both the method’s great economy and its central difficulty, and the inventory shop shows both faces of it.</p>
+<p>Suppose the optimal policy, and the iterates leading to it, favour driving the inventory towards zero. Then states with large inventories may never be visited, even with demand disturbances. This is <strong>good</strong>: those states are irrelevant from the point of view of the optimal policy, and computing their costs-to-go accurately would be wasted effort. A method that only learns about the part of the state space a good policy actually occupies is doing something dynamic programming cannot.</p>
+<p>Now suppose instead that the initial policy <span class="math inline">\(\mu^0\)</span> favours high-inventory states, and that the cost of the low-inventory states happens to be estimated as high. Then the improvement step will keep favouring high-inventory states, and the simulations will keep visiting only those, so the bad estimates of the low-inventory states will never be corrected – and the shop will never discover that running lean is better. This is <strong>poor exploration</strong>, and it is a genuine failure mode, not a slow convergence.</p>
+<p>The two situations are indistinguishable from inside the algorithm. Both look like “the simulations only visit these states”; only in the first case is that a feature. There are several remedies, none of them fully satisfactory.</p>
+<section id="exploring-starts-and-epsilon-soft-policies" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="exploring-starts-and-epsilon-soft-policies"><span class="header-section-number">4.1</span> Exploring starts and <span class="math inline">\(\epsilon\)</span>-soft policies</h3>
+<p><strong>Exploring starts.</strong> The simplest option: make sure the initial state is set, several times, to each possible state. It has three drawbacks. It is only feasible if the state space is small enough to sweep, which defeats much of the purpose. It requires the simulator to be startable from an arbitrary state, which a real system generally is not. And it does not concentrate on the <em>meaningful</em> states – those actually generated by sensible control inputs – so a good deal of the computation is spent on states no reasonable policy ever occupies.</p>
+<p><strong>Random behaviour added to the policy.</strong> The prime example is an <span class="math inline">\(\epsilon\)</span>-soft policy. Given a deterministic policy <span class="math inline">\(\mu^k\)</span>, its <span class="math inline">\(\epsilon\)</span>-soft version <span class="math inline">\(\mu^{\epsilon,k}\)</span> picks the action <span class="math inline">\(\mu^k(i)\)</span> with probability <span class="math inline">\(1-\epsilon\)</span> and, with probability <span class="math inline">\(\epsilon\)</span>, one of the other <strong>actions</strong>, all of the others being equally likely. The idea is that meaningful actions are still taken most of the time, but once in a while something else is tried, possibly leading to good and unexplored states.</p>
+<p>Replacing <span class="math inline">\(\mu^k\)</span> by an <span class="math inline">\(\epsilon\)</span>-soft version is the standard move for policy evaluation. It has a cost that is easy to overlook: what then gets estimated is the cost of the <span class="math inline">\(\epsilon\)</span>-soft <em>version</em>, not of <span class="math inline">\(\mu^k\)</span>. One is evaluating a policy one does not intend to use. The usual mitigation is to start with a large <span class="math inline">\(\epsilon\)</span>, <span class="math inline">\(0&lt;\epsilon&lt;1\)</span>, and reduce it gradually, so that the policy being evaluated converges to the policy being sought. SARSA, below, does exactly this, and off-policy learning, at the end of the unit, is the alternative: keep the two policies distinct and correct for the difference explicitly.</p>
+</section>
+<section id="why-q-factors-make-exploration-harder" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="why-q-factors-make-exploration-harder"><span class="header-section-number">4.2</span> Why Q-factors make exploration harder</h3>
+<p>When working with cost functions <span class="math inline">\(J\)</span>, policy evaluation can still achieve reasonable exploration on its own, provided the disturbances excite the system enough to make it wander through many – eventually all – of the states. The randomness in the problem does the exploring.</p>
+<p>With Q-factors this is definitely not the case, and the reason is structural. Q-factors are indexed by (state, action) pairs, which is to say they live on an augmented state space of size <span class="math inline">\(nm\)</span> rather than <span class="math inline">\(n\)</span>. Under a <em>deterministic</em> policy <span class="math inline">\(\mu^k\)</span>, the only pairs ever visited are <span class="math inline">\(\{(i,\mu^k(i))\}\)</span> – exactly <span class="math inline">\(n\)</span> of the <span class="math inline">\(nm\)</span>. The remaining <span class="math inline">\(n(m-1)\)</span> entries receive no data at all, no matter how long the simulation runs and no matter how noisy the system is. Disturbances move the state; they do not move the action.</p>
+<p>Two consequences follow. Trajectories cannot be reused across policies unless <span class="math inline">\(\epsilon\)</span>-soft policies are used, since a trajectory generated by <span class="math inline">\(\mu^k\)</span> carries no information about actions <span class="math inline">\(\mu^k\)</span> does not take. And even with an <span class="math inline">\(\epsilon\)</span>-soft policy, the pairs belonging to <span class="math inline">\(\mu^k\)</span> are visited far more often than the others – by a factor of roughly <span class="math inline">\((1-\epsilon)(m-1)/\epsilon\)</span> – so the estimates of the alternatives, which are exactly the estimates the improvement step compares against, are the least reliable numbers in the table.</p>
+<p>This is the price of the model-free improvement step, and it is worth stating plainly: moving the model dependence out of the improvement step bought a factor of <span class="math inline">\(m\)</span> in the size of the thing that has to be estimated, and a qualitatively harder exploration problem.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: when does poor exploration not matter?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: when does poor exploration not matter?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p><code>A_11_StochInventoryControlSimBasedPI.ipynb</code> runs simulation-based policy iteration on the inventory problem and compares every entry against the exact answer. Most entries come out accurate to a few tenths, but a handful are still sitting at their initial value of zero, with errors above <span class="math inline">\(30\)</span>. The convergence theorem’s first condition – every state-action pair visited infinitely often – is visibly violated. Why does the notebook nevertheless report that the learned policy is a good one?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Because of <em>which</em> entries are missing. They are the high-stock states at the middle stages: a stock of <span class="math inline">\(3\)</span> or <span class="math inline">\(4\)</span> at stage <span class="math inline">\(1\)</span> or <span class="math inline">\(2\)</span>.</p>
+<p>Reaching one of those would require placing a large order into an already well-stocked shop – an action no good policy takes, and the iterates <span class="math inline">\(\mu^k\)</span> do not take it. Exploration would have to supply the visit by chance, and the exploration rate decays after the first <span class="math inline">\(25\,000\)</span> simulations, so after that it does not.</p>
+<p>Now ask what is lost. The policy is only ever <em>used</em> from states it can actually reach, and those states are unreachable under any policy the algorithm would want to follow. Their costs-to-go never enter a decision. So the violated condition costs nothing here: the theorem asks for every pair to be visited because it proves convergence of <em>every</em> entry of the table, and we only need the entries that get consulted.</p>
+<p>The important caveat is that this reasoning is only available <em>after the fact</em>, and only because the exact answer is known. From inside the algorithm, “these states were never visited because no good policy goes there” and “these states were never visited because my initial policy was bad and nothing ever corrected it” look identical. That is precisely the ambiguity the section above describes, and it is why the demonstration is run on a problem small enough to check.</p>
+<p><code>A_11_RobotPlanningSimulationBasedPI.ipynb</code> shows the other side of the coin, and shows it with a number: a bug in the original script makes the exploratory action always “up” rather than uniform over the three available actions, and the maximum error against the exact cost-to-go goes from <span class="math inline">\(1.89\)</span> to <span class="math inline">\(6.39\)</span>. Same algorithm, same step size, same number of simulations – the answer is wrong because one branch of the action space was never tried.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="generalized-policy-iteration" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="generalized-policy-iteration"><span class="header-section-number">5</span> Generalized policy iteration</h2>
+<p><strong>Generalized policy iteration</strong> (GPI) is the name for the whole family of methods inspired by policy iteration that do not necessarily carry out either step exactly. Policy evaluation may be performed only for a few states – for instance only those appearing in a simulation – and only approximately; policy improvement likewise, perhaps only for a subset of the actions, perhaps through an approximation architecture. Approximate simulation-based policy iteration with inaccurate evaluation is a practical scheme and a special case of GPI.</p>
+<p>The idea that holds the family together is this. Even if each component is imperfect, evaluation tends to make the values more accurate, and improvement tends to make the policy better by being greedy with respect to the current values. The two pull in compatible directions, and the hope is that the process converges even when neither step is exact. Under certain conditions it can be established that it does.</p>
+<p>It is worth naming what has been given up. Exact policy iteration had a finite termination argument and a certificate of optimality. GPI has neither: it is a heuristic with a convergence theory for special cases, and the reason to study it is that essentially every reinforcement learning algorithm used in practice is an instance of it. Q-learning, read in this light, is GPI with an evaluation step of exactly one backup; SARSA is the same with the bootstrap taken from the policy rather than from the minimum.</p>
+</section>
+<section id="sarsa" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="sarsa"><span class="header-section-number">6</span> SARSA</h2>
+<p>SARSA is the on-policy TD control algorithm, and it is the simplest member of the GPI family worth naming. It applies the TD update to Q-factors:</p>
+<p><span class="math display">\[\hat Q(x_k,u_k)\leftarrow \hat Q(x_k,u_k)+\gamma\Big(g(x_k,u_k)+\hat Q(x_{k+1},u_{k+1})-\hat Q(x_k,u_k)\Big).\]</span></p>
+<p>The name is the list of what one update consumes:</p>
+<p><span class="math display">\[\underbrace{\text{State}}_{x_k}-\underbrace{\text{Action}}_{u_k}-\underbrace{\text{Reward}}_{g}-\underbrace{\text{State}}_{x_{k+1}}-\underbrace{\text{Action}}_{u_{k+1}} \quad \text{(SARSA)}.\]</span></p>
+<p>The control policy is <span class="math inline">\(\epsilon\)</span>-greedy with respect to the current table,</p>
+<p><span class="math display">\[\text{Prob}[u_k=a]=\begin{cases}1-\epsilon &amp; \text{if } a=\underset{u}{\arg\min}\ \hat Q(x_k,u)\\[6pt] \dfrac{\epsilon}{\#\text{actions at } x_k-1} &amp; \text{otherwise,}\end{cases}\]</span></p>
+<p>so with probability <span class="math inline">\(1-\epsilon\)</span> the greedy action is taken and otherwise one of the others, uniformly. As in the exploration section, <span class="math inline">\(\epsilon\)</span> starts large and is progressively reduced.</p>
+<p>Three observations make SARSA worth its name.</p>
+<p><strong>It is GPI.</strong> There is no separate evaluation phase and no separate improvement phase: every transition does a little of both. The update moves <span class="math inline">\(\hat Q\)</span> towards the value of the policy currently being followed (evaluation), and the policy is read off <span class="math inline">\(\hat Q\)</span> at every step (improvement). Policy iteration’s two boxes have been interleaved to the point of being simultaneous.</p>
+<p><strong>It differs from Q-learning in exactly one symbol.</strong> Q-learning’s target is <span class="math inline">\(g+\min_v\hat Q(x_{k+1},v)\)</span>; SARSA’s is <span class="math inline">\(g+\hat Q(x_{k+1},u_{k+1})\)</span>, the action actually taken next. That is the whole difference between the two algorithms, and it is the difference between <strong>off-policy</strong> and <strong>on-policy</strong>: Q-learning estimates the value of the greedy policy no matter what policy generated the data, while SARSA estimates the value of the policy generating the data – which, because the <span class="math inline">\(\epsilon\)</span>-greedy policy is derived from the same table, is itself.</p>
+<p><strong>The difference shows up in the data requirements.</strong> A Q-learning update needs <span class="math inline">\((x_k,u_k,g,x_{k+1})\)</span>; a SARSA update needs <span class="math inline">\((x_k,u_k,g,x_{k+1},u_{k+1})\)</span>. So for Q-learning a transition is a self-contained training example and a data set is a <em>set</em>, while for SARSA the examples overlap and a data set is a <em>sequence</em> that cannot be cut without loss. Problem 11.4 makes this concrete in an unusually direct way: it asks for SARSA to be run on the same ten-step data table Unit 10 used for Q-learning, and the table turns out to be one column short.</p>
+<section id="example-frozen-lake" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="example-frozen-lake"><span class="header-section-number">6.1</span> Example: frozen lake</h3>
+<p>OpenAI Gymnasium is one of the most prominent collections of standard environments for testing reinforcement learning ideas, and the <strong>frozen lake</strong> is one of its simplest.</p>
+<p>The game starts with the player at position <span class="math inline">\([0,0]\)</span> of a <span class="math inline">\(4\times4\)</span> grid world, with the goal at <span class="math inline">\([3,3]\)</span>. The player chooses up, left, right or down at each step until it reaches the goal or falls into a hole. The lake is <strong>slippery</strong>, so the player may instead move perpendicular to the intended direction. A reward of one is given for reaching the goal, and zero for falling into a hole or for letting <span class="math inline">\(100\)</span> iterations elapse.</p>
+<p><a href="#fig-sarsa-vs-q" class="quarto-xref">Fig.&nbsp;11</a> shows SARSA and Q-learning applied to it.</p>
+<div style="text-align: center;">
+<div id="fig-sarsa-vs-q" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-sarsa-vs-q-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg33-sarsa-vs-qlearning.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:78.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-sarsa-vs-q-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;11: SARSA and Q-learning on the slippery <span class="math inline">\(4\times4\)</span> frozen lake. The two algorithms reach similar performance and settle on similar policies, which is what one expects when the behaviour policy is <span class="math inline">\(\epsilon\)</span>-greedy with a decaying <span class="math inline">\(\epsilon\)</span>: the two targets agree whenever the greedy action is the one taken.
+</figcaption>
+</figure>
+</div>
+</div>
+<p><code>A_11_FrozenLakeQLearningSARSA.ipynb</code> runs both and reproduces this plot. Two details from it are worth carrying away. Both algorithms reach a win rate near <span class="math inline">\(0.5\)</span> – the lake is slippery enough that half the games are lost by a policy that plays perfectly. And several arrows in the learned policies point straight <strong>into a wall</strong>, which is correct rather than a bug: commanding into a wall makes the intended move a no-op and leaves only the two perpendicular slips, so it is how one moves sideways with no chance of sliding into a hole. It is a good reminder that a learned policy exploiting the dynamics will not always look sensible when read as intent.</p>
+<p>One warning about the environment. Gymnasium hands out <strong>rewards to be maximised</strong>, while this course minimises a <strong>cost</strong>; the two conventions differ by a sign, and the greedy action in the notebook is accordingly an <span class="math inline">\(\arg\max\)</span> where every formula in these notes has an <span class="math inline">\(\arg\min\)</span>.</p>
+</section>
+</section>
+<section id="off-policy-learning" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="off-policy-learning"><span class="header-section-number">7</span> Off-policy learning</h2>
+<p>Reinforcement learning faces a dilemma that has no counterpart in Part I. We want to learn the optimal policy, and to gather informative data we must run <em>some</em> policy – but if we could already run the optimal policy, we would not need to find it. Data gathered under a good policy is data about a narrow slice of the state-action space; data gathered under an exploratory policy is about a policy we do not want.</p>
+<p><strong>Off-policy learning</strong> is the name for the resolution: learn the value of one policy – the <strong>target policy</strong> <span class="math inline">\(\pi\)</span> – while following a different policy – the <strong>behaviour policy</strong> <span class="math inline">\(\mu\)</span> – to collect the data. Typically <span class="math inline">\(\pi\)</span> is the optimal policy, or the current greedy policy, and <span class="math inline">\(\mu\)</span> is something that explores.</p>
+<p>SARSA is <em>on-policy</em> and sidesteps the dilemma rather than solving it: it learns the value of the <span class="math inline">\(\epsilon\)</span>-greedy policy, which is both target and behaviour policy, and lets <span class="math inline">\(\epsilon\)</span> go to zero so that the policy it is learning about drifts towards the one we want. Q-learning, by contrast, is genuinely off-policy already – its <span class="math inline">\(\min\)</span> makes its target the greedy policy regardless of what generated the data – which is why it needed no machinery in Unit 10. For Monte-Carlo and TD <em>evaluation</em>, where the target is a specific policy’s value rather than a minimum, the correction has to be made explicitly. Most methods do it with <strong>importance sampling</strong>.</p>
+<section id="importance-sampling" class="level3" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="importance-sampling"><span class="header-section-number">7.1</span> Importance sampling</h3>
+<p>Start with a problem that has no control in it at all. Let <span class="math inline">\(x\)</span> be a random variable distributed according to a <strong>behaviour</strong> distribution <span class="math inline">\(b=(b_1,\dots,b_n)\)</span>, which we can sample, obtaining data <span class="math inline">\(x_1,\dots,x_K\)</span>. We want the expected value with respect to a different, <strong>target</strong> distribution <span class="math inline">\(t=(t_1,\dots,t_n)\)</span>,</p>
+<p><span class="math display">\[J=\sum_{i=1}^{n}t_ic_i,\]</span></p>
+<p>where <span class="math inline">\(c_1,\dots,c_n\)</span> are the values <span class="math inline">\(x\)</span> can take. The difficulty is that the samples come from <span class="math inline">\(b\)</span>, not from <span class="math inline">\(t\)</span>. Averaging them estimates <span class="math inline">\(\sum_ib_ic_i\)</span>, which is the wrong number.</p>
+<p>Importance sampling repairs this by reweighting each sample:</p>
+<p><span class="math display">\[\bar J=\frac{1}{K}\sum_{k=1}^{K}\rho_kx_k, \qquad \rho_k=\frac{t_i}{b_i} \ \text{ if } x_k=c_i, \qquad b_i&gt;0,\]</span></p>
+<p>where <span class="math inline">\(\rho_k\)</span> is the <strong>importance ratio</strong>. The estimate is unbiased, and the computation showing it is one line:</p>
+<p><span class="math display">\[\mathbb{E}[\bar J]=\frac{1}{K}\sum_{k=1}^{K}\mathbb{E}[\rho_kx_k]=\frac{1}{K}\sum_{k=1}^{K}\Big(\sum_{i=1}^{n}\frac{t_i}{b_i}c_i\,b_i\Big)=\sum_{i=1}^{n}t_ic_i=J.\]</span></p>
+<p>The <span class="math inline">\(b_i\)</span> in the expectation – the probability of drawing <span class="math inline">\(c_i\)</span> – cancels the <span class="math inline">\(b_i\)</span> in the denominator of the ratio. That cancellation is the whole mechanism, and it is also where the method’s weakness lives: a value that <span class="math inline">\(b\)</span> makes rare but <span class="math inline">\(t\)</span> makes common carries a large ratio, so the estimate rests on a few heavily weighted samples. Problem 11.7 is a five-point distribution engineered to show this, where <span class="math inline">\(b\)</span> assigns <span class="math inline">\(0.1\)</span> to a value carrying <span class="math inline">\(0.7\)</span> of <span class="math inline">\(t\)</span>’s mass.</p>
+<p>The condition <span class="math inline">\(b_i&gt;0\)</span> is not a technicality. If the behaviour distribution never produces a value the target distribution cares about, no amount of reweighting recovers it – there is nothing to reweight. Transferred to policies, the requirement is that the behaviour policy must give every trajectory the target policy can produce a positive probability of occurring, and an <span class="math inline">\(\epsilon\)</span>-soft policy is the standard way to guarantee it: given any deterministic policy, it takes that policy’s action with probability <span class="math inline">\(1-\epsilon\)</span> and any other action with probability <span class="math inline">\(\epsilon\)</span> spread equally, so no action anywhere has probability zero.</p>
+</section>
+<section id="importance-sampling-for-returns" class="level3" data-number="7.2">
+<h3 data-number="7.2" class="anchored" data-anchor-id="importance-sampling-for-returns"><span class="header-section-number">7.2</span> Importance sampling for returns</h3>
+<p>Now transfer this to policy evaluation. We wish to estimate the Monte-Carlo return of a target policy <span class="math inline">\(\pi\)</span> from data generated by a behaviour policy <span class="math inline">\(\mu\)</span>. <a href="#fig-traj-lattice" class="quarto-xref">Fig.&nbsp;12</a> shows the object being averaged over.</p>
+<div style="text-align: center;">
+<div id="fig-traj-lattice" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-traj-lattice-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg39-trajectory-lattice.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:74.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-traj-lattice-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;12: The trajectories available from a state <span class="math inline">\(x_k\)</span>. There are finitely many – <span class="math inline">\(L\)</span> of them, with costs <span class="math inline">\(c_1,\dots,c_L\)</span> – and each has a probability under the behaviour policy and another under the target policy. Importance sampling replaces the simple average of observed returns by an average weighted by the ratio of those two probabilities.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Writing <span class="math inline">\(b=(b_1,\dots,b_L)\)</span> and <span class="math inline">\(t=(t_1,\dots,t_L)\)</span> for the probability of each trajectory under <span class="math inline">\(\mu\)</span> and under <span class="math inline">\(\pi\)</span>, the Monte-Carlo estimate becomes a weighted average,</p>
+<p><span class="math display">\[\hat J(i)=\frac{1}{\bar n(i)}\sum_{r=1}^{\bar n(i)}\rho_rR_r(i), \qquad \rho_r=\frac{t_j}{b_j} \ \text{ if } R_r(i)=c_j.\]</span></p>
+<p>This looks like it needs the model, since the probability of a trajectory certainly does. It does not, and seeing why is the key step. Suppose both policies are stochastic,</p>
+<p><span class="math display">\[\textbf{Behaviour}\quad \text{Prob}[u_t=j\mid x_t,\mu]=\mu_j(x_t), \qquad \mu(x_t)=\big(\mu_1(x_t),\dots,\mu_{m(x_t)}(x_t)\big),\]</span></p>
+<p><span class="math display">\[\textbf{Target}\quad \text{Prob}[u_t=j\mid x_t,\pi]=\pi_j(x_t), \qquad \pi(x_t)=\big(\pi_1(x_t),\dots,\pi_{m(x_t)}(x_t)\big),\]</span></p>
+<p>with <span class="math inline">\(m(x_t)\)</span> the number of actions available at <span class="math inline">\(x_t\)</span>. The probability of a trajectory factorises into a model part and a policy part at every step:</p>
+<p><span class="math display">\[\text{Prob}[x_k=i_k,\dots,x_N=i_N,\ u_k=j_k,\dots,u_{N-1}=j_{N-1}]=\prod_{\ell=k}^{N-1}\underbrace{P(x_{\ell+1}=i_{\ell+1}\mid x_\ell=i_\ell,u_\ell)}_{\text{depends on the model}}\underbrace{P(u_\ell=j_\ell\mid x_\ell=i_\ell)}_{\text{depends on the policy}}.\]</span></p>
+<p>The two policies differ only in the second factor. Forming the ratio, the model factors are identical in numerator and denominator – the same trajectory, the same transitions – and cancel term by term:</p>
+<p><span class="math display">\[\rho=\frac{\prod_{\ell=k}^{N-1}P(x_{\ell+1}\mid x_\ell,u_\ell)\,\pi_{j_\ell}(i_\ell)}{\prod_{\ell=k}^{N-1}P(x_{\ell+1}\mid x_\ell,u_\ell)\,\mu_{j_\ell}(i_\ell)}=\prod_{\ell=k}^{N-1}\frac{\pi_{j_\ell}(i_\ell)}{\mu_{j_\ell}(i_\ell)}.\]</span></p>
+<p>The importance ratio depends <strong>only on the two policies</strong>, both of which we know, and not on the model, which we do not. That is what makes off-policy learning computable at all.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: what the cancellation does and does not buy">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: what the cancellation does and does not buy
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>The model cancels from the importance ratio. Does it follow that importance sampling works equally well however different the two policies are?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-8" class="callout-8-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>No.&nbsp;The cancellation makes the ratio <strong>computable</strong>; it says nothing about whether the resulting estimator is any <strong>good</strong>.</p>
+<p>Look at what the surviving product does over a horizon. The ratio is <span class="math inline">\(\prod_{\ell=k}^{N-1}\pi_{j_\ell}(i_\ell)/\mu_{j_\ell}(i_\ell)\)</span>, a product of <span class="math inline">\(N-k\)</span> terms. If the two policies differ even slightly at each step, the terms are each a little above or below one, and their product has a variance that grows geometrically in the horizon. Over a long trajectory, almost all the weight ends up on a handful of samples, and the estimator – still perfectly unbiased – becomes useless.</p>
+<p>The extreme case is instructive. If <span class="math inline">\(\pi\)</span> is deterministic and <span class="math inline">\(\mu\)</span> is its <span class="math inline">\(\epsilon\)</span>-soft version, then <span class="math inline">\(\pi_{j_\ell}(i_\ell)\)</span> is <span class="math inline">\(1\)</span> when the trajectory happened to follow the target and <span class="math inline">\(0\)</span> otherwise, so <span class="math inline">\(\rho\)</span> is either <span class="math inline">\(1/(1-\epsilon)^{N-k}\)</span> or exactly zero. Every trajectory that ever deviated contributes nothing at all, and the fraction that survives is <span class="math inline">\((1-\epsilon)^{N-k}\)</span> – which for <span class="math inline">\(\epsilon=0.1\)</span> and a fifty-step horizon is about half a percent of the data. Problem 11.8 works this case through and shows that something simpler and better is available for it.</p>
+<p>So the cancellation is what makes the method <em>possible</em>, and the length of the product is what limits how far apart the two policies can usefully be. It is the main reason practical off-policy methods use per-step corrections, truncated or clipped ratios, or avoid importance sampling altogether – as Q-learning does.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="ordinary-and-weighted-importance-sampling" class="level3" data-number="7.3">
+<h3 data-number="7.3" class="anchored" data-anchor-id="ordinary-and-weighted-importance-sampling"><span class="header-section-number">7.3</span> Ordinary and weighted importance sampling</h3>
+<p>The bottleneck just identified – rare events, a small denominator, a large influence on the estimate – is mitigated by changing the normaliser.</p>
+<p><strong>Ordinary importance sampling</strong> divides by the number of samples:</p>
+<p><span class="math display">\[\hat J(i)=\frac{1}{\bar n(i)}\sum_{r=1}^{\bar n(i)}\rho_rR_r(i).\]</span></p>
+<p>It is <strong>unbiased</strong>, and it has <strong>large variance</strong> because of the influence of rare events.</p>
+<p><strong>Weighted importance sampling</strong> divides by the sum of the weights instead:</p>
+<p><span class="math display">\[\hat J(i)=\frac{1}{\sum_{r=1}^{\bar n(i)}\rho_r}\sum_{r=1}^{\bar n(i)}\rho_rR_r(i).\]</span></p>
+<p>It is <strong>biased</strong> – a ratio of two random quantities is not the ratio of their means – but asymptotically consistent, and it has much <strong>smaller variance</strong>. In applications it is the one to prefer.</p>
+<p>The intuition is worth stating because it makes the choice obvious. In expectation the weights sum to <span class="math inline">\(\bar n(i)\)</span>, since each has mean one. In any finite sample they do not, and the discrepancy is pure noise: it reflects how many high-ratio samples happened to arrive, not anything about the quantity being estimated. Ordinary importance sampling divides by the number that <em>should</em> have come out; weighted importance sampling divides by the one that <em>did</em>, cancelling that noise entirely. The price is that the estimator is no longer linear in the samples, hence no longer unbiased.</p>
+<p>Problems 11.7 and 11.11 both make this visible with small numbers. In 11.7 the weights sum to <span class="math inline">\(26.1\)</span> against <span class="math inline">\(N=20\)</span>, and renormalising moves the estimate from <span class="math inline">\(3.8775\)</span> to <span class="math inline">\(2.9713\)</span> against a true value of <span class="math inline">\(2.96\)</span>. In 11.11 the same arithmetic rescues an estimate of average height that ordinary importance sampling puts <em>below</em> the female average of a population that is <span class="math inline">\(80\%\)</span> male.</p>
+</section>
+<section id="example-blackjack" class="level3" data-number="7.4">
+<h3 data-number="7.4" class="anchored" data-anchor-id="example-blackjack"><span class="header-section-number">7.4</span> Example: blackjack</h3>
+<p>Blackjack, also from OpenAI Gymnasium, is used here to compare on-policy with off-policy evaluation, and it is the right example because it is small enough to solve <strong>exactly</strong>, so every estimate can be checked against the truth.</p>
+<p>The game starts with the dealer holding one card face up and one face down, and the player holding two cards face up. Face cards are worth <span class="math inline">\(10\)</span>; an ace counts as <span class="math inline">\(11\)</span> (a <em>usable ace</em>) or as <span class="math inline">\(1\)</span>; numerical cards count their number. The player holds the sum of their cards and may request more (<em>hit</em>) until they decide to stop (<em>stick</em>) or exceed <span class="math inline">\(21\)</span> (<em>bust</em>, an immediate loss). After the player sticks, the dealer reveals the face-down card and draws until reaching <span class="math inline">\(17\)</span> or more. If the dealer busts, the player wins; if neither busts, the outcome is decided by whose sum is closer to <span class="math inline">\(21\)</span>.</p>
+<p>The optimal policy is computed by dynamic programming, an <span class="math inline">\(\epsilon\)</span>-soft version of it is used as the behaviour policy, and the target policy is the optimal policy itself. <a href="#fig-blackjack" class="quarto-xref">Fig.&nbsp;13</a> shows the result.</p>
+<div style="text-align: center;">
+<div id="fig-blackjack" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-blackjack-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg43-blackjack-variance.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:56.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-blackjack-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;13: On-policy and off-policy evaluation of one state’s value in blackjack, with the exact value known. The off-policy variance is substantially higher than the on-policy variance, as expected from the product of importance ratios; the weighted version performs quite well.
+</figcaption>
+</figure>
+</div>
+</div>
+<p><code>A_11_BlackjackOnOffPolicy.ipynb</code> reproduces this and adds the exact answer alongside. It estimates one Q-factor, <span class="math inline">\(Q\big((20,10,\text{False}),\text{stick}\big)\)</span>, three ways – on-policy, and off-policy with ordinary and with weighted importance sampling – with <span class="math inline">\(\epsilon=0.6\)</span>. The exact value, by value iteration, is <span class="math inline">\(+0.4350\)</span>, and all three estimators land on it; the difference between the two off-policy estimators is variance, not location, which is the point. The notebook also documents a one-index bug in the original script, worth knowing about because the symptom is exactly what an unbiased estimator should never show: the ordinary-IS curve settling at <span class="math inline">\(0.6076\)</span> while the other two settle at <span class="math inline">\(0.43\)</span>.</p>
+</section>
+</section>
+<section id="summary" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="summary"><span class="header-section-number">8</span> Summary</h2>
+<p>Policy iteration is a second route to an optimal policy, quite unlike dynamic programming. It alternates <strong>evaluating</strong> a policy – which, for a fixed policy, is a linear system rather than a minimisation, because the <span class="math inline">\(\min\)</span> is exactly what the policy removes – with <strong>improving</strong> it greedily. It terminates in finitely many steps, since there are finitely many policies and each round produces a strictly better one until it produces the same one, and when it stops it holds a certificate of optimality rather than a tolerance.</p>
+<p>Policy improvement is exactly a rollout step with the current policy as the base policy, which is why Unit 8’s material reappears here, and the rollout guarantee is what makes the iteration monotone.</p>
+<p>Written with Q-factors, the improvement step needs no model at all – it is a minimisation over a stored table. That is what makes the whole scheme usable for reinforcement learning, and it is the same observation that made Q-learning possible in Unit 10. The model dependence is not removed but relocated, from a step that cannot be sampled to one that can.</p>
+<p>Replacing the exact evaluation by simulation gives <strong>simulation-based policy iteration</strong>. The two standard estimators are <strong>Monte-Carlo</strong>, which is unbiased but needs whole trajectories, and <strong>temporal difference</strong>, which is biased but local, immediate, and reuses the estimates already built up. They are the two ends of one family rather than rivals: the Monte-Carlo error is the discounted sum of the TD errors along the trajectory, and truncating that sum interpolates between them.</p>
+<p>Relaxing either step gives <strong>generalized policy iteration</strong>, the pattern behind most practical algorithms, at the cost of the finite-termination guarantee. <strong>SARSA</strong> is the on-policy TD control algorithm of that family; it differs from Q-learning in exactly one symbol – the bootstrap is the action actually taken next rather than the minimising one – and that symbol is the difference between evaluating the policy being followed and evaluating the greedy one.</p>
+<p><strong>Exploration</strong> is the recurring difficulty, and it is worse with Q-factors, since a deterministic policy visits only one action per state and no amount of process noise will visit the others. <span class="math inline">\(\epsilon\)</span>-soft policies and exploring starts are the two standard remedies, neither fully satisfactory; the first changes the policy being evaluated and the second needs a simulator that can be started anywhere.</p>
+<p><strong>Off-policy learning</strong> – learning about one policy while following another – is handled by importance sampling. The importance ratio is a product of per-step policy ratios in which the model cancels, which is what makes it computable; the length of that product is what limits how far apart the two policies can usefully be. Weighting the estimate by the realised weights rather than the sample count trades a little bias for a large reduction in variance, and is what one uses in practice.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Appendix: trajectory reuse and the bias-variance trade-off">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-9-contents" aria-controls="callout-9" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Appendix: trajectory reuse and the bias-variance trade-off
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-9" class="callout-9-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Monte-Carlo policy evaluation was stated above in terms of simulations of length <span class="math inline">\(N\)</span>, with the choice of <span class="math inline">\(N\)</span> deferred. This appendix collects what that choice involves, and one implementation device that softens it.</p>
+<p><strong>Trajectory reuse.</strong> The straightforward scheme is to start at many initial states and, for each, run several simulations of large length <span class="math inline">\(N\)</span> with <span class="math inline">\(u^s_k=\mu^k(x^s_k)\)</span>, then average the returns. <a href="#fig-reuse" class="quarto-xref">Fig.&nbsp;14</a> shows the arrangement: one block of trajectories per initial state, one estimate per block.</p>
+<div style="text-align: center;">
+<div id="fig-reuse" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-reuse-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg45-trajectory-reuse.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-reuse-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;14: The straightforward Monte-Carlo arrangement. For each initial state <span class="math inline">\(x^s_0=1,\dots,n\)</span>, several trajectories of length <span class="math inline">\(N\)</span> are simulated under the policy <span class="math inline">\(\mu^k\)</span>, and the average of their costs gives <span class="math inline">\(\tilde J_{\mu^k}\)</span> at that state. With Q-factors the same picture applies with the blocks indexed by initial state-action pairs <span class="math inline">\((x^s_0,u^s_0)\)</span> instead.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>If <span class="math inline">\(N\)</span> is large this is wasteful, because a single long trajectory passes through many states and each passage is itself a sample of the cost-to-go from that state. <a href="#fig-reuse-ex" class="quarto-xref">Fig.&nbsp;15</a> shows the idea: a trajectory started at state <span class="math inline">\(1\)</span> that reaches state <span class="math inline">\(2\)</span> at its second step supplies, from that point on, a perfectly good return for state <span class="math inline">\(2\)</span> as well.</p>
+<div style="text-align: center;">
+<div id="fig-reuse-ex" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-reuse-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture11/pg45-trajectory-reuse-ex.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-reuse-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;15: Reusing one simulation for several states. The pairs are <span class="math inline">\((\text{state},\text{action})\)</span>. The red bracket marks the suffix of the trajectory that contributes a return for <span class="math inline">\(\tilde J_{\mu^k}(2)\)</span> – everything from the first visit to state <span class="math inline">\(2\)</span> onwards – and the blue brackets mark the suffixes contributing to the other states visited early on.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>One subtlety is worth flagging: the returns harvested this way from a single trajectory are <strong>not independent</strong>, since they share their tails. Averaging them is still unbiased, but the variance does not fall as fast as the count of samples suggests. The device buys data cheaply, not freely.</p>
+<p><strong>How should <span class="math inline">\(N\)</span> be chosen?</strong> The trade-off has four parts.</p>
+<ul>
+<li>A small <span class="math inline">\(N\)</span> gives inaccurate results – <strong>bias</strong> – since the estimates leave out <span class="math inline">\(\alpha^Ng(x_N,u_N)\)</span>, <span class="math inline">\(\alpha^{N+1}g(x_{N+1},u_{N+1}),\dots\)</span>, and for a cost that is consistently signed the omission is systematic rather than averaging out.</li>
+<li>A large <span class="math inline">\(N\)</span> gives accurate results but costs more computation.</li>
+<li>An estimate built from a small <span class="math inline">\(N\)</span> depends on fewer random variables, so it has <strong>smaller variance</strong>.</li>
+<li>Small <span class="math inline">\(N\)</span> has two further practical advantages: more simulations can be run for the same budget, and each can be started from an initial state of our choosing. Long trajectories may wander into a small set of states and stay there, which is poor exploration.</li>
+</ul>
+<p>So the choice is not simply “as large as affordable”. A short horizon is biased but cheap, low-variance and good for exploration; a long one is nearly unbiased but expensive, noisy and narrow. The discount factor sets the scale: contributions beyond <span class="math inline">\(N\)</span> are damped by <span class="math inline">\(\alpha^N\)</span>, so <span class="math inline">\(N\)</span> of the order of a few times <span class="math inline">\(1/(1-\alpha)\)</span> captures most of the mass. Problem 11.5 shows the bias concretely – a Monte-Carlo pass over an eleven-step trajectory with <span class="math inline">\(\alpha=0.9\)</span> captures only about <span class="math inline">\(69\%\)</span> of the discount mass, and its estimates drift downwards along the trajectory for exactly that reason.</p>
+</div>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

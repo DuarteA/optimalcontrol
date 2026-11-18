@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Duarte Antunes">
+
+<title>Unit 10 – Reinforcement Learning: Infinite-Horizon Problems and Q-Learning</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="unit10-notes_files/libs/clipboard/clipboard.min.js"></script>
+<script src="unit10-notes_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="unit10-notes_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="unit10-notes_files/libs/quarto-html/popper.min.js"></script>
+<script src="unit10-notes_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="unit10-notes_files/libs/quarto-html/anchor.min.js"></script>
+<link href="unit10-notes_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="unit10-notes_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="unit10-notes_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="unit10-notes_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="unit10-notes_files/libs/bootstrap/bootstrap-5f5514ab72c605193d28bd5ace4a0252.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<!--
+MathJax needs its own macro definitions -- LaTeX's \newcommand in
+macros.tex only takes effect for the PDF/LaTeX output path. This keeps the
+SAME macro names available when rendering to revealjs/html, so a macro like
+\costtogo looks identical whether you're viewing slides in the browser or a
+PDF. Add new macros to BOTH this file and macros.tex when we introduce them.
+-->
+<script>
+window.MathJax = {
+  tex: {
+    macros: {
+      E: "\\mathbb{E}",
+      Prob: "\\text{Prob}",
+      R: "\\mathbb{R}",
+      N: "\\mathbb{N}",
+      // NOTE: these must stay 0-argument, matching \newcommand{\argmin}
+      // in macros.tex. They used to be declared here as taking one
+      // argument ("\\operatorname*{argmin}_{#1}", 1), so \argmin{...}
+      // rendered in html but produced garbage in pdf, and \argmin_{...}
+      // rendered in pdf but produced garbage in html. Use \argmin_{x}.
+      argmin: "\\operatorname*{argmin}",
+      argmax: "\\operatorname*{argmax}",
+      policy: "\\mu",
+      costtogo: "J",
+      state: "x",
+      action: "u"
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#where-this-unit-sits-in-the-course" id="toc-where-this-unit-sits-in-the-course" class="nav-link active" data-scroll-target="#where-this-unit-sits-in-the-course"><span class="header-section-number">1</span> Where this unit sits in the course</a></li>
+  <li><a href="#the-reinforcement-learning-formulation" id="toc-the-reinforcement-learning-formulation" class="nav-link" data-scroll-target="#the-reinforcement-learning-formulation"><span class="header-section-number">2</span> The reinforcement learning formulation</a>
+  <ul class="collapse">
+  <li><a href="#three-families-of-approach" id="toc-three-families-of-approach" class="nav-link" data-scroll-target="#three-families-of-approach"><span class="header-section-number">2.1</span> Three families of approach</a></li>
+  <li><a href="#how-the-cost-approximation-is-represented" id="toc-how-the-cost-approximation-is-represented" class="nav-link" data-scroll-target="#how-the-cost-approximation-is-represented"><span class="header-section-number">2.2</span> How the cost approximation is represented</a></li>
+  <li><a href="#the-roadmap-for-units-10-to-14" id="toc-the-roadmap-for-units-10-to-14" class="nav-link" data-scroll-target="#the-roadmap-for-units-10-to-14"><span class="header-section-number">2.3</span> The roadmap for Units 10 to 14</a></li>
+  </ul></li>
+  <li><a href="#infinite-horizon-problems" id="toc-infinite-horizon-problems" class="nav-link" data-scroll-target="#infinite-horizon-problems"><span class="header-section-number">3</span> Infinite-horizon problems</a></li>
+  <li><a href="#shortest-path-problems" id="toc-shortest-path-problems" class="nav-link" data-scroll-target="#shortest-path-problems"><span class="header-section-number">4</span> Shortest path problems</a>
+  <ul class="collapse">
+  <li><a href="#finite-horizon-problems-are-shortest-path-problems-too" id="toc-finite-horizon-problems-are-shortest-path-problems-too" class="nav-link" data-scroll-target="#finite-horizon-problems-are-shortest-path-problems-too"><span class="header-section-number">4.1</span> Finite-horizon problems are shortest path problems too</a></li>
+  <li><a href="#an-example-catching-pac-man" id="toc-an-example-catching-pac-man" class="nav-link" data-scroll-target="#an-example-catching-pac-man"><span class="header-section-number">4.2</span> An example: catching Pac-man</a></li>
+  <li><a href="#transition-probabilities" id="toc-transition-probabilities" class="nav-link" data-scroll-target="#transition-probabilities"><span class="header-section-number">4.3</span> Transition probabilities</a></li>
+  <li><a href="#the-standing-assumptions" id="toc-the-standing-assumptions" class="nav-link" data-scroll-target="#the-standing-assumptions"><span class="header-section-number">4.4</span> The standing assumptions</a></li>
+  <li><a href="#value-iteration" id="toc-value-iteration" class="nav-link" data-scroll-target="#value-iteration"><span class="header-section-number">4.5</span> Value iteration</a></li>
+  <li><a href="#the-bellman-equation-and-the-optimal-policy" id="toc-the-bellman-equation-and-the-optimal-policy" class="nav-link" data-scroll-target="#the-bellman-equation-and-the-optimal-policy"><span class="header-section-number">4.6</span> The Bellman equation and the optimal policy</a></li>
+  </ul></li>
+  <li><a href="#discounted-problems" id="toc-discounted-problems" class="nav-link" data-scroll-target="#discounted-problems"><span class="header-section-number">5</span> Discounted problems</a>
+  <ul class="collapse">
+  <li><a href="#an-example-when-to-sell-an-asset" id="toc-an-example-when-to-sell-an-asset" class="nav-link" data-scroll-target="#an-example-when-to-sell-an-asset"><span class="header-section-number">5.1</span> An example: when to sell an asset</a></li>
+  </ul></li>
+  <li><a href="#q-factors" id="toc-q-factors" class="nav-link" data-scroll-target="#q-factors"><span class="header-section-number">6</span> Q-factors</a></li>
+  <li><a href="#q-learning" id="toc-q-learning" class="nav-link" data-scroll-target="#q-learning"><span class="header-section-number">7</span> Q-learning</a>
+  <ul class="collapse">
+  <li><a href="#stochastic-approximation" id="toc-stochastic-approximation" class="nav-link" data-scroll-target="#stochastic-approximation"><span class="header-section-number">7.1</span> Stochastic approximation</a></li>
+  <li><a href="#q-learning-for-shortest-path-problems" id="toc-q-learning-for-shortest-path-problems" class="nav-link" data-scroll-target="#q-learning-for-shortest-path-problems"><span class="header-section-number">7.2</span> Q-learning for shortest path problems</a></li>
+  <li><a href="#convergence" id="toc-convergence" class="nav-link" data-scroll-target="#convergence"><span class="header-section-number">7.3</span> Convergence</a></li>
+  <li><a href="#q-learning-for-finite-horizon-problems" id="toc-q-learning-for-finite-horizon-problems" class="nav-link" data-scroll-target="#q-learning-for-finite-horizon-problems"><span class="header-section-number">7.4</span> Q-learning for finite-horizon problems</a></li>
+  <li><a href="#why-it-converges" id="toc-why-it-converges" class="nav-link" data-scroll-target="#why-it-converges"><span class="header-section-number">7.5</span> Why it converges</a></li>
+  </ul></li>
+  <li><a href="#discussion-a-bittersweet-result" id="toc-discussion-a-bittersweet-result" class="nav-link" data-scroll-target="#discussion-a-bittersweet-result"><span class="header-section-number">8</span> Discussion: a bittersweet result</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">9</span> Summary</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="unit10-notes.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Unit 10 – Reinforcement Learning: Infinite-Horizon Problems and Q-Learning</h1>
+<p class="subtitle lead">4SC000 Optimal Control and Reinforcement Learning</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Duarte Antunes </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Eindhoven University of Technology (TU/e)
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Textbook-prose companion to
+lectures/lecture10-rl-infinite-horizon-q-learning.qmd, intended as a
+booklet chapter for readers who did not attend the lecture. Same content
+and figures as the slides, but written as connected prose rather than
+bullet points, so it can stand on its own. Figures are the same crops
+already verified for the slide deck, referenced from
+../lectures/figures/lecture10/ rather than duplicated.
+
+FIRST PASS (2026-10-21), written the same day as the deck. Conventions
+carried over from units 1-8:
+- Prose, not bullets; every equation from the deck is kept.
+- Figure captions are written here (the slides deliberately carry none).
+- Quick-check callouts follow the unit 1-8 pattern: an OPEN
+  {.callout-tip collapse="false"} with the question, immediately followed
+  by a COLLAPSED {.callout-note collapse="true"} with the solution.
+- The deck's appendix on average cost problems is folded into a
+  collapsible callout at the end rather than kept as a trailing section --
+  same treatment as units 5, 6 and 7.
+- Per [[feedback-concluding-remarks-no-learning-outcomes]], no "After this
+  lecture you should be able to" block; the deck's Concluding remarks are
+  absorbed into the closing Summary section.
+
+HEADER LINK ROW: complete as of 2026-10-21 -- Slides, Exercises (from
+PS3 section 1) and Jupyter notebooks (code/unit10/, Python translations
+of the five MATLAB live scripts). All three resolve only once those
+files have been rendered: `quarto render` the whole project, or at least
+exercises/unit10-exercises.qmd and code/unit10/notebooks.qmd, or the
+links 404 even though they are correct.
+
+ERRORS IN THE SOURCE SLIDES. The deck's own header comment lists nine
+transcription-level corrections made against Slides/Lecture10.pdf; the
+same corrections are carried here. The two that change mathematical
+content rather than notation are:
+  - the Robbins-Monro step-size conditions (source pages 30 and 33 write
+    sum (gamma^t)^2 = infinity; it must be < infinity);
+  - the asset-selling problem (source page 22 states it as minimising
+    g = x_k while the goal, the value iteration and the plotted values
+    all say maximise revenue).
+Both are written here in their corrected form, and the asset-selling one
+is flagged in the text itself since a reader comparing with the slides
+would otherwise be confused.
+
+FIRST-PASS CAVEAT: expect a section-by-section refinement round, same as
+every other unit. No interactive demonstrations have been added yet --
+units 6, 7 and 8 have them, this one does not.
+-->
+<p><a href="../lectures/lecture10-rl-infinite-horizon-q-learning.html">Slides</a> · <a href="../exercises/unit10-exercises.html">Exercises</a> · <a href="../code/unit10/notebooks.html">Jupyter notebooks</a></p>
+<section id="where-this-unit-sits-in-the-course" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="where-this-unit-sits-in-the-course"><span class="header-section-number">1</span> Where this unit sits in the course</h2>
+<p>The course has two halves. Units 1 to 9 were about <strong>model-based optimal control</strong>: a model of the system was given to us, and the question was how to use it. We wrote the model as <span class="math inline">\(x_{k+1}=f_k(x_k,u_k,w_k)\)</span>, we wrote a cost that was additive over time, and from those two objects we derived policies – by the dynamic programming algorithm when the state space was small enough to enumerate, by the Riccati recursion when the model was linear and the cost quadratic, by discretization, by static optimization over a path, and by the approximate schemes of Unit 8 when none of those were tractable.</p>
+<p>This unit opens the second half, Units 10 to 14, on <strong>reinforcement learning</strong>. The question is the same – find a policy that minimises an additive cost – but one thing is taken away: we are no longer given <span class="math inline">\(f_k\)</span>. All we have is the system itself, or a simulator of it, which we can run. We choose an action, we observe what happens and what it cost, and we have to learn a good policy from that stream of experience alone.</p>
+<p>It is worth being clear about what does <em>not</em> change. The Bellman equation, the dynamic programming algorithm and the costs-to-go are not superseded by reinforcement learning; they are precisely the objects that reinforcement learning estimates from data. Everything proved in Part I remains the scaffolding of Part II, which is why this unit begins by rebuilding that scaffolding in the setting – infinite horizons and finite state spaces – where the learning algorithms are easiest to state and to prove correct.</p>
+</section>
+<section id="the-reinforcement-learning-formulation" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="the-reinforcement-learning-formulation"><span class="header-section-number">2</span> The reinforcement learning formulation</h2>
+<p>The standard picture of the reinforcement learning problem is the loop in <a href="#fig-rl-loop" class="quarto-xref">Fig.&nbsp;1</a>: an agent chooses an action, the environment responds with a new state and a reward, and the agent chooses again.</p>
+<div style="text-align: center;">
+<div id="fig-rl-loop" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rl-loop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture10/pg03-rl-loop.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:72.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rl-loop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;1: The reinforcement learning loop. The agent (controller, decision maker) applies an action to the system (process, environment) and observes the resulting state and reward. The loop is the only access the agent has to the system: no description of the arrow from action to next state is supplied.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Three elements of that picture deserve comment, because each differs from the corresponding element in Part I.</p>
+<p><strong>The dynamic model.</strong> There is none. Only the real system, or a simulator that can be run, is available. For the purpose of <em>analysis</em> we will still write <span class="math inline">\(x_{k+1}=f(x_k,u_k,w_k)\)</span> with <span class="math inline">\(w_k\)</span> a disturbance, and every theorem below is stated in terms of such a model – but the algorithms are never allowed to use <span class="math inline">\(f\)</span>, only to observe its consequences. This distinction matters: the model is a device for proving that a learning algorithm converges, not an input the algorithm is given.</p>
+<p><strong>The reward, or cost, function.</strong> It encapsulates the goal, and it is obtained the same way as the transitions: through the agent’s interaction with the environment. It is additive over time, <span class="math inline">\(\sum_{k=0}^{h-1}g_k(x_k,u_k)+g_h(x_h)\)</span>, exactly as in Part I. One notational warning. In the reinforcement learning literature this quantity is usually a <em>reward</em> and is to be <strong>maximised</strong>; in this course it is a <em>cost</em> and is to be <strong>minimised</strong>. The two conventions differ by a sign, and we keep the control-theoretic one throughout so that everything connects directly to Units 1 to 9. When you read the RL literature, expect every <span class="math inline">\(\min\)</span> below to be a <span class="math inline">\(\max\)</span> there.</p>
+<p><strong>The goal.</strong> Find a policy – a function from states to actions – that minimises the cost, on the basis of data obtained by trial and error.</p>
+<section id="three-families-of-approach" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="three-families-of-approach"><span class="header-section-number">2.1</span> Three families of approach</h3>
+<p>Before narrowing to the particular algorithms of this unit, it is worth seeing the shape of the whole field, because almost everything in Units 10 to 14 falls into one of three families.</p>
+<p><strong>Approximation in value space.</strong> Approximate the optimal cost-to-go <span class="math inline">\(J^\star_{k+1}\)</span> by some other function <span class="math inline">\(\tilde J_{k+1}\)</span>, and then act greedily with respect to it,</p>
+<p><span class="math display">\[u_k = \underset{u_k \in U_k(x_k)}{\arg\min} \ \mathbb{E}\big[g_k(x_k,u_k,w_k)+\tilde J_{k+1}(f_k(x_k,u_k,w_k))\big] .\]</span></p>
+<p>This is the one-step-lookahead form; multistep variants replace the single stage by a short horizon, exactly as in Unit 8. Typically <span class="math inline">\(\tilde J_{k+1}\)</span> is drawn from a parametric class <span class="math inline">\(\tilde J_{k+1}(x_{k+1},r_{k+1})\)</span>, and the parameters <span class="math inline">\(r_{k+1}\)</span> are fitted to training data. Readers of Unit 8 will recognise this as precisely the structure of rollout and MPC, with the difference that the approximating function is now <em>learned</em> rather than constructed from a base policy or a truncated horizon.</p>
+<p><strong>Approximation in policy space.</strong> Select the policy directly from a parameterized class, <span class="math inline">\(u_k=\mu_k(x_k,r_k)\)</span> – a state feedback, or a neural network. There is no cost-to-go anywhere; instead one searches over the parameters <span class="math inline">\(r_k\)</span>, assessing each candidate by simulation, and typically using a gradient method to move towards parameters with a small overall cost. This is the family that Units 13 and 14 will develop under the names policy gradient and actor-critic.</p>
+<p><strong>Both at once.</strong> The two can be combined, approximating in value space and in policy space simultaneously; actor-critic methods are the standard example.</p>
+</section>
+<section id="how-the-cost-approximation-is-represented" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="how-the-cost-approximation-is-represented"><span class="header-section-number">2.2</span> How the cost approximation is represented</h3>
+<p>When the approximation lives in value space and the setting is model-free, <span class="math inline">\(\tilde J_{k+1}\)</span> is typically a neural network, trained on simulated trajectories. <a href="#fig-parametric-cost" class="quarto-xref">Fig.&nbsp;2</a> shows the arrangement.</p>
+<div style="text-align: center;">
+<div id="fig-parametric-cost" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-parametric-cost-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture10/pg05-parametric-cost.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-parametric-cost-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;2: Fitting a parametric cost approximation. A state <span class="math inline">\(x^s_{k+1}\)</span> is fed through the network – a linear layer, a nonlinear layer, and a second linear layer with weights <span class="math inline">\(r\)</span> – producing <span class="math inline">\(\tilde J_{k+1}(x^s_{k+1})\)</span>. Independently, the simulator is run forward from the same state to produce the actual cost-to-go <span class="math inline">\(\beta^s\)</span> of one trajectory starting there. The difference <span class="math inline">\(e\)</span> between the two is the fitting error that training minimises, over simulated samples <span class="math inline">\(s\in\{1,\dots,N\}\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The important structural point is where the <em>target</em> comes from. The network is not fitted to known values of <span class="math inline">\(J^\star\)</span> – those are what we do not have. It is fitted to numbers <span class="math inline">\(\beta^s\)</span> produced by running the simulator forward from a sampled state and adding up what actually happened. Learning a cost-to-go is, at bottom, averaging simulated outcomes; the rest is the machinery that makes the averaging efficient.</p>
+</section>
+<section id="the-roadmap-for-units-10-to-14" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="the-roadmap-for-units-10-to-14"><span class="header-section-number">2.3</span> The roadmap for Units 10 to 14</h3>
+<p>The methods differ sharply depending on whether the state and action spaces are finite or continuous, and the course is organised along that axis.</p>
+<p><strong>Finite state space, finite action space.</strong> Everything can be tabulated, and reinforcement learning can genuinely recover an optimal policy. This is the setting of Units 10 and 11, and the home of Q-learning and SARSA.</p>
+<p><strong>Continuous state space, finite action space.</strong> The value function must be approximated – by a neural network, say – but the minimisation over actions is still a search over a finite list. Unit 12: deep Q-learning, and SARSA with semi-gradients.</p>
+<p><strong>Continuous state and action spaces.</strong> Both the value function and the policy need parametric representations. Units 13 and 14: policy gradient, actor-critic and their recent variants.</p>
+<p>Along the way other topics appear – LSTD, off-policy learning and importance sampling among them.</p>
+<p>The present unit is the first box of that table, and it spends most of its length on the groundwork rather than on the learning algorithm itself. That is deliberate. Q-learning occupies about half a page; what takes work is understanding <em>what</em> it converges to, and that requires the infinite-horizon theory developed next.</p>
+</section>
+</section>
+<section id="infinite-horizon-problems" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="infinite-horizon-problems"><span class="header-section-number">3</span> Infinite-horizon problems</h2>
+<p>Until now the horizon has been finite: the problem ran from stage <span class="math inline">\(0\)</span> to stage <span class="math inline">\(h\)</span>, and the optimal policy was time-varying, <span class="math inline">\(u_k=\mu_k(x_k)\)</span>, with a different <span class="math inline">\(\mu_k\)</span> at each stage. That is an awkward object to learn. Each stage has its own function to estimate, and experience gathered at stage <span class="math inline">\(7\)</span> says nothing about stage <span class="math inline">\(8\)</span>.</p>
+<p>Infinite-horizon formulations avoid this. When the horizon is infinite – as in the infinite-horizon LQR of Unit 5 – the optimal policy is typically <strong>time-invariant</strong>, <span class="math inline">\(u_k=\mu(x_k)\)</span>: one function, and every transition ever observed is evidence about it. This is why reinforcement learning is almost always set up over an infinite horizon, and it is the reason this unit takes the detour.</p>
+<p>There are four such formulations, all of which assume a time-invariant model and a time-invariant running cost,</p>
+<p><span class="math display">\[x_{k+1}=f(x_k,u_k,w_k) \qquad k \in \{0,1,2,\dots\} .\]</span></p>
+<p>The difficulty they all have to deal with is the same: an infinite sum of costs is in general infinite, and an objective that is <span class="math inline">\(+\infty\)</span> for every policy ranks nothing. Each formulation is a different device for keeping the total finite.</p>
+<p><strong>Undiscounted</strong>, <span class="math inline">\(\ \sum_{k=0}^{\infty}\mathbb{E}\left[g(x_k,u_k)\right]\)</span>. The sum is kept finite by the running cost itself decaying to zero, which is what happens in the infinite-horizon LQR: the state is driven to the origin and <span class="math inline">\(x^\intercal Qx+u^\intercal Ru\)</span> vanishes with it.</p>
+<p><strong>Stochastic shortest path</strong>, <span class="math inline">\(\ \sum_{k=0}^{\infty}\mathbb{E}\left[g(x_k,u_k)\right]=\mathbb{E}\left[\sum_{k=0}^{T-1}g(x_k,u_k)+\underbrace{g(x_T,\cdot)}_{=0}\right]\)</span>. The system eventually reaches a special terminal state <span class="math inline">\(x_T\)</span>, where it remains at zero cost; the infinite sum therefore has only finitely many nonzero terms, even though the number of them, <span class="math inline">\(T\)</span>, is random.</p>
+<p><strong>Discounted</strong>, <span class="math inline">\(\ \sum_{k=0}^{\infty}\mathbb{E}\left[\alpha^kg(x_k,u_k)\right]\)</span> with <span class="math inline">\(0&lt;\alpha&lt;1\)</span>. The geometric weight makes the sum converge whenever the running cost is bounded, regardless of what the state does.</p>
+<p><strong>Average cost</strong>, <span class="math inline">\(\ \lim_{T\to\infty}\frac{1}{T}\mathbb{E}\left[\sum_{k=0}^{T-1}g(x_k,u_k)\right]\)</span>. Dividing by the horizon keeps the quantity finite – this is the natural formulation for problems like LQG, where the state keeps being kicked by noise and the cost per stage never decays. We do not develop it in the main text; it is treated in the appendix at the end of this unit.</p>
+<p>The reason for enumerating all four is that the next two sections show something economical: the stochastic shortest path problem and the discounted problem are, mathematically, the <em>same problem</em>. Everything proved for one transfers to the other.</p>
+</section>
+<section id="shortest-path-problems" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="shortest-path-problems"><span class="header-section-number">4</span> Shortest path problems</h2>
+<p>Many problems have dynamics and costs that do not depend explicitly on time,</p>
+<p><span class="math display">\[x_{k+1}=f(x_k,u_k,w_k) \qquad k \in \{0,1,2,\dots\} \qquad \text{Prob}[w_k=\ell]=p_\ell^{x_k,u_k},\]</span></p>
+<p>and in which the system evolves for an undetermined time <span class="math inline">\(T\)</span> – possibly very long – until it reaches a set of terminal states <span class="math inline">\(\mathcal{X}\)</span>, that is <span class="math inline">\(x_T\in\mathcal{X}\)</span>. The cost accumulated along the way is</p>
+<p><span class="math display">\[\mathbb{E}\left[\sum_{k=0}^{T-1}g(x_k,u_k)\right].\]</span></p>
+<p>Because <span class="math inline">\(T\)</span> is random, this looks like a different kind of object from the infinite sums above. It is not. Make two assumptions about the terminal set: that it is absorbing, <span class="math inline">\(x_k\in\mathcal{X}\implies
+x_{k+1}\in\mathcal{X}\)</span>, and that it is free, <span class="math inline">\(x_k\in\mathcal{X}\implies g(x_k,j)=0\)</span> for every <span class="math inline">\(j\)</span>. Then every term of the infinite sum beyond stage <span class="math inline">\(T\)</span> is zero, and</p>
+<p><span class="math display">\[\sum_{k=0}^{\infty}\mathbb{E}[g(x_k,u_k)] = \mathbb{E}\left[\sum_{k=0}^{T-1}g(x_k,u_k)+\underbrace{g(x_T,\cdot)}_{=0}\right].\]</span></p>
+<p>So a shortest path problem <em>is</em> an infinite-horizon problem; the random stopping time is a feature of the trajectories, not of the objective. This is what lets one theory cover both.</p>
+<section id="finite-horizon-problems-are-shortest-path-problems-too" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="finite-horizon-problems-are-shortest-path-problems-too"><span class="header-section-number">4.1</span> Finite-horizon problems are shortest path problems too</h3>
+<p>The same trick absorbs the entire finite-horizon theory of Part I. Take a finite-horizon problem, and allow it even to be time-varying,</p>
+<p><span class="math display">\[\min_{u_k=\mu_k(x_k)} \mathbb{E}\left[\sum_{k=0}^{h-1}g_k(x_k,u_k)+g_h(x_h)\right] \qquad x_{k+1}=f_k(x_k,u_k,w_k).\]</span></p>
+<p>Augment the state with the clock: let <span class="math inline">\(\bar x_k = (\bar x_{1,k},\bar
+x_{2,k}) = (x_k,k)\)</span>. The running cost in the augmented variables is</p>
+<p><span class="math display">\[\bar g(\bar x_k,u_k,w_k)=\begin{cases} g_{x_{2,k}}(x_{1,k},u_k) &amp; \text{if } 0\leq x_{2,k}\leq h-2\\ g_{h-1}(x_{1,h-1},u_k)+g_h(f_{h-1}(x_{1,h-1},u_{h-1},w_{h-1})) &amp; \text{if } x_{2,k}=h-1\\ 0 &amp; \text{if } x_{2,k}\geq h \end{cases}\]</span></p>
+<p>which is time-invariant, and the states with <span class="math inline">\(\bar x_{2,k}\geq h\)</span> are absorbing and free. The augmented problem is therefore a shortest path problem.</p>
+<p>The point is not merely bookkeeping. The optimal policy <span class="math inline">\(\mu(\bar x_k)\)</span> of the augmented problem is a <em>single</em> time-invariant function, yet because the clock is part of the state, it encodes exactly the time-varying policy <span class="math inline">\(\{\mu_0,\dots,\mu_{h-1}\}\)</span> of the original problem. Nothing is lost, and we will use this at the end of the unit: proving that Q-learning works on finite-horizon problems becomes a special case of the shortest path theory, and is much easier than the general proof.</p>
+</section>
+<section id="an-example-catching-pac-man" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="an-example-catching-pac-man"><span class="header-section-number">4.2</span> An example: catching Pac-man</h3>
+<p>A concrete shortest path problem, which will also be familiar from the stochastic dynamic programming of Unit 2. A ghost must catch Pac-man in the maze of <a href="#fig-pacman" class="quarto-xref">Fig.&nbsp;3</a> in the minimum expected time.</p>
+<div style="text-align: center;">
+<div id="fig-pacman" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pacman-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture10/pg11-pacman-maze.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:52.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pacman-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;3: The Pac-man maze. The 77 free cells are numbered; the yellow cell holds Pac-man and the red cell the ghost. The state is the pair of occupied cells, so the state space has <span class="math inline">\(77\times77\)</span> elements, and the terminal states are those in which the two coincide.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The state is the pair <span class="math inline">\(x_k=(x_{1,k},x_{2,k})\)</span>, with <span class="math inline">\(x_{1,k}\in\{1,\dots,77\}\)</span> Pac-man’s cell and <span class="math inline">\(x_{2,k}\in\{1,\dots,77\}\)</span> the ghost’s. The model is <span class="math inline">\(x_{k+1}=f(x_k,u_k,w_k)\)</span>, where <span class="math inline">\(u_k\)</span> is the ghost’s decision and <span class="math inline">\(w_k\)</span> captures whatever uncertainty there is in Pac-man’s moves; it must enforce that a capture is permanent, <span class="math inline">\(x_{1,k}=x_{2,k} \implies x_{1,k+1}=x_{2,k+1}\)</span>. The cost is</p>
+<p><span class="math display">\[\sum_{k=0}^{\infty}\mathbb{E}[g(x_k,u_k)] \qquad g(x_k,u_k)=\begin{cases}1 &amp; \text{if } x_{1,k}\neq x_{2,k}\\ 0 &amp; \text{if } x_{1,k}=x_{2,k}\end{cases}\]</span></p>
+<p>– one unit of cost for every stage in which Pac-man is still free, nothing thereafter. The total is the expected number of stages to capture, and minimising it is exactly “catch him as fast as possible”. Note how the two assumptions of the previous subsection are visible here: capture is absorbing, and capture is free.</p>
+</section>
+<section id="transition-probabilities" class="level3" data-number="4.3">
+<h3 data-number="4.3" class="anchored" data-anchor-id="transition-probabilities"><span class="header-section-number">4.3</span> Transition probabilities</h3>
+<p>From here on the state and action spaces are finite, so it is convenient to drop <span class="math inline">\(f\)</span> and <span class="math inline">\(w\)</span> and work directly with transition probabilities. Any model <span class="math inline">\(x_{k+1}=f_k(x_k,u_k,w_k)\)</span> on a finite state space can be written as</p>
+<p><span class="math display">\[p_{ij}(\ell)=\text{Prob}[x_{k+1}=j\mid x_k=i,\ u_k=\ell],\]</span></p>
+<p>in which case the dynamics are simply <span class="math inline">\(x_{k+1}=w_k\)</span> with <span class="math inline">\(\text{Prob}[w_k=j\mid x_k=i,\ u_k=\ell]=p_{ij}(\ell)\)</span>. The running cost is unchanged if it depends only on state and input; if it also depends on the disturbance it is averaged over the destination,</p>
+<p><span class="math display">\[g(i,u)=\sum_j p_{ij}(u)\tilde g(i,u,j).\]</span></p>
+</section>
+<section id="the-standing-assumptions" class="level3" data-number="4.4">
+<h3 data-number="4.4" class="anchored" data-anchor-id="the-standing-assumptions"><span class="header-section-number">4.4</span> The standing assumptions</h3>
+<p>The results of this unit hold under three assumptions, which we state once and then use throughout.</p>
+<p>The state belongs to one of <span class="math inline">\(n\)</span> states plus a terminal state <span class="math inline">\(t=n+1\)</span>, so <span class="math inline">\(x\in\{1,2,\dots,n+1\}\)</span>. Once the terminal state is reached the system stays there at no cost: for every <span class="math inline">\(u\)</span>,</p>
+<p><span class="math display">\[p_{n+1,n+1}(u)=1 \qquad g(n+1,u)=0 .\]</span></p>
+<div style="text-align: center;">
+<div id="fig-terminal-state" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-terminal-state-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture10/pg13-terminal-state-graph.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:60.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-terminal-state-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;4: The transition structure assumed throughout. The <span class="math inline">\(n\)</span> ordinary states <span class="math inline">\(1,\dots,n\)</span> are connected by the transition probabilities <span class="math inline">\(p_{ij}(u)\)</span> (black); every state also has some probability <span class="math inline">\(p_{i,t}(u)\)</span> of moving to the terminal state <span class="math inline">\(t\)</span> (blue), which is absorbing and free. Several terminal states are handled by adding a transition from each of them into a single <span class="math inline">\(t\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Finally, and most importantly: regardless of the initial state and of the policy, there is a positive probability that <span class="math inline">\(t\)</span> is reached after some finite, fixed number of stages. This is what rules out a policy that wanders for ever and makes the problem well posed. It is the analogue, for shortest path problems, of the stabilizability conditions that made the infinite-horizon LQR of Unit 5 well posed.</p>
+</section>
+<section id="value-iteration" class="level3" data-number="4.5">
+<h3 data-number="4.5" class="anchored" data-anchor-id="value-iteration"><span class="header-section-number">4.5</span> Value iteration</h3>
+<p>The algorithm that computes the optimal cost-to-go – in infinite-horizon language, the <strong>value function</strong> – is value iteration.</p>
+<p><strong>Value iteration (shortest path).</strong> Given any initial values <span class="math inline">\(J_0(1),\dots,J_0(n)\)</span>, run for <span class="math inline">\(k=0,1,2,\dots\)</span></p>
+<p><span class="math display">\[J_{k+1}(i)=\min_{u\in U(i)}\Big[g(i,u)+\sum_{j=1}^{n}p_{ij}(u)J_k(j)\Big] \qquad i\in\{1,\dots,n\}.\]</span></p>
+<p>The iterates converge to values <span class="math inline">\(J^\star(i)\)</span>, so one stops when</p>
+<p><span class="math display">\[\max_{i\in\{1,\dots,n\}}|J_{k+1}(i)-J_k(i)|&lt;\epsilon .\]</span></p>
+<p>This is nothing other than the dynamic programming algorithm of Unit 1, with different indexing. There the recursion ran <em>backwards</em> from a known terminal cost over a known number of stages; here the number of iterations is not known in advance, so the index counts iterations <em>forwards</em> and one stops when the values settle. If you do fix the number of stages at <span class="math inline">\(h\)</span> and start from <span class="math inline">\(J_h(1),\dots,J_h(n)\)</span>, the recursion</p>
+<p><span class="math display">\[J_{k-1}(i)=\min_{u\in U(i)}\Big[g(i,u)+\sum_{j=1}^{n}p_{ij}(u)J_k(j)\Big]=\min_{u\in U(i)}\mathbb{E}_w\big[g(i,u)+J_k(f(i,u,w))\big]\]</span></p>
+<p>is literally the Unit 1 algorithm. The two are the same computation read in opposite directions.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: why can value iteration start anywhere?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: why can value iteration start anywhere?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>The dynamic programming algorithm of Unit 1 had to be initialised at the true terminal cost <span class="math inline">\(J_h=g_h\)</span>; starting it from anything else would have given the wrong answer. Value iteration, by contrast, is said to converge “given any initial values <span class="math inline">\(J_0\)</span>”. What accounts for the difference?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The finite-horizon algorithm computes an exact quantity in exactly <span class="math inline">\(h\)</span> steps, so an error in the initial condition is an error in the problem being solved – it is the terminal cost, not a guess. Value iteration computes a <em>fixed point</em>. The iteration is a contraction towards the unique solution of the Bellman equation (below), so the influence of <span class="math inline">\(J_0\)</span> decays as the iteration proceeds; after enough steps it has been forgotten. The price is that convergence is only asymptotic, which is why one needs a stopping test <span class="math inline">\(\epsilon\)</span> rather than a step count.</p>
+<p>This also explains the practical advice to initialise with the best guess available: it does not change the answer, only how many iterations are needed to get there.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-bellman-equation-and-the-optimal-policy" class="level3" data-number="4.6">
+<h3 data-number="4.6" class="anchored" data-anchor-id="the-bellman-equation-and-the-optimal-policy"><span class="header-section-number">4.6</span> The Bellman equation and the optimal policy</h3>
+<p>Value iteration converges, and what it converges to is the solution of a system of nonlinear equations. That system can also be solved by other means, which is why it is worth stating separately.</p>
+<p><strong>Theorem (Bellman equation, shortest path).</strong> Under the standing assumptions, the system of nonlinear equations</p>
+<p><span class="math display">\[J^\star(i)=\min_{u\in U(i)}\Big[g(i,u)+\sum_{j=1}^{n}p_{ij}(u)J^\star(j)\Big] \qquad i\in\{1,\dots,n\}\]</span></p>
+<p>admits a unique solution.</p>
+<p>Uniqueness is the substantive claim. It is what guarantees that value iteration cannot converge to the wrong fixed point, and it is where the assumption that <span class="math inline">\(t\)</span> is reachable from everywhere does its work.</p>
+<p>Given the solution, the policy follows immediately.</p>
+<p><strong>Theorem (optimal policy, shortest path).</strong> The minimiser in the Bellman equation,</p>
+<p><span class="math display">\[\mu(i)=\underset{u\in U(i)}{\arg\min}\Big[g(i,u)+\sum_{j=1}^{n}p_{ij}(u)J^\star(j)\Big] \qquad i\in\{1,\dots,n\},\]</span></p>
+<p>is an optimal policy for the shortest path problem.</p>
+<p>Note that this policy is <strong>time-invariant</strong> – a single function of the state – as promised at the start of the section.</p>
+</section>
+</section>
+<section id="discounted-problems" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="discounted-problems"><span class="header-section-number">5</span> Discounted problems</h2>
+<p>The discounted problem minimises <span class="math inline">\(\sum_{k=0}^{\infty}\mathbb{E}\left[\alpha^kg(x_k,u_k)\right]\)</span> over a Markov chain with transition probabilities <span class="math inline">\(p_{ij}(u)\)</span>, as on the left of <a href="#fig-dc-original" class="quarto-xref">Fig.&nbsp;5</a>. At first sight it has nothing to do with the previous section: there is no terminal state, and trajectories never stop.</p>
+<div style="text-align: center;">
+<div id="fig-dc-original" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dc-original-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture10/pg17-dc-graph-original.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:62.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dc-original-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;5: The original discounted problem: <span class="math inline">\(n\)</span> states connected by transition probabilities <span class="math inline">\(p_{ij}(u)\)</span>, with no terminal state. Trajectories run for ever, and the sum is kept finite by the discount factor rather than by stopping.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>There is a construction, though, that turns it into a shortest path problem. Build a ‘twin’ problem by</p>
+<ol type="i">
+<li><p>multiplying every transition probability of the original problem by the discount factor <span class="math inline">\(\alpha\)</span>;</p></li>
+<li><p>adding an extra terminal state <span class="math inline">\(t\)</span> with zero terminal cost, reachable from <strong>every</strong> node with probability <span class="math inline">\(1-\alpha\)</span>;</p></li>
+<li><p>keeping the same costs <span class="math inline">\(g(x_k,u_k)\)</span>, and zero cost at the terminal state.</p></li>
+</ol>
+<div style="text-align: center;">
+<div id="fig-dc-twin" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dc-twin-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture10/pg17-dc-graph-twin.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:62.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dc-twin-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;6: The twin stochastic shortest path problem. Every original transition probability is scaled by <span class="math inline">\(\alpha\)</span> (green), and the missing probability mass <span class="math inline">\(1-\alpha\)</span> is routed from every state into a new absorbing, cost-free terminal state <span class="math inline">\(t\)</span> (blue). The rows still sum to one, so this is a legitimate Markov chain.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The twin problem satisfies the standing assumptions of the previous section: <span class="math inline">\(t\)</span> is absorbing and free, and it is reached from any state with probability <span class="math inline">\(1-\alpha&gt;0\)</span> at every stage, hence within a finite number of stages with positive probability.</p>
+<p>Now compare the two problems under the same policy. The state evolves identically in both until the twin problem terminates, since the twin’s transitions are the original’s conditioned on not terminating. The expected running cost incurred by the twin at stage <span class="math inline">\(k\)</span> is therefore <span class="math inline">\(g(x_k,u_k)\)</span> multiplied by the probability that <span class="math inline">\(t\)</span> has not yet been reached, and that probability is exactly <span class="math inline">\(\alpha^k\)</span>. Summing over <span class="math inline">\(k\)</span> gives <span class="math inline">\(\sum_k \alpha^k\mathbb{E}[g(x_k,u_k)]\)</span> – the discounted cost. The two problems have the same value, for every policy.</p>
+<p>So the discount factor is not merely a mathematical convenience for making sums converge: it <em>is</em> a probability of termination. A discounted problem with <span class="math inline">\(\alpha=0.99\)</span> is a problem in which the world ends with probability <span class="math inline">\(1\%\)</span> per stage. Every result of the previous section therefore carries over verbatim, with the one change that the sum is multiplied by <span class="math inline">\(\alpha\)</span>.</p>
+<p><strong>Value iteration (discounted cost).</strong> Given any <span class="math inline">\(J_0(1),\dots,J_0(n)\)</span>, run for <span class="math inline">\(k=0,1,2,\dots\)</span></p>
+<p><span class="math display">\[J_{k+1}(i)=\min_{u\in U(i)}\Big[g(i,u)+\alpha\sum_{j=1}^{n}p_{ij}(u)J_k(j)\Big] \qquad i\in\{1,\dots,n\},\]</span></p>
+<p>stopping when <span class="math inline">\(\max_i|J_{k+1}(i)-J_k(i)|&lt;\epsilon\)</span>.</p>
+<p><strong>Theorem (Bellman equation, discounted cost).</strong> The system</p>
+<p><span class="math display">\[J^\star(i)=\min_{u\in U(i)}\Big[g(i,u)+\alpha\sum_{j=1}^{n}p_{ij}(u)J^\star(j)\Big] \qquad i\in\{1,2,\dots,n\}\]</span></p>
+<p>admits a unique solution.</p>
+<p><strong>Theorem (optimal policy, discounted cost).</strong> The minimiser</p>
+<p><span class="math display">\[\mu(i)=\underset{u\in U(i)}{\arg\min}\Big[g(i,u)+\alpha\sum_{j=1}^{n}p_{ij}(u)J^\star(j)\Big] \qquad i\in\{1,\dots,n\}\]</span></p>
+<p>is an optimal policy for the discounted problem.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: what happens as the discount approaches one?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: what happens as the discount approaches one?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>In the twin construction, the probability of terminating at each stage is <span class="math inline">\(1-\alpha\)</span>. What does this say about the expected length of a twin trajectory as <span class="math inline">\(\alpha\to1\)</span>, and what does that imply for the number of value iterations needed to reach a given accuracy?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Termination at each stage is a Bernoulli trial with success probability <span class="math inline">\(1-\alpha\)</span>, so the number of stages before termination is geometric with mean <span class="math inline">\(1/(1-\alpha)\)</span>. At <span class="math inline">\(\alpha=0.9\)</span> a trajectory lasts about <span class="math inline">\(10\)</span> stages; at <span class="math inline">\(\alpha=0.999\)</span>, about <span class="math inline">\(1000\)</span>.</p>
+<p>Value iteration has to propagate information backwards along those trajectories, and the error contracts by a factor <span class="math inline">\(\alpha\)</span> per sweep, so reaching accuracy <span class="math inline">\(\epsilon\)</span> takes on the order of <span class="math inline">\(\log\epsilon/\log\alpha \approx \log(1/\epsilon)/(1-\alpha)\)</span> sweeps. Discount factors close to one therefore make the problem both more far-sighted and markedly more expensive – and, in the learning setting of the second half of this unit, they also mean each simulated trajectory is long, so data as well as computation becomes scarce. The choice of <span class="math inline">\(\alpha\)</span> is a modelling decision with a direct computational price.</p>
+</div>
+</div>
+</div>
+<section id="an-example-when-to-sell-an-asset" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="an-example-when-to-sell-an-asset"><span class="header-section-number">5.1</span> An example: when to sell an asset</h3>
+<p>A classic stopping problem. You own an asset – a car, say – and offers arrive over time; you must decide when to accept one.</p>
+<div style="text-align: center;">
+<div id="fig-used-cars" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-used-cars-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture10/pg21-used-cars.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:34.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-used-cars-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;7: The asset selling problem: offers for a used car arrive month by month and must be accepted or declined, with the car depreciating meanwhile.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Offers at time <span class="math inline">\(k\)</span>, written <span class="math inline">\(\bar w_k\)</span>, take values in a finite set: at time zero <span class="math inline">\(\bar w_0\in\{c_1,c_2,\dots,c_C\}\)</span> with <span class="math inline">\(\text{Prob}[\bar w_0=c_i]=p_i\)</span>. The car depreciates at rate <span class="math inline">\(\alpha^k\)</span> with <span class="math inline">\(0&lt;\alpha&lt;1\)</span>, so <span class="math inline">\(k\)</span> months later the offers are <span class="math inline">\(\bar w_k\in\{\alpha^kc_1,\dots,\alpha^kc_C\}\)</span> with <span class="math inline">\(\text{Prob}[\bar w_k=\alpha^kc_i]=p_i\)</span>. There may also be no offer at all in a given month: <span class="math inline">\(\sum_{i=1}^{C}p_i=1-p_0\)</span>, where <span class="math inline">\(p_0\)</span> is the probability of no offer.</p>
+<p>To put this in the standard form, scale the offers back to time zero: let <span class="math inline">\(w_k=\bar w_k/\alpha^k\)</span>, or <span class="math inline">\(w_k=N\)</span> if there is no offer, and let <span class="math inline">\(u_k\in\{1\ (\text{sell}),\ 0\ (\text{not sell})\}\)</span>. Let <span class="math inline">\(x_k\)</span> for <span class="math inline">\(k\geq1\)</span> be the most recent scaled offer, or <span class="math inline">\(x_k=T\)</span> if the car has already been sold. Then</p>
+<p><span class="math display">\[x_{k+1}=\begin{cases}T &amp; \text{if } x_k=T, \text{ or if } x_k\neq T \text{ and } u_k=1,\\ w_k &amp; \text{otherwise,}\end{cases}\]</span></p>
+<p>and we want the policy that maximises the expected discounted revenue <span class="math inline">\(\mathbb{E}\left[\sum_{k=0}^{\infty}\alpha^kg(x_k,u_k)\right]\)</span> with</p>
+<p><span class="math display">\[g(x_k,u_k)=\begin{cases}x_k &amp; \text{if } x_k\neq T \text{ and } u_k=1,\\ 0 &amp; \text{otherwise.}\end{cases}\]</span></p>
+<p>This is a discounted problem with an absorbing state, so it is also a shortest path problem – and, because the only decision is when to stop, it belongs to the subclass known as <em>optimal stopping</em> problems. The infinite horizon is an idealisation of the realistic case that the car will be sold within some large but finite time.</p>
+<p>One warning for readers comparing with the slides: the deck’s general convention is that costs are <em>minimised</em>, and this example is the one place where that convention collides with the problem’s natural statement. Here the quantity is a revenue and is <em>maximised</em>. Nothing hinges on it – replacing <span class="math inline">\(g\)</span> by <span class="math inline">\(-g\)</span> and every <span class="math inline">\(\max\)</span> by a <span class="math inline">\(\min\)</span> gives the identical policy – but the <span class="math inline">\(\max\)</span> in the value iteration below is deliberate, not a slip.</p>
+<p>Value iteration for this problem is</p>
+<p><span class="math display">\[J_k(N)=0, \quad J_k(T)=0, \qquad J_{k+1}(x_k)=\max\Big\{x_k,\ \alpha\sum_{i=1}^{C}p_iJ_k(c_i)\Big\}, \quad x_k\neq N,\ x_k\neq T\]</span></p>
+<p>– at each stage, compare what is on the table now with the discounted expected value of waiting. Taking <span class="math inline">\(c_i=10000+(i-1)100\)</span> euros, <span class="math inline">\(C=101\)</span>, <span class="math inline">\(p_i=e^{-(c_i-\bar c)^2/2\bar v}\)</span> with <span class="math inline">\(\bar c=15000\)</span> and <span class="math inline">\(\bar v=2000^2\)</span>, the iterates behave as in <a href="#fig-asset-values" class="quarto-xref">Fig.&nbsp;8</a>.</p>
+<div style="text-align: center;">
+<div id="fig-asset-values" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-asset-values-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture10/pg23-asset-values.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:68.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-asset-values-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;8: The value iterates <span class="math inline">\(J_k(i)\)</span> for the asset selling problem, <span class="math inline">\(k=0,\dots,9\)</span>, as a function of the current scaled offer <span class="math inline">\(i\)</span> (euros). Successive curves move apart less and less and settle on the solution of the Bellman equation. The converged value is flat for small offers – where the decision is to wait, so the value does not depend on the current offer – and rises along the diagonal for large offers, where the decision is to sell and the value <em>is</em> the offer.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The policy converges with the values, and what it converges to is about as simple as a policy can be.</p>
+<div style="text-align: center;">
+<div id="fig-asset-policy" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-asset-policy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture10/pg24-asset-policy.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:56.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-asset-policy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;9: The policy iterates <span class="math inline">\(\mu_k(i)\)</span> for the asset selling problem, <span class="math inline">\(k=0,\dots,9\)</span>: sell (<span class="math inline">\(1\)</span>) or wait (<span class="math inline">\(0\)</span>) as a function of the current scaled offer. Each iterate is a step function, and the step moves right as the iteration proceeds: by <span class="math inline">\(k=9\)</span>, the last curve plotted, it stands at <span class="math inline">\(16\,700\)</span> euros.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The optimal policy is a <strong>threshold rule</strong>: sell if the scaled offer exceeds a fixed number, otherwise wait. Run to convergence – 63 iterations, rather than the ten plotted – that number is <span class="math inline">\(16\,900\)</span> euros, with a wait value of <span class="math inline">\(16\,857.9\)</span>; the tenth iterate shown above has only reached <span class="math inline">\(16\,700\)</span>. It is stationary – it does not depend on time – which is the payoff of the infinite-horizon formulation. A finite-horizon version of the same problem, such as the one in the appendix of Unit 2, has a threshold that moves as the deadline approaches; here there is no deadline, so every month looks like every other and one number suffices.</p>
+<p>Notice also where the threshold sits: well above the mean offer of <span class="math inline">\(15\,000\)</span>. Waiting is worth something, and the threshold is the price at which that option value is exactly used up. The notebook <code>A_10_AssetSellingValueIteration.ipynb</code> prints both numbers, and <code>A_10_stoppingtimeQLearning.ipynb</code> recovers the same threshold without ever using the offer distribution.</p>
+</section>
+</section>
+<section id="q-factors" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="q-factors"><span class="header-section-number">6</span> Q-factors</h2>
+<p>Everything so far has been stated in terms of cost functions <span class="math inline">\(J_\mu(i)\)</span> and optimal cost functions <span class="math inline">\(J^\star(i)=\min_\mu J_\mu(i)\)</span> – the value functions, which play the role that costs-to-go played in the finite-horizon theory. There is an equivalent formulation in terms of <strong>Q-factors</strong>, which are the same quantities indexed by state <em>and</em> action:</p>
+<p><span class="math display">\[\textbf{SP:}\quad Q_\mu(i,u)=g(i,u)+\sum_{j=1}^{n}p_{ij}(u)J_\mu(j), \qquad Q^\star(i,u)=g(i,u)+\sum_{j=1}^{n}p_{ij}(u)J^\star(j)\]</span></p>
+<p><span class="math display">\[\textbf{DC:}\quad Q_\mu(i,u)=g(i,u)+\alpha\sum_{j=1}^{n}p_{ij}(u)J_\mu(j), \qquad Q^\star(i,u)=g(i,u)+\alpha\sum_{j=1}^{n}p_{ij}(u)J^\star(j)\]</span></p>
+<p>In words, <span class="math inline">\(Q^\star(i,u)\)</span> is the cost of taking action <span class="math inline">\(u\)</span> once in state <span class="math inline">\(i\)</span> and behaving optimally thereafter. Cost functions are defined on the state space; Q-factors are defined on the state-action space, which is larger by a factor of the number of actions.</p>
+<p>Everything can be rewritten in these terms. Since <span class="math inline">\(J^\star(j)=\min_{v\in U(j)}Q^\star(j,v)\)</span>, the Bellman equations become</p>
+<p><span class="math display">\[\textbf{SP:}\quad Q^\star(i,u)=g(i,u)+\sum_{j=1}^{n}p_{ij}(u)\min_{v\in U(j)}Q^\star(j,v)\]</span></p>
+<p><span class="math display">\[\textbf{DC:}\quad Q^\star(i,u)=g(i,u)+\alpha\sum_{j=1}^{n}p_{ij}(u)\min_{v\in U(j)}Q^\star(j,v)\]</span></p>
+<p>value iteration becomes</p>
+<p><span class="math display">\[Q_{k+1}(i,u)=g(i,u)+(\alpha)\sum_{j=1}^{n}p_{ij}(u)\min_{v\in U(j)}Q_k(j,v)\]</span></p>
+<p>with the <span class="math inline">\(\alpha\)</span> present in the discounted case and absent in the shortest path case, and the optimal policy becomes</p>
+<p><span class="math display">\[\mu^\star(i)=\underset{u\in U(i)}{\arg\min}\ Q^\star(i,u).\]</span></p>
+<p>When the model is known, this buys nothing: the Q-factors store the same information as <span class="math inline">\(J^\star\)</span>, in more space, and are computed from the same <span class="math inline">\(p_{ij}(u)\)</span>. The reason to introduce them is visible in that last equation. <strong>Extracting the policy from <span class="math inline">\(Q^\star\)</span> requires no model at all</strong> – it is a minimisation over a stored table. Extracting it from <span class="math inline">\(J^\star\)</span> requires <span class="math inline">\(g(i,u)\)</span> and <span class="math inline">\(p_{ij}(u)\)</span>, which in the model-free setting we do not have. The Q-factor formulation moves the model dependence out of the final step and into the quantity being learned, and that is exactly what makes a model-free algorithm possible.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: what does the extra index cost?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: what does the extra index cost?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>A problem has <span class="math inline">\(n\)</span> states and <span class="math inline">\(m\)</span> actions available at each. Compare the storage needed for <span class="math inline">\(J^\star\)</span> with that needed for <span class="math inline">\(Q^\star\)</span>, and compare the work needed to extract the greedy action at a given state from each of them, assuming in the <span class="math inline">\(J^\star\)</span> case that the model is available.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><span class="math inline">\(J^\star\)</span> needs <span class="math inline">\(n\)</span> numbers, <span class="math inline">\(Q^\star\)</span> needs <span class="math inline">\(nm\)</span> – a factor <span class="math inline">\(m\)</span> more storage. Extracting the greedy action at state <span class="math inline">\(i\)</span> from <span class="math inline">\(Q^\star\)</span> costs <span class="math inline">\(m\)</span> comparisons. From <span class="math inline">\(J^\star\)</span> it costs, for each of the <span class="math inline">\(m\)</span> actions, a sum over the possible successor states: <span class="math inline">\(O(mn)\)</span> in the worst case, or <span class="math inline">\(O(m\bar d)\)</span> with <span class="math inline">\(\bar d\)</span> the average number of reachable successors – plus access to <span class="math inline">\(g\)</span> and <span class="math inline">\(p_{ij}\)</span>.</p>
+<p>So the Q-factors trade memory for both speed and, far more importantly, independence from the model. In the tabular setting of this unit the factor <span class="math inline">\(m\)</span> is affordable. In Unit 12, where the state space is continuous and the table is replaced by a network, the same trade-off reappears as a choice of what the network’s output layer represents – one number per state, or one per action.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="q-learning" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="q-learning"><span class="header-section-number">7</span> Q-learning</h2>
+<p>We can now state the algorithm. It is one of the first and most famous methods in reinforcement learning, proposed by Watkins in 1989.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p><strong>Q-learning (discounted cost).</strong> Consider an infinitely long – in practice, sufficiently long – simulation under an <strong>arbitrary</strong> policy, producing a sequence of state-action pairs <span class="math inline">\((x_t,u_t)\)</span>, <span class="math inline">\(t\in\{0,1,2,\dots\}\)</span>. For each pair <span class="math inline">\((i,u)\)</span> keep an estimate <span class="math inline">\(Q_t(i,u)\)</span>. At time <span class="math inline">\(t\)</span>, update only the estimate belonging to the pair actually visited, <span class="math inline">\((i,u)=(x_t,u_t)\)</span>:</p>
+<p><span class="math display">\[Q_{t+1}(x_t,u_t)=\big(1-\gamma^t\big)Q_t(x_t,u_t)+\gamma^t\Big(g(x_t,u_t)+\alpha\min_{v\in U(x_{t+1})}Q_t(x_{t+1},v)\Big)\]</span></p>
+<p>where the step sizes <span class="math inline">\(\gamma^t\in(0,1]\)</span> are arbitrary. All other estimates are left unchanged: <span class="math inline">\(Q_{t+1}(i,j)=Q_t(i,j)\)</span> for <span class="math inline">\((i,j)\neq(x_t,u_t)\)</span>.</p>
+<p>Three features of this update are worth dwelling on.</p>
+<p><strong>It is a weighted average.</strong> Writing it as</p>
+<p><span class="math display">\[Q_{t+1}(x_t,u_t)=\big(1-\gamma^t\big)\underbrace{Q_t(x_t,u_t)}_{\text{previous estimate}}+\gamma^t\underbrace{\Big(g(x_t,u_t)+\alpha\min_{v\in U(x_{t+1})}Q_t(x_{t+1},v)\Big)}_{\text{target}}\]</span></p>
+<p>makes the structure plain: the new estimate is a blend of what we believed and what this one transition suggests. The step size <span class="math inline">\(\gamma^t\)</span> decides how much notice to take of the new evidence.</p>
+<p><strong>The target is value iteration.</strong> Compare the target with the Q-factor value iteration of the previous section,</p>
+<p><span class="math display">\[Q_{k+1}(x_k,u_k)=g(x_k,u_k)+\alpha\min_{v\in U(x_{k+1})}Q_k(x_{k+1},v).\]</span></p>
+<p>They are the same expression – except that value iteration averages over all successor states <span class="math inline">\(j\)</span> using <span class="math inline">\(p_{ij}(u)\)</span>, whereas Q-learning uses the single successor <span class="math inline">\(x_{t+1}\)</span> that actually occurred. Q-learning is value iteration with the expectation replaced by a sample. That is the whole idea, and it is why no model is needed: the environment supplies the sample.</p>
+<p><strong>The exploration policy is arbitrary.</strong> The data may be generated by any policy at all – this is the <strong>exploration policy</strong> – while the policy being learned, the <strong>target policy</strong>, is the optimal one. An algorithm with this property is called <em>off-policy</em>, and it is a strong property: it means we may explore recklessly, even randomly, and still converge to the optimal Q-factors. (Unit 11’s SARSA will not have it, and the contrast is instructive.) The one thing the exploration policy must do is visit everything, which is the first condition of the convergence theorem below.</p>
+<p>A practical note: instead of one infinitely long simulation one can run many finite-length ones and concatenate them, which is usually what happens in practice. And although a constant step size is the obvious choice, it does not give convergence; the step size has to decrease, in a particular way, which the next section makes precise.</p>
+<section id="stochastic-approximation" class="level3" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="stochastic-approximation"><span class="header-section-number">7.1</span> Stochastic approximation</h3>
+<p>The reason a decreasing step size is needed has nothing to do with control, and everything to do with estimating a mean from samples.</p>
+<p><strong>Stochastic approximation.</strong> Let <span class="math inline">\((r_1,r_2,r_3,\dots)\)</span> be independent and identically distributed random variables whose mean <span class="math inline">\(\mu\)</span> we wish to determine, and consider the recursion</p>
+<p><span class="math display">\[z_{t+1}=(1-\gamma^t)z_t+\gamma^tr_t .\]</span></p>
+<p>If</p>
+<p><span class="math display">\[\gamma^t&gt;0 \qquad \sum_{t=0}^{\infty}\gamma^t=\infty \qquad \sum_{t=0}^{\infty}(\gamma^t)^2&lt;\infty\]</span></p>
+<p>then <span class="math inline">\(\lim_{t\to\infty}z_t=\mu\)</span>.</p>
+<p>The two sum conditions are the heart of it, and they pull in opposite directions. <span class="math inline">\(\sum\gamma^t=\infty\)</span> says the steps must not shrink so fast that the iterate stalls before reaching the mean – there must always be enough movement left to travel any remaining distance. <span class="math inline">\(\sum(\gamma^t)^2&lt;\infty\)</span> says they must shrink fast enough that the accumulated noise is finite – that the iterate eventually stops being jostled by individual samples. The canonical choice satisfying both is <span class="math inline">\(\gamma^t=1/t\)</span>, and with that choice the recursion is exactly the incremental sample mean,</p>
+<p><span class="math display">\[\frac{1}{t}\sum_{\ell=1}^{t}r_\ell \qquad\text{written as}\qquad z_{t+1}=\Big(1-\frac{1}{t}\Big)z_t+\frac{1}{t}r_t .\]</span></p>
+<p>So the sample mean is a special case, and the theorem says that a whole family of averaging schemes converges, not just that one.</p>
+<p>That generality matters in practice, because the sample mean is not always what one wants. <a href="#fig-stochastic-approx" class="quarto-xref">Fig.&nbsp;10</a> compares the incremental sample mean with constant step sizes in two situations.</p>
+<div style="text-align: center;">
+<div id="fig-stochastic-approx" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-stochastic-approx-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture10/pg31-stochastic-approx.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:88.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-stochastic-approx-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;10: Stochastic approximation with a decreasing versus a constant step size. Left: the samples <span class="math inline">\(r_t\)</span> are uniform on <span class="math inline">\([0,1]\)</span> throughout, and the incremental sample mean (grey) converges smoothly to <span class="math inline">\(0.5\)</span> while constant step sizes keep fluctuating around it, the more so the larger <span class="math inline">\(\gamma\)</span>. Right: the distribution changes at <span class="math inline">\(t=1000\)</span>, from uniform on <span class="math inline">\([0,1]\)</span> to uniform on <span class="math inline">\([0,2]\)</span>; now the constant step sizes track the new mean within a few hundred iterations while the sample mean, which weights all past data equally, crawls towards it.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The trade-off with a constant <span class="math inline">\(\gamma\)</span> is the familiar one: small <span class="math inline">\(\gamma\)</span> gives an accurate steady state but slow adaptation; large <span class="math inline">\(\gamma\)</span> the reverse. This is not an idle aside for Q-learning, because the target of the Q-learning update contains <span class="math inline">\(Q_t\)</span> itself and therefore <em>is</em> a quantity whose distribution changes as learning proceeds – which is part of why the theory needs the conditions above while practice often uses a constant step anyway.</p>
+</section>
+<section id="q-learning-for-shortest-path-problems" class="level3" data-number="7.2">
+<h3 data-number="7.2" class="anchored" data-anchor-id="q-learning-for-shortest-path-problems"><span class="header-section-number">7.2</span> Q-learning for shortest path problems</h3>
+<p>The shortest path version differs only in bookkeeping. Trajectories now terminate, so instead of one infinite run there are infinitely many – in practice, sufficiently many – finite simulations <span class="math inline">\(s\in\{1,2,\dots\}\)</span>, each a sequence <span class="math inline">\((x_k^s,u_k^s)\)</span> with <span class="math inline">\(k\in\{0,1,\dots,K^s\}\)</span> and <span class="math inline">\(K^s\)</span> the time at which simulation <span class="math inline">\(s\)</span> reaches the terminal state. These are concatenated into one index,</p>
+<p><span class="math display">\[\{(x_t,u_t)\}=\big((x_0^1,u_0^1),\dots,(x_{K^1}^1,u_{K^1}^1),(x_0^2,u_0^2),\dots,(x_{K^2}^2,u_{K^2}^2),(x_0^3,u_0^3),\dots\big),\]</span></p>
+<p>and the update, applied at every index <span class="math inline">\(t\neq K^s\)</span>, is</p>
+<p><span class="math display">\[Q_{t+1}(x_t,u_t)=\big(1-\gamma^t\big)Q_t(x_t,u_t)+\gamma^t\Big(g(x_t,u_t)+\min_{v\in U(x_{t+1})}Q_t(x_{t+1},v)\Big),\]</span></p>
+<p>identical to the discounted case except for the absent <span class="math inline">\(\alpha\)</span>. The exclusion <span class="math inline">\(t\neq K^s\)</span> matters: at the last index of a simulation the “next state” would be the first state of the <em>next</em> simulation, which is not a real transition.</p>
+</section>
+<section id="convergence" class="level3" data-number="7.3">
+<h3 data-number="7.3" class="anchored" data-anchor-id="convergence"><span class="header-section-number">7.3</span> Convergence</h3>
+<p><strong>Theorem (convergence, discounted cost).</strong> The Q-factors of the Q-learning algorithm converge to the optimal ones if</p>
+<ul>
+<li>all state-action pairs are generated in the simulation infinitely often, and</li>
+<li>the step size satisfies <span class="math inline">\(\gamma^t&gt;0\)</span>, <span class="math inline">\(\sum_{t=0}^{\infty}\gamma^t=\infty\)</span> and <span class="math inline">\(\sum_{t=0}^{\infty}(\gamma^t)^2&lt;\infty\)</span>.</li>
+</ul>
+<p>Once the optimal Q-factors are known, the optimal policy is immediate, <span class="math inline">\(\mu(i)=\underset{u\in U(i)}{\arg\min}Q^\star(i,u)\)</span>.</p>
+<p>The two conditions are exactly what one would guess. The second is the stochastic approximation requirement, applied to each state-action pair separately. The first is what makes that application legitimate: an estimate that is updated only finitely often cannot converge to anything, so every pair must keep being revisited. This is the formal statement of the need for <strong>exploration</strong>, and it is why a policy that greedily follows the current estimates is a poor exploration policy – it may never try the action that turns out to be best.</p>
+<p>A similar result holds for the shortest path case. The full proof for discounted problems needs machinery we will not develop. But the finite-horizon case – which, by the state-augmentation argument earlier in this unit, is a special case of the shortest path problem – can be proved with what we already have, and the proof is worth seeing because it shows exactly where the convergence comes from.</p>
+</section>
+<section id="q-learning-for-finite-horizon-problems" class="level3" data-number="7.4">
+<h3 data-number="7.4" class="anchored" data-anchor-id="q-learning-for-finite-horizon-problems"><span class="header-section-number">7.4</span> Q-learning for finite-horizon problems</h3>
+<p>Consider a finite-horizon problem with unknown model,</p>
+<p><span class="math display">\[\min_{u_k=\mu_k(x_k)}\mathbb{E}\left[\sum_{k=0}^{h-1}g_k(x_k,u_k)+g_h(x_h)\right] \qquad x_{k+1}=f_k(x_k,u_k,w_k),\]</span></p>
+<p>and run infinitely many simulations <span class="math inline">\(s\in\{1,2,\dots\}\)</span> under an arbitrary policy, each of length <span class="math inline">\(h\)</span> (the final action <span class="math inline">\(u_h^s\)</span> being irrelevant), concatenated as before. Because the problem is time-varying, Q-factors are now indexed by stage as well: <span class="math inline">\(Q(k,i,u)\)</span>, with estimates <span class="math inline">\(Q_t(k,i,u)\)</span> at update <span class="math inline">\(t\)</span>. The update is</p>
+<p><span class="math display">\[Q_{t+1}(k,x_t,u_t)=\big(1-\gamma^t\big)Q_t(k,x_t,u_t)+\gamma^t\Big(g_k(x_t,u_t)+\min_{v\in U(x_{t+1})}Q_t(k+1,x_{t+1},v)\Big), \quad k\neq h-1\]</span></p>
+<p><span class="math display">\[Q_{t+1}(h-1,x_t,u_t)=\big(1-\gamma^t\big)Q_t(h-1,x_t,u_t)+\gamma^t\big(g_{h-1}(x_t,u_t)+g_h(x_{t+1})\big), \quad k=h-1\]</span></p>
+<p>with <span class="math inline">\(\gamma^t\in(0,1]\)</span> arbitrary and all other estimates unchanged. The second line is the first with the terminal cost in place of the lookahead, since there is no stage <span class="math inline">\(h+1\)</span> to look ahead to.</p>
+</section>
+<section id="why-it-converges" class="level3" data-number="7.5">
+<h3 data-number="7.5" class="anchored" data-anchor-id="why-it-converges"><span class="header-section-number">7.5</span> Why it converges</h3>
+<p>The argument is an induction backwards over the stages, and each step is an application of the stochastic approximation result.</p>
+<p><strong>Step 1.</strong> Fix a state-action pair <span class="math inline">\((x_{h-1},u_{h-1})=(i,u)\)</span> at the last decision stage <span class="math inline">\(h-1\)</span>. By assumption it is visited infinitely often, and each time it is visited its estimate is updated by</p>
+<p><span class="math display">\[Q_{t+1}(h-1,i,u)=\big(1-\gamma^t\big)Q_t(h-1,i,u)+\gamma^t\big(g_{h-1}(i,u)+g_h(f(i,u,w_{h-1}))\big).\]</span></p>
+<p>Look at what multiplies <span class="math inline">\(\gamma^t\)</span>. The only random quantity in it is the disturbance <span class="math inline">\(w_{h-1}\)</span>, and successive visits to <span class="math inline">\((i,u)\)</span> draw independent copies of it. So this is precisely the recursion of the stochastic approximation theorem, averaging the random variable <span class="math inline">\(g_{h-1}(i,u)+g_h(f(i,u,w_{h-1}))\)</span>. Therefore <span class="math inline">\(Q_t(h-1,i,u)\)</span> converges to its mean,</p>
+<p><span class="math display">\[g_{h-1}(i,u)+\mathbb{E}\left[g_h(f(i,u,w_{h-1}))\right],\]</span></p>
+<p>which is the true Q-factor at stage <span class="math inline">\(h-1\)</span>.</p>
+<p><strong>Step 2.</strong> Take <span class="math inline">\(t\)</span> large enough that <span class="math inline">\(Q_t(h-1,i,u)\)</span> has converged for every <span class="math inline">\((i,u)\)</span>. Then</p>
+<p><span class="math display">\[\tilde J_{h-1}(x_{h-1})=\min_{v\in U(x_{h-1})}Q_t(h-1,x_{h-1},v)=\min_{v\in U(x_{h-1})}g_{h-1}(x_{h-1},v)+\mathbb{E}\left[g_h(f(x_{h-1},v,w_{h-1}))\right]\]</span></p>
+<p>is the optimal cost-to-go at stage <span class="math inline">\(h-1\)</span>, and from the point of view of stage <span class="math inline">\(h-2\)</span> it plays exactly the role of a terminal cost.</p>
+<p><strong>Step 3.</strong> Fix a pair <span class="math inline">\((x_{h-2},u_{h-2})=(i,u)\)</span> at stage <span class="math inline">\(h-2\)</span>. It too is visited infinitely often, and its update reads</p>
+<p><span class="math display">\[Q_{t+1}(h-2,i,u)=\big(1-\gamma^t\big)Q_t(h-2,i,u)+\gamma^t\Big(g_{h-2}(i,u)+\underbrace{\min_v Q_t(h-1,f(i,u,w_k),v)}_{\tilde J_{h-1}(f(i,u,w_k))}\Big).\]</span></p>
+<p>By Step 2 the underbraced quantity is a fixed function of the disturbance, so again the thing being averaged is a random variable driven only by <span class="math inline">\(w_k\)</span>, and Steps 1 and 2 apply verbatim: <span class="math inline">\(Q_t(h-2,i,u)\)</span> converges to the optimal values.</p>
+<p><strong>Step 4.</strong> Repeat for stages <span class="math inline">\(h-3\)</span>, <span class="math inline">\(h-4\)</span>, and so on. Every <span class="math inline">\(Q_t(k,i,u)\)</span> converges to the optimal value.</p>
+<p>The structure of the argument is the structure of the dynamic programming algorithm itself. Dynamic programming sweeps backwards from the terminal cost, solving one stage at a time; this proof does the same, except that each stage is solved by averaging samples instead of by computing an expectation, and “solved” means “converged in the limit” rather than “computed exactly”. Q-learning is the dynamic programming algorithm with every expectation replaced by an average over experience.</p>
+<p>Note also where the two conditions enter: the step-size conditions make each individual average converge, and the infinite-visitation condition makes every stage-state-action triple get its own average. Neither is dispensable.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Quick exercise: why must the proof go backwards?">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quick exercise: why must the proof go backwards?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Step 3 relies on Step 2 having already converged. Suppose instead one tried to argue directly that <span class="math inline">\(Q_t(0,i,u)\)</span>, at the <em>first</em> stage, converges. What goes wrong?</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Solution">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Solution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-8" class="callout-8-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The target for a stage-<span class="math inline">\(k\)</span> update contains <span class="math inline">\(\min_v Q_t(k+1,\cdot,v)\)</span> – the current estimate at the <em>next</em> stage. If that estimate is still moving, the quantity being averaged is not an i.i.d. sequence with a fixed mean: its distribution changes as <span class="math inline">\(Q_t(k+1,\cdot,\cdot)\)</span> changes, and the stochastic approximation theorem does not apply.</p>
+<p>Going backwards fixes this. At the last stage the target contains no Q-factors at all, only <span class="math inline">\(g_{h-1}\)</span>, <span class="math inline">\(g_h\)</span> and the disturbance, so it is genuinely i.i.d. and the theorem applies. Once that stage has settled, the stage before it has a fixed target, and so on. The dependence runs one way, and the proof has to follow it.</p>
+<p>This is also why the algorithm is slow in practice. Information about the terminal cost has to propagate back one stage at a time, and each stage needs many visits before it settles – so the number of simulations needed grows with the horizon, not just with the size of the state space.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="discussion-a-bittersweet-result" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="discussion-a-bittersweet-result"><span class="header-section-number">8</span> Discussion: a bittersweet result</h2>
+<p>It is worth being clear about what has and has not been achieved.</p>
+<p>On the positive side, the result is remarkable. For <strong>any</strong> Markov decision problem in discrete time – and, by a suitable discretization, in continuous time – Q-learning will solve it, in the sense of converging to an optimal policy, without ever being given a model. One algorithm, two mild conditions, no structural assumptions about <span class="math inline">\(f\)</span> or <span class="math inline">\(g\)</span> beyond finiteness. Set against the careful case-by-case work of Units 5 to 9, where each new structure demanded its own method, that is a striking degree of generality.</p>
+<p>On the negative side, Q-learning is often badly <strong>data inefficient</strong>. “Sufficiently many iterations” in the proof typically means a tremendous number of simulations, even for small problems, for the reason the last exercise identified: information propagates backwards one stage per sweep of visits, and every state-action pair needs many visits of its own. There are methods that use data far more efficiently, at the cost of giving up the optimality guarantee – and much of Units 11 to 14 is about them.</p>
+<p>The honest summary, then, is that of the two curses the course has been fighting, Q-learning solves neither. The <strong>curse of dimensionality</strong> is untouched: the table has <span class="math inline">\(nm\)</span> entries, and for a continuous state space discretized finely enough, that is hopeless – which is exactly the problem Unit 12 takes up by replacing the table with a function approximator. And the <strong>curse of data</strong> has been introduced rather than solved: we have traded the need for a model for the need for an enormous number of interactions. The result is of great theoretical interest and limited direct practical use, and it is the right foundation precisely because everything that follows can be understood as an attempt to relax one of those two curses.</p>
+</section>
+<section id="summary" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="summary"><span class="header-section-number">9</span> Summary</h2>
+<p>Reinforcement learning asks the question of Part I – find a policy minimising an additive cost – without a model: only the system itself, or a simulator, is available. The field divides into approximation in value space, approximation in policy space, and combinations of the two; this unit and the next treat the case where the state and action spaces are finite and everything can be tabulated.</p>
+<p>Infinite-horizon formulations are the natural setting, because the optimal policy is then time-invariant and every observed transition is evidence about the same function. Four formulations keep the infinite sum finite in different ways; two of them, the stochastic shortest path and the discounted problem, turn out to be the same problem – the discount factor <em>is</em> a per-stage probability of termination – and a finite-horizon problem becomes a third instance of the same thing once the clock is folded into the state.</p>
+<p>For these problems, value iteration converges to the unique solution of a Bellman equation, and the minimiser in that equation is an optimal policy. Rewriting all of this in terms of Q-factors changes nothing mathematically but moves the model dependence out of the policy extraction step, which is what makes a model-free algorithm possible at all.</p>
+<p>Q-learning is then value iteration with the expectation over successor states replaced by the single successor that actually occurred. It converges to the optimal Q-factors provided every state-action pair is visited infinitely often and the step sizes satisfy the stochastic approximation conditions – and the proof, in the finite-horizon case, is the dynamic programming algorithm with averaging in place of expectation.</p>
+<p>The guarantee is strong and the practice is hard. Q-learning is correct but data hungry, and it does nothing about the curse of dimensionality. The remaining units of Part II are about what to do instead.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Appendix: average cost problems">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-9-contents" aria-controls="callout-9" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Appendix: average cost problems
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-9" class="callout-9-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The fourth infinite-horizon formulation,</p>
+<p><span class="math display">\[J(i)=\lim_{T\to\infty}\frac{1}{T}\mathbb{E}\left[\sum_{k=0}^{T-1}g(x_k,\mu(x_k))\mid x_0=i\right],\]</span></p>
+<p>is the natural one for problems in which the state never settles – LQG being the standard example. It is not used in the rest of the course, but it rounds out the picture, and the route to it is the same reduction-to-shortest-path used twice already.</p>
+<p><strong>Decomposing the cost.</strong> Assume there is one state, by convention state <span class="math inline">\(n\)</span>, which is visited within a finite number of initial stages with positive probability. Then <span class="math inline">\(n\)</span> is <em>recurrent</em>: the system keeps returning to it. Let <span class="math inline">\(s_\ell\)</span> be the times at which the state is <span class="math inline">\(n\)</span>, and suppose there are <span class="math inline">\(L+1\)</span> of them within <span class="math inline">\(\{0,1,\dots,T-1\}\)</span>.</p>
+<div style="text-align: center;">
+<div id="fig-ac-partition" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ac-partition-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture10/pg39-ac-partition.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:92.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ac-partition-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;11: A trajectory over <span class="math inline">\(\{0,1,\dots,T\}\)</span>, with the occupied state at each time shown in red. The times <span class="math inline">\(s_0,s_1,\dots,s_L\)</span> at which the trajectory revisits the distinguished state <span class="math inline">\(n\)</span> cut the horizon into an initial segment, a sequence of complete cycles between consecutive visits, and a final partial segment.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Writing <span class="math inline">\(J_T(i)=\mathbb{E}\left[\sum_{k=0}^{T-1}g(x_k,\mu(x_k))\mid x_0=i\right]\)</span>, the visits cut the sum into three parts,</p>
+<p><span class="math display">\[J_T(i)=\underbrace{\mathbb{E}\left[\sum_{k=0}^{s_0-1}g\ \Big|\ x_0=i\right]}_{(1)}+\underbrace{\sum_{\ell=0}^{L-1}\mathbb{E}\left[\sum_{k=s_\ell}^{s_{\ell+1}-1}g\ \Big|\ x_{s_\ell}=n\right]}_{(2)}+\underbrace{\mathbb{E}\left[\sum_{k=s_L}^{T-1}g\ \Big|\ x_{s_L}=n\right]}_{(3)}.\]</span></p>
+<p><strong>Implications.</strong> In the limit <span class="math inline">\(J(i)=\lim_{T\to\infty}J_T(i)/T\)</span>, terms (1) and (3) contribute nothing – each is a single finite segment divided by a horizon going to infinity. Term (2) is a sum of <span class="math inline">\(L\)</span> identical quantities, so</p>
+<p><span class="math display">\[J(i)=\lim_{T\to\infty}\frac{L}{T}\mathbb{E}\left[\sum_{k=s_0}^{s_1-1}g(x_k,\mu(x_k))\ \Big|\ x_{s_0}=n\right]=\frac{1}{\mathbb{E}[s_1-s_0]}\mathbb{E}\left[\sum_{k=s_0}^{s_1-1}g(x_k,\mu(x_k))\ \Big|\ x_{s_0}=n\right].\]</span></p>
+<p>Three consequences follow. First, the average cost does not depend on the initial state: for any policy <span class="math inline">\(\mu\)</span> it is the same number <span class="math inline">\(\lambda_\mu\)</span> for every <span class="math inline">\(i\)</span> – the initial transient is averaged away. Second, it depends only on what happens between two visits to <span class="math inline">\(n\)</span>. Third, it can be written as</p>
+<p><span class="math display">\[\lambda_\mu=\frac{C_{nn}(\mu)}{N_{nn}(\mu)}\]</span></p>
+<p>where <span class="math inline">\(C_{nn}(\mu)\)</span> is the expected cost from <span class="math inline">\(n\)</span> until the first return to <span class="math inline">\(n\)</span>, and <span class="math inline">\(N_{nn}(\mu)=T/L\)</span> the expected number of stages to return.</p>
+<p><strong>Reduction to a shortest path problem.</strong> We want a shortest path problem that starts at <span class="math inline">\(n\)</span> and ends at <span class="math inline">\(n\)</span> – but a terminal state must transition only to itself, so <span class="math inline">\(n\)</span> cannot play both roles. The fix is to split it: introduce a terminal state <span class="math inline">\(t\)</span>, and redirect every transition <em>into</em> <span class="math inline">\(n\)</span> so that it goes into <span class="math inline">\(t\)</span> instead, with the same probabilities.</p>
+<div style="text-align: center;">
+<div id="fig-ac-graphs" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ac-graphs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../lectures/figures/lecture10/pg41-ac-graphs.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:82.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ac-graphs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;12: Left: the original graph, in which the transitions <span class="math inline">\(p_{1n}(u),p_{2n}(u),p_{3n}(u),\dots\)</span> lead back into state <span class="math inline">\(n\)</span>. Right: the modified graph, in which those same transitions are redirected into a new terminal state <span class="math inline">\(t\)</span> (blue). A trajectory from <span class="math inline">\(n\)</span> to <span class="math inline">\(t\)</span> in the modified graph is exactly one cycle from <span class="math inline">\(n\)</span> back to <span class="math inline">\(n\)</span> in the original.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The costs are modified from <span class="math inline">\(g(i,u)\)</span> to <span class="math inline">\(g(i,u)-\lambda^\star\)</span>, where</p>
+<p><span class="math display">\[\lambda^\star=\min_\mu\lambda_\mu=\min_\mu\frac{C_{nn}(\mu)}{N_{nn}(\mu)}.\]</span></p>
+<p>Why subtract <span class="math inline">\(\lambda^\star\)</span>? Because for any <span class="math inline">\(\mu\)</span> we have <span class="math inline">\(\lambda_\mu=C_{nn}(\mu)/N_{nn}(\mu)\geq\lambda^\star\)</span>, hence</p>
+<p><span class="math display">\[C_{nn}(\mu)-\lambda^\star N_{nn}(\mu)\geq0, \qquad\text{with equality when } \mu=\mu^\star .\]</span></p>
+<p>So the optimal policy is the one minimising <span class="math inline">\(C_{nn}(\mu)-\lambda^\star N_{nn}(\mu)\)</span> – and that is exactly the shortest path problem just constructed, since</p>
+<p><span class="math display">\[\min_\mu\mathbb{E}\left[\sum_{k=s_0}^{s_1-1}\big(g(x_k,\mu(x_k))-\lambda^\star\big)\ \Big|\ x_{s_0}=n\right]=\min_\mu\ C_{nn}(\mu)-\lambda^\star\,\mathbb{E}[s_1-s_0].\]</span></p>
+<p><strong>The Bellman equation.</strong> For the modified shortest path problem it reads</p>
+<p><span class="math display">\[h^\star(i)=\min_{u\in U(i)}\Big[g(i,u)-\lambda^\star+\sum_{j=1}^{n-1}p_{ij}(u)h^\star(j)\Big],\]</span></p>
+<p>the sum stopping at <span class="math inline">\(n-1\)</span> because the transitions from <span class="math inline">\(i\)</span> into <span class="math inline">\(n\)</span> now go to <span class="math inline">\(t\)</span> instead. Since <span class="math inline">\(h^\star(n)=C_{nn}(\mu^\star)-\lambda^\star N_{nn}(\mu^\star)=0\)</span>, the term <span class="math inline">\(j=n\)</span> may be added back at no cost, giving the standard form.</p>
+<p><strong>Theorem (Bellman equation, average cost).</strong> The optimal average cost <span class="math inline">\(\lambda^\star\)</span> is the same for all initial states and, together with some vector <span class="math inline">\((h^\star(1),\dots,h^\star(n))\)</span>, satisfies</p>
+<p><span class="math display">\[\lambda^\star+h^\star(i)=\min_{u\in U(i)}\Big[g(i,u)+\sum_{j=1}^{n}p_{ij}(u)h^\star(j)\Big] \qquad i\in\{1,2,\dots,n\}\]</span></p>
+<p>with <span class="math inline">\(h^\star(n)=0\)</span>.</p>
+<p>Here <span class="math inline">\(\lambda^\star\)</span> is the cost per stage in steady state, and <span class="math inline">\(h^\star(i)\)</span> – the <em>bias</em>, or differential cost – measures how much better or worse it is to start in state <span class="math inline">\(i\)</span> than in the reference state <span class="math inline">\(n\)</span>. The pair carries the information that a single value function carries in the other formulations.</p>
+<p><strong>Numerical method.</strong> To obtain <span class="math inline">\(\lambda^\star\)</span>, <span class="math inline">\(h^\star\)</span> and the optimal policy: first run ordinary value iteration</p>
+<p><span class="math display">\[J_{k+1}(i)=\min_{u\in U(i)}\Big[g(i,u)+\sum_{j=1}^{n}p_{ij}(u)J_k(j)\Big]\]</span></p>
+<p>and compute <span class="math inline">\(\lambda^\star=\lim_{k\to\infty}J_k(i)/k\)</span> – the values themselves diverge, but they diverge linearly, at the rate <span class="math inline">\(\lambda^\star\)</span>. Then solve the modified shortest path problem above, with the now-known <span class="math inline">\(\lambda^\star\)</span>, by value iteration again.</p>
+</div>
+</div>
+</div>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>C. Watkins, <em>Learning from delayed rewards</em>, PhD thesis, Cambridge University, 1989.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
